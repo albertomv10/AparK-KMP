@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.AparK" parent="android:Theme.Material.Light.NoActionBar" >
+        <!-- Fondo del splash screen -->
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/splash_background</item>
+        <!-- Ícono del splash screen (puede ser un drawable) -->
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="31">@drawable/splash_image_sin_fondo</item>
+        <!-- Duración de la animación del ícono (opcional) -->
+        <item name="android:windowSplashScreenAnimationDuration" tools:targetApi="31">300</item>
+        <!-- Tema a usar después de que el splash screen desaparezca -->
+        <item name="postSplashScreenTheme">@style/Theme.AparK</item>
+    </style>
+</resources>
