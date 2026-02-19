@@ -35,4 +35,12 @@ class LocationRepositoryImpl(
     override suspend fun saveParking(data: Any) {
         firestore.collection("parkings").add(data) //TODO quitar
     }
+
+    override suspend fun getCurrentLocation(): Vehicle.LocationModel {
+        TODO("Not yet implemented")
+    }
+
+    override fun getLocationUpdates(): Flow<Vehicle.LocationModel> {
+        TODO("Not yet implemented")
+    }
 }

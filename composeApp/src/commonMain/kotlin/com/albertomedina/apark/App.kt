@@ -20,6 +20,7 @@ import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.app_name
 import apark.composeapp.generated.resources.compose_multiplatform
 import com.albertomedina.apark.di.AppConfig
+import com.albertomedina.apark.presentation.auth.login.LoginScreen
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -31,6 +32,7 @@ import kotlin.time.Clock
 @Preview
 fun App() {
 
+    /*
     MaterialTheme {
         var showContent by remember { mutableStateOf(false) }
         val viewmodel = koinViewModel<TestViewModel>()
@@ -98,5 +100,17 @@ fun App() {
             }
         }
         
-    }
+    } */
+
+    // Dentro de tu App.kt o tu grafo de navegación:
+    LoginScreen(
+        onNavigateToHome = {
+            println("Navegando a la pantalla principal...")
+            // navHost.navigate(Routes.Home)
+        },
+        onNavigateToVerify = {
+            println("Navegando a verificar email...")
+            // navHost.navigate(Routes.Verify)
+        }
+    )
 }

@@ -1,5 +1,8 @@
 package com.albertomedina.apark.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Vehicle(
     val id: String = "",
     val name: String = "",
@@ -11,6 +14,7 @@ data class Vehicle(
     val sharedUsers: List<String> = emptyList(),
     val lastLocation: LocationModel? = null
 )  {
+    @Serializable
     data class LocationModel(
         val latitude: Double = 0.0,
         val longitude: Double = 0.0,
