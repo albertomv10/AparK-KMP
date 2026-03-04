@@ -5,7 +5,7 @@
         <!-- Fondo del splash screen -->
         <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/splash_background</item>
         <!-- Ícono del splash screen (puede ser un drawable) -->
-        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="31">@drawable/logosinfondosvg</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="31">@drawable/splash</item>
         <!-- Duración de la animación del ícono (opcional) -->
         <item name="android:windowSplashScreenAnimationDuration" tools:targetApi="31">300</item>
         <!-- Tema a usar después de que el splash screen desaparezca -->

@@ -6,7 +6,7 @@ import dev.gitlive.firebase.auth.FirebaseUser // 👈 Ojo al import KMP
 class LoginGoogleUseCase(
     private val authRepository: AuthRepository
 ) {
-    suspend operator fun invoke(idToken: String): Result<FirebaseUser?> {
-        return authRepository.loginWithGoogle(idToken)
+    suspend operator fun invoke(idToken: String, accessToken: String? = null): Result<FirebaseUser?> {
+        return authRepository.loginWithGoogle(idToken, accessToken)
     }
 }

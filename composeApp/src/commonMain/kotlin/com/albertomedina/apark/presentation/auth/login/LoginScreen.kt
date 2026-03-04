@@ -25,8 +25,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import org.koin.compose.viewmodel.koinViewModel // 👈 Importante para inyectar el ViewModel en KMP
-
+import com.albertomedina.apark.presentation.components.GoogleSignInButton
+import com.albertomedina.apark.presentation.components.StandardAparKButton
+import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun LoginScreen(
     // Inyectamos el ViewModel automáticamente gracias a Koin
@@ -118,26 +119,28 @@ fun LoginScreen(
             if (state.isLoading) {
                 CircularProgressIndicator()
             } else {
-                Button(
-                    onClick = { viewModel.onEvent(LoginEvent.LoginClicked) },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Iniciar Sesión")
+
+                StandardAparKButton(
+                    onClick = { viewModel.onEvent(LoginEvent.LoginClicked)}
+                ){
+                    Text("Iniciar Sesión",
+                        style = MaterialTheme.typography.titleSmall,
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedButton(
-                    onClick = {
-                        // Nota: En un entorno real, aquí llamarías a una librería
-                        // que abra el popup de Google, recoja el token y se lo pase al evento.
-                        // Para probar el flujo de error, pasamos un token falso.
-                        viewModel.onEvent(LoginEvent.GoogleLoginClicked("token_falso_de_prueba"))
+                GoogleSignInButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    buttonText = "Entrar con Google",
+                    onTokenReceived = { idToken, accessToken ->
+                        viewModel.onEvent(LoginEvent.GoogleLoginClicked(idToken, accessToken))
                     },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Entrar con Google (Prueba)")
-                }
+                    onError = { errorMessage ->
+                        // Manejar el error
+                        println("Error en GoogleSignInButton: $errorMessage")
+                    }
+                )
             }
         }
     }

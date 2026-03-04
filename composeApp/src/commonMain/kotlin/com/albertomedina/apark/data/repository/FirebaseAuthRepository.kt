@@ -88,10 +88,13 @@ class FirebaseAuthRepository(
         }
     }
 
-    override suspend fun loginWithGoogle(idToken: String): Result<FirebaseUser?> {
+    override suspend fun loginWithGoogle(
+        idToken: String,
+        accessToken: String?
+    ): Result<FirebaseUser?> {
         return try {
-            // Sintaxis KMP para credenciales de Google
-            val credential = GoogleAuthProvider.credential(idToken, null)
+
+            val credential = GoogleAuthProvider.credential(idToken, accessToken)
             val authResult = firebaseAuth.signInWithCredential(credential)
 
             println("AuthRepository: Usuario autenticado con Google")

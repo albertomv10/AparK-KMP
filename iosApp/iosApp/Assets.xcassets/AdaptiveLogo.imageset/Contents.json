@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "splash_image_sin_fondo.png",
+      "filename" : "appstore.png",
       "idiom" : "universal"
     },
     {
@@ -11,7 +11,7 @@
           "value" : "light"
         }
       ],
-      "filename" : "splash_image_sin_fondo 1.png",
+      "filename" : "appstore 1.png",
       "idiom" : "universal"
     },
     {
@@ -21,7 +21,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "splash_image_sin_fondo 2.png",
+      "filename" : "appstore 2.png",
       "idiom" : "universal"
     }
   ],

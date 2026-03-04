@@ -30,18 +30,23 @@ class LoginViewModel(
             is LoginEvent.EmailChanged -> {
                 _uiState.update { it.copy(email = event.email) }
             }
+
             is LoginEvent.PasswordChanged -> {
                 _uiState.update { it.copy(password = event.password) }
             }
+
             LoginEvent.LoginClicked -> {
                 performLogin()
             }
+
             is LoginEvent.GoogleLoginClicked -> {
-                performGoogleLogin(event.idToken)
+                performGoogleLogin(event.idToken, event.accessToken)
             }
+
             LoginEvent.ErrorDismissed -> {
                 _uiState.update { it.copy(snackbarMessage = null) }
             }
+
             LoginEvent.OnNavigated -> {
                 _uiState.update {
                     it.copy(shouldNavigate = false, shouldVerificate = false)
@@ -78,23 +83,26 @@ class LoginViewModel(
                     _uiState.update { it.copy(shouldNavigate = true) }
                 },
                 onFailure = { error ->
-                    val errorMsg = if (error.message?.contains("Email_verification_required") == true) {
-                        _uiState.update { it.copy(shouldVerificate = true) }
-                        "Verifica tu email antes de entrar"
-                    } else {
-                        "Error: ${error.message}"
-                    }
+                    val errorMsg =
+                        if (error.message?.contains("Email_verification_required") == true) {
+                            _uiState.update { it.copy(shouldVerificate = true) }
+                            "Verifica tu email antes de entrar"
+                        }else if (error.message?.contains("ERROR_INVALID_CREDENTIAL") == true) {
+                            "Las credenciales son incorrectas. Verifica tu email y contraseña."
+                        } else {
+                            "Error: ${error.message}"
+                        }
                     _uiState.update { it.copy(snackbarMessage = errorMsg) }
                 }
             )
         }
     }
 
-    private fun performGoogleLogin(idToken: String) {
+    private fun performGoogleLogin(idToken: String, accessToken: String?) {
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            val result = loginGoogleUseCase(idToken)
+            val result = loginGoogleUseCase(idToken, accessToken)
 
             result.fold(
                 onSuccess = { firebaseUser ->
@@ -150,7 +158,7 @@ sealed class LoginEvent {
     data class EmailChanged(val email: String) : LoginEvent()
     data class PasswordChanged(val password: String) : LoginEvent()
     data object LoginClicked : LoginEvent()
-    data class GoogleLoginClicked(val idToken: String) : LoginEvent() // El token viene de la UI
+    data class GoogleLoginClicked(val idToken: String, val accessToken: String? = null) : LoginEvent()
     data object ErrorDismissed : LoginEvent()
     data object OnNavigated : LoginEvent()
 }

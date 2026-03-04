@@ -59,7 +59,7 @@ interface AuthRepository {
      * Attempts to log in a user using Google authentication.
      * @return A Result containing Unit on success, or an error on failure.
      */
-    suspend fun loginWithGoogle(idToken: String): Result<FirebaseUser?>
+    suspend fun loginWithGoogle(idToken: String, accessToken: String? = null): Result<FirebaseUser?>
 
     /**
      * Attempts to reset the password of a given email address.

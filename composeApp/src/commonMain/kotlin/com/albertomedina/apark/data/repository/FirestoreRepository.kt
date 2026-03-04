@@ -247,13 +247,15 @@ class FirestoreRepository(
     }
 
     override suspend fun createUser(user: User) {
-        firestore.runTransaction {
+
+        try {
             val docRef = firestore.collection(FirestoreConstants.USERS_COLLECTION).document(user.id)
-            val snapshot = get(docRef)
+            val snapshot = docRef.get()
 
             if (!snapshot.exists) {
-                set(docRef, user)
+                docRef.set<User>(user)
             }
-        }
+        } catch (e: Exception) {
+            println("Firestore: Error al crear usuario -> ${e.message}")        }
     }
 }
