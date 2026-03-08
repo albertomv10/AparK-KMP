@@ -7,17 +7,24 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -31,13 +38,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.albertomedina.apark.presentation.components.AppleSignInButton
 import com.albertomedina.apark.presentation.components.GoogleSignInButton
 import com.albertomedina.apark.presentation.components.StandardAparKButton
 import com.albertomedina.apark.presentation.components.StandardAparKTextButton
+import com.albertomedina.apark.utils.SnackbarMessage
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -58,6 +69,11 @@ fun LoginScreen(
 
     // 3. Estado local para mostrar/ocultar contraseña
     var passwordVisible by remember { mutableStateOf(false) }
+
+    var activeSnackbarMessage by remember { mutableStateOf<SnackbarMessage?>(null) }
+
+    val keyboardController = LocalSoftwareKeyboardController.current
+
 
     // ==========================================
     // MANEJO DE EFECTOS (Side Effects)
@@ -95,9 +111,16 @@ fun LoginScreen(
 
     // Escuchar si hay un mensaje de error/éxito
     LaunchedEffect(state.snackbarMessage) {
-        state.snackbarMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            viewModel.onEvent(LoginEvent.ErrorDismissed) // Limpiamos el error tras mostrarlo
+        state.snackbarMessage?.let { msg ->
+            activeSnackbarMessage = msg // 👈 Guardamos el objeto para extraer sus colores luego[cite: 5]
+
+            snackbarHostState.showSnackbar(
+                message = msg.message,
+                actionLabel = msg.actionLabel,
+                withDismissAction = true,
+                duration = SnackbarDuration.Long
+            )
+            viewModel.onEvent(LoginEvent.ErrorDismissed)
         }
     }
 
@@ -106,7 +129,19 @@ fun LoginScreen(
     // ==========================================
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { snackbarData ->
+                // Customizamos el componente visual del Snackbar
+                activeSnackbarMessage?.let { customMsg ->
+                    Snackbar(
+                        snackbarData = snackbarData,
+                        containerColor = customMsg.backgroundColor(),
+                        contentColor = customMsg.contentColor(),
+                        actionColor = customMsg.contentColor() // Color del botón de acción si lo hubiera
+                    )
+                } ?: Snackbar(snackbarData = snackbarData) // Fallback de seguridad
+            }
+        }
     ) { paddingValues ->
 
         Column(
@@ -119,7 +154,9 @@ fun LoginScreen(
                     )
                 )
                 .padding(paddingValues)
-                .padding(32.dp),
+                .padding(32.dp)
+                .verticalScroll(rememberScrollState())
+                .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -175,30 +212,50 @@ fun LoginScreen(
                 onClick = { /*TODO*/ }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
 
-            // Botón o Cargando
             if (state.isLoading) {
                 CircularProgressIndicator()
             } else {
 
                 StandardAparKButton(
-                    onClick = { viewModel.onEvent(LoginEvent.LoginClicked)}
+                    onClick = {
+                        keyboardController?.hide()
+                        viewModel.onEvent(LoginEvent.LoginClicked)
+                    }
                 ){
                     Text("Iniciar Sesión",
                         style = MaterialTheme.typography.titleSmall,
                     )
                 }
 
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 8.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .padding(horizontal = 40.dp)
+                    .fillMaxWidth()
+                    .height(1.dp),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
                 GoogleSignInButton(
                     modifier = Modifier.fillMaxWidth(),
-                    buttonText = "Entrar con Google",
+                    buttonText = "Continuar con Google",
                     onTokenReceived = { idToken, accessToken ->
                         viewModel.onEvent(LoginEvent.GoogleLoginClicked(idToken, accessToken))
                     },
                     onError = { errorMessage ->
                         // Manejar el error
                         println("Error en GoogleSignInButton: $errorMessage")
+                    }
+                )
+                AppleSignInButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    onTokenReceived = { idToken, nonce ->
+                        viewModel.onEvent(LoginEvent.AppleLoginClicked(idToken, nonce))
+                    },
+                    onError = { errorMessage ->
+                        // Manejar el error
+                        println("Error en AppleSignInButton: $errorMessage")
                     }
                 )
 

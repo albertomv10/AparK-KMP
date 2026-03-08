@@ -4,6 +4,7 @@ import com.albertomedina.apark.domain.repository.AuthRepository
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.auth.GoogleAuthProvider
+import dev.gitlive.firebase.auth.OAuthProvider
 
 class FirebaseAuthRepository(
     private val firebaseAuth: FirebaseAuth
@@ -101,6 +102,24 @@ class FirebaseAuthRepository(
             Result.success(authResult.user)
         } catch (e: Exception) {
             println("AuthRepository: Error al autenticar con Google: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun loginWithApple(
+        idToken: String,
+        nonce: String
+    ): Result<FirebaseUser?> {
+        return try {
+            // Usamos el companion object directamente con sus parámetros correctos
+            val credential = OAuthProvider.credential(
+                providerId = "apple.com",
+                idToken = idToken,
+                rawNonce = nonce
+            )
+            val authResult = firebaseAuth.signInWithCredential(credential)
+            Result.success(authResult.user)
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }

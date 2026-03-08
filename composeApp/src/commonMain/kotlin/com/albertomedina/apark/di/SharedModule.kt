@@ -13,6 +13,7 @@ import com.albertomedina.apark.domain.usecase.GetLastVehicleLocationUseCase
 import com.albertomedina.apark.domain.usecase.GetUserUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleByIdUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
+import com.albertomedina.apark.domain.usecase.LoginAppleUseCase
 import com.albertomedina.apark.domain.usecase.LoginGoogleUseCase
 import com.albertomedina.apark.domain.usecase.LoginUseCase
 import com.albertomedina.apark.domain.usecase.RegisterUseCase
@@ -87,6 +88,8 @@ val sharedModule = module {
     factory { LoginUseCase(authRepository = get()) }
     factory { RegisterUseCase(authRepository = get()) }
     factory { LoginGoogleUseCase(authRepository = get()) }
+    factory { LoginAppleUseCase(authRepository = get()) }
+
 
     // User
     factory { GetUserUseCase(repository = get()) }
@@ -100,6 +103,7 @@ val sharedModule = module {
         LoginViewModel(
             loginUseCase = get(),
             loginGoogleUseCase = get(),
+            loginAppleUseCase = get(),
             userRepository = get()
         )
     }

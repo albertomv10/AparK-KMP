@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.model.User
 import com.albertomedina.apark.domain.repository.UserRepository
+import com.albertomedina.apark.domain.usecase.LoginAppleUseCase
 import com.albertomedina.apark.domain.usecase.LoginGoogleUseCase
 import com.albertomedina.apark.domain.usecase.LoginUseCase
+import com.albertomedina.apark.utils.SnackbarMessage
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +18,7 @@ import kotlinx.coroutines.launch
 class LoginViewModel(
     private val loginUseCase: LoginUseCase,
     private val loginGoogleUseCase: LoginGoogleUseCase,
+    private val loginAppleUseCase: LoginAppleUseCase,
     private val userRepository: UserRepository
 ) : ViewModel() {
 
@@ -43,6 +46,10 @@ class LoginViewModel(
                 performGoogleLogin(event.idToken, event.accessToken)
             }
 
+            is LoginEvent.AppleLoginClicked -> {
+                performAppleLogin(event.idToken, event.nonce)
+            }
+
             LoginEvent.ResetPasswordClicked -> {
                 _uiState.update { it.copy(shouldResetPassword = true) }
             }
@@ -67,12 +74,12 @@ class LoginViewModel(
         val password = _uiState.value.password
 
         if (!isValidEmail(email)) {
-            _uiState.update { it.copy(snackbarMessage = "Email inválido") } // Usar Res.string en el futuro
+            _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("Email no válido")) } // Usar Res.string en el futuro
             return
         }
 
         if (password.isBlank()) {
-            _uiState.update { it.copy(snackbarMessage = "La contraseña no puede estar vacía") }
+            _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("Contraseña vacía")) }
             return
         }
 
@@ -99,7 +106,7 @@ class LoginViewModel(
                         } else {
                             "Error: ${error.message}"
                         }
-                    _uiState.update { it.copy(snackbarMessage = errorMsg) }
+                    _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error(errorMsg)) }
                 }
             )
         }
@@ -121,7 +128,31 @@ class LoginViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            snackbarMessage = "Error Google: ${error.message}"
+                            snackbarMessage = SnackbarMessage.Error("Error Google: ${error.message}")
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    private fun performAppleLogin(idToken: String, nonce: String) {
+        _uiState.update { it.copy(isLoading = true) }
+
+        viewModelScope.launch {
+            // Llama a tu nuevo UseCase aquí
+            val result = loginAppleUseCase(idToken, nonce)
+
+            result.fold(
+                onSuccess = { firebaseUser ->
+                    firebaseUser?.let { createUserInDbIfNecessary(it) }
+                    _uiState.update { it.copy(isLoading = false, shouldNavigate = true) }
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            snackbarMessage = SnackbarMessage.Error("Error Apple: ${error.message}")
                         )
                     }
                 }
@@ -160,8 +191,7 @@ data class LoginUiState(
     val shouldVerificate: Boolean = false,
     val shouldResetPassword: Boolean = false,
     val shouldRegister: Boolean = false,
-    val snackbarMessage: String? = null
-)
+    val snackbarMessage: SnackbarMessage? = null)
 
 sealed class LoginEvent {
     data class EmailChanged(val email: String) : LoginEvent()
@@ -170,6 +200,7 @@ sealed class LoginEvent {
     data object ResetPasswordClicked : LoginEvent()
     data object RegisterClicked : LoginEvent()
     data class GoogleLoginClicked(val idToken: String, val accessToken: String? = null) : LoginEvent()
+    data class AppleLoginClicked(val idToken: String, val nonce: String) : LoginEvent()
     data object ErrorDismissed : LoginEvent()
     data object OnNavigated : LoginEvent()
 }

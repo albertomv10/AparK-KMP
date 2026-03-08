@@ -218,7 +218,12 @@ val surfaceContainerHighDarkHighContrast = Color(0xFF383C40)
 val surfaceContainerHighestDarkHighContrast = Color(0xFF43474B)
 
 
+//
+val appleSurfaceLight = Color(0xFF000000)
+val onAppleSurfaceLight = Color(0xFFFFFFFF)
 
+val appleSurfaceDark = Color(0xFFFFFFFF)
+val onAppleSurfaceDark = Color(0xFF000000)
 
 
 

@@ -61,6 +61,8 @@ interface AuthRepository {
      */
     suspend fun loginWithGoogle(idToken: String, accessToken: String? = null): Result<FirebaseUser?>
 
+    suspend fun loginWithApple(idToken: String, nonce: String): Result<FirebaseUser?>
+
     /**
      * Attempts to reset the password of a given email address.
      * @return A Result containing Unit on success, or an error on failure.

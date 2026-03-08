@@ -5,6 +5,9 @@ import GoogleSignIn
 
 @main
 struct iOSApp: App {
+    
+    static let appleAuthCoordinator = AppleAuthCoordinator()
+    
     init() {
         FirebaseApp.configure()
                 
@@ -28,6 +31,17 @@ struct iOSApp: App {
                 }
             )
         }
+        
+        AppleSignInButton_iosKt.iosAppleSignInProvider = { onSuccess, onError in
+            iOSApp.appleAuthCoordinator.startSignIn(
+                        onSuccess: { idToken, nonce in
+                           _ = onSuccess(idToken, nonce)
+                        },
+                        onError: { errorMsg in
+                            _ = onError(errorMsg)
+                        }
+                    )
+                }
 
     }
     
