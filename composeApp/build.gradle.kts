@@ -50,6 +50,9 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            
+            implementation(compose.materialIconsExtended)
+
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
 
@@ -58,11 +61,13 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
 
+            // Navigation 3 (KMP)
+            implementation(libs.jetbrains.navigation3.ui)
+
             implementation(libs.firebase.auth)
             implementation(libs.firebase.firestore)
 
             implementation(libs.kotlinx.serialization.json)
-
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -19,6 +19,7 @@ import com.albertomedina.apark.domain.usecase.RegisterUseCase
 import com.albertomedina.apark.domain.usecase.RemoveUserFromVehicleUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleUseCase
 import com.albertomedina.apark.presentation.auth.login.LoginViewModel
+import com.albertomedina.apark.presentation.home.HomeViewModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.app
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -101,6 +102,10 @@ val sharedModule = module {
             loginGoogleUseCase = get(),
             userRepository = get()
         )
+    }
+
+    viewModel {
+        HomeViewModel()
     }
 }
 

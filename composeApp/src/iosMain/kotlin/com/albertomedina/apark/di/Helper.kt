@@ -1,8 +1,5 @@
-package com.albertomedina.apark
+package com.albertomedina.apark.di
 
-import com.albertomedina.apark.di.AppConfig
-import com.albertomedina.apark.di.initKoin
-import com.albertomedina.apark.di.iosModule
 import org.koin.dsl.module
 
 // Añadimos el parámetro isDebug

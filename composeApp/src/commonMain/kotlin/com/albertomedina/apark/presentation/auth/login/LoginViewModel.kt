@@ -43,13 +43,20 @@ class LoginViewModel(
                 performGoogleLogin(event.idToken, event.accessToken)
             }
 
+            LoginEvent.ResetPasswordClicked -> {
+                _uiState.update { it.copy(shouldResetPassword = true) }
+            }
+            LoginEvent.RegisterClicked -> {
+                _uiState.update { it.copy(shouldRegister = true) }
+            }
+
             LoginEvent.ErrorDismissed -> {
                 _uiState.update { it.copy(snackbarMessage = null) }
             }
 
             LoginEvent.OnNavigated -> {
                 _uiState.update {
-                    it.copy(shouldNavigate = false, shouldVerificate = false)
+                    it.copy(shouldNavigate = false, shouldVerificate = false, shouldResetPassword = false, shouldRegister = false)
                 }
             }
         }
@@ -87,7 +94,7 @@ class LoginViewModel(
                         if (error.message?.contains("Email_verification_required") == true) {
                             _uiState.update { it.copy(shouldVerificate = true) }
                             "Verifica tu email antes de entrar"
-                        }else if (error.message?.contains("ERROR_INVALID_CREDENTIAL") == true) {
+                        }else if (error.message?.contains("credential", ignoreCase = true) == true) {
                             "Las credenciales son incorrectas. Verifica tu email y contraseña."
                         } else {
                             "Error: ${error.message}"
@@ -151,6 +158,8 @@ data class LoginUiState(
     val isLoading: Boolean = false,
     val shouldNavigate: Boolean = false,
     val shouldVerificate: Boolean = false,
+    val shouldResetPassword: Boolean = false,
+    val shouldRegister: Boolean = false,
     val snackbarMessage: String? = null
 )
 
@@ -158,6 +167,8 @@ sealed class LoginEvent {
     data class EmailChanged(val email: String) : LoginEvent()
     data class PasswordChanged(val password: String) : LoginEvent()
     data object LoginClicked : LoginEvent()
+    data object ResetPasswordClicked : LoginEvent()
+    data object RegisterClicked : LoginEvent()
     data class GoogleLoginClicked(val idToken: String, val accessToken: String? = null) : LoginEvent()
     data object ErrorDismissed : LoginEvent()
     data object OnNavigated : LoginEvent()

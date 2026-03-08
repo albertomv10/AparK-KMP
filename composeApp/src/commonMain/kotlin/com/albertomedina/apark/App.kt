@@ -21,6 +21,7 @@ import apark.composeapp.generated.resources.app_name
 import apark.composeapp.generated.resources.compose_multiplatform
 import com.albertomedina.apark.di.AppConfig
 import com.albertomedina.apark.presentation.auth.login.LoginScreen
+import com.albertomedina.apark.presentation.navigation.BasicNavigationWrapper
 import com.albertomedina.apark.ui.theme.AparKTheme
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
@@ -106,15 +107,6 @@ fun App() {
     // Dentro de tu App.kt o tu grafo de navegación:
     AparKTheme {
 
-        LoginScreen(
-            onNavigateToHome = {
-                println("Navegando a la pantalla principal...")
-                // navHost.navigate(Routes.Home)
-            },
-            onNavigateToVerify = {
-                println("Navegando a verificar email...")
-                // navHost.navigate(Routes.Verify)
-            }
-        )
+        BasicNavigationWrapper()
     }
 }

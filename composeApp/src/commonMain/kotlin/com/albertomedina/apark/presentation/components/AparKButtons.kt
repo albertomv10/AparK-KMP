@@ -7,6 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,4 +34,19 @@ fun StandardAparKButton(
     ){
         content()
     }
+}
+
+@Composable
+fun StandardAparKTextButton(modifier: Modifier = Modifier, text: String, onClick: () -> Unit) {
+    TextButton(
+        modifier = modifier
+            .padding(vertical = 4.dp)
+            .height(32.dp),
+        onClick = { onClick() }) {
+        Text(text,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+
 }

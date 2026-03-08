@@ -25,6 +25,10 @@ koinComposeMultiplatform = "4.1.1"
 firebase-gitlive = "2.4.0"
 gms-google-services = "4.4.4"
 googleid = "1.2.0"
+navigation3Runtime = "1.0.1"
+navigation3Ui = "1.0.1"
+
+cmpNavigation3 = "1.0.0-alpha06"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -56,6 +60,9 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
+
+jetbrains-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "cmpNavigation3" }
+
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
