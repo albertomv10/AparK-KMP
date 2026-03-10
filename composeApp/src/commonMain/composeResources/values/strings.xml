@@ -1,3 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Apark</string>
+    <string name="login_welcome">Bienvenido/a</string>
+    <string name="login_subtitle">Inicia sesión o crea una cuenta para empezar</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Contraseña</string>
+    <string name="show_password">Mostrar contraseña</string>
+    <string name="hide_password">Ocultar contraseña</string>
+    <string name="forgot_password">Olvidé mi contraseña</string>
+    <string name="login_button">Iniciar Sesión</string>
+    <string name="google_login">Continuar con Google</string>
+    <string name="apple_login">Continuar con Apple</string>
+    <string name="no_account_register">¿No tienes una cuenta? Regístrate</string>
+    
+    <string name="error_invalid_email">Email no válido</string>
+    <string name="error_empty_password">Contraseña vacía</string>
+    <string name="error_verify_email">Verifica tu email antes de entrar</string>
+    <string name="error_invalid_credentials">Las credenciales son incorrectas. Verifica tu email y contraseña.</string>
+    <string name="error_google_login" formatted="false">Error Google: %s</string>
+    <string name="error_apple_login" formatted="false">Error Apple: %s</string>
 </resources>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AparK</string>
+    <string name="login_welcome">Bienvenue</string>
+    <string name="login_subtitle">Connectez-vous ou créez un compte pour commencer</string>
+    <string name="email_label">E-mail</string>
+    <string name="password_label">Mot de passe</string>
+    <string name="show_password">Afficher le mot de passe</string>
+    <string name="hide_password">Masquer le mot de passe</string>
+    <string name="forgot_password">Mot de passe oublié</string>
+    <string name="login_button">Se connecter</string>
+    <string name="google_login">Continuer avec Google</string>
+    <string name="apple_login">Continuer avec Apple</string>
+    <string name="no_account_register">Vous n\'avez pas de compte ? Inscrivez-vous</string>
+    
+    <string name="error_invalid_email">E-mail invalide</string>
+    <string name="error_empty_password">Mot de passe vide</string>
+    <string name="error_verify_email">Veuillez vérifier votre e-mail avant de vous connecter</string>
+    <string name="error_invalid_credentials">Identifiants incorrects. Veuillez vérifier votre e-mail et votre mot de passe.</string>
+    <string name="error_google_login" formatted="false">Erreur Google : %s</string>
+    <string name="error_apple_login" formatted="false">Erreur Apple : %s</string>
+</resources>

@@ -25,7 +25,6 @@ class LoginViewModel(
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    // Regex simple para validar email en KMP (ya que Patterns es de Android)
     private val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$".toRegex()
 
     fun onEvent(event: LoginEvent) {
@@ -74,12 +73,12 @@ class LoginViewModel(
         val password = _uiState.value.password
 
         if (!isValidEmail(email)) {
-            _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("Email no válido")) } // Usar Res.string en el futuro
+            _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_invalid_email")) }
             return
         }
 
         if (password.isBlank()) {
-            _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("Contraseña vacía")) }
+            _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_empty_password")) }
             return
         }
 
@@ -97,16 +96,16 @@ class LoginViewModel(
                     _uiState.update { it.copy(shouldNavigate = true) }
                 },
                 onFailure = { error ->
-                    val errorMsg =
+                    val errorKey =
                         if (error.message?.contains("Email_verification_required") == true) {
                             _uiState.update { it.copy(shouldVerificate = true) }
-                            "Verifica tu email antes de entrar"
-                        }else if (error.message?.contains("credential", ignoreCase = true) == true) {
-                            "Las credenciales son incorrectas. Verifica tu email y contraseña."
+                            "error_verify_email"
+                        } else if (error.message?.contains("credential", ignoreCase = true) == true) {
+                            "error_invalid_credentials"
                         } else {
-                            "Error: ${error.message}"
+                            error.message ?: "Unknown error"
                         }
-                    _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error(errorMsg)) }
+                    _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error(errorKey)) }
                 }
             )
         }
@@ -120,7 +119,6 @@ class LoginViewModel(
 
             result.fold(
                 onSuccess = { firebaseUser ->
-                    // Si es la primera vez, quizás queramos crear el usuario en nuestra DB
                     firebaseUser?.let { createUserInDbIfNecessary(it) }
                     _uiState.update { it.copy(isLoading = false, shouldNavigate = true) }
                 },
@@ -128,7 +126,7 @@ class LoginViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            snackbarMessage = SnackbarMessage.Error("Error Google: ${error.message}")
+                            snackbarMessage = SnackbarMessage.Error("error_google_login")
                         )
                     }
                 }
@@ -140,7 +138,6 @@ class LoginViewModel(
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            // Llama a tu nuevo UseCase aquí
             val result = loginAppleUseCase(idToken, nonce)
 
             result.fold(
@@ -152,7 +149,7 @@ class LoginViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            snackbarMessage = SnackbarMessage.Error("Error Apple: ${error.message}")
+                            snackbarMessage = SnackbarMessage.Error("error_apple_login")
                         )
                     }
                 }
@@ -161,7 +158,6 @@ class LoginViewModel(
     }
 
     private suspend fun createUserInDbIfNecessary(firebaseUser: FirebaseUser) {
-        // Lógica opcional: crear documento de usuario si es login social
         val user = User(
             id = firebaseUser.uid,
             email = firebaseUser.email ?: "",
@@ -169,7 +165,6 @@ class LoginViewModel(
             userVehicles = emptyList()
         )
         try {
-            // Nota: createUser en el repo verifica si existe antes de sobrescribir
             userRepository.createUser(user)
         } catch (e: Exception) {
             println("Error creating user data: ${e.message}")
@@ -181,8 +176,6 @@ class LoginViewModel(
     }
 }
 
-// LoginContract.kt (o dentro del mismo archivo ViewModel)
-
 data class LoginUiState(
     val email: String = "",
     val password: String = "",
@@ -191,7 +184,8 @@ data class LoginUiState(
     val shouldVerificate: Boolean = false,
     val shouldResetPassword: Boolean = false,
     val shouldRegister: Boolean = false,
-    val snackbarMessage: SnackbarMessage? = null)
+    val snackbarMessage: SnackbarMessage? = null
+)
 
 sealed class LoginEvent {
     data class EmailChanged(val email: String) : LoginEvent()

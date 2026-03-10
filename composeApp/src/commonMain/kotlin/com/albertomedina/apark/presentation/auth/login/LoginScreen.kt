@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,60 +37,46 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import apark.composeapp.generated.resources.Res
+import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.presentation.components.AppleSignInButton
 import com.albertomedina.apark.presentation.components.GoogleSignInButton
 import com.albertomedina.apark.presentation.components.StandardAparKButton
 import com.albertomedina.apark.presentation.components.StandardAparKTextButton
 import com.albertomedina.apark.utils.SnackbarMessage
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun LoginScreen(
-    // Inyectamos el ViewModel automáticamente gracias a Koin
     viewModel: LoginViewModel = koinViewModel(),
-    // Callbacks de navegación para mantener la UI desacoplada del sistema de rutas
     onNavigateToHome: (String) -> Unit,
     onNavigateToVerify: () -> Unit,
     onNavigateToResetPassword: () -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
-    // 1. Observamos el estado (UI State)
     val state by viewModel.uiState.collectAsState()
-
-    // 2. Estado para el Snackbar (Notificaciones)
     val snackbarHostState = remember { SnackbarHostState() }
-
-    // 3. Estado local para mostrar/ocultar contraseña
     var passwordVisible by remember { mutableStateOf(false) }
-
     var activeSnackbarMessage by remember { mutableStateOf<SnackbarMessage?>(null) }
-
     val keyboardController = LocalSoftwareKeyboardController.current
 
-
-    // ==========================================
-    // MANEJO DE EFECTOS (Side Effects)
-    // ==========================================
-
-    // Escuchar si hay que navegar al Home
     LaunchedEffect(state.shouldNavigate) {
         if (state.shouldNavigate) {
             onNavigateToHome(state.email)
-            viewModel.onEvent(LoginEvent.OnNavigated) // Reseteamos el "gatillo"
+            viewModel.onEvent(LoginEvent.OnNavigated)
         }
     }
 
-    // Escuchar si hay que ir a Verificar Email
     LaunchedEffect(state.shouldVerificate) {
         if (state.shouldVerificate) {
             onNavigateToVerify()
-            viewModel.onEvent(LoginEvent.OnNavigated) // Reseteamos el "gatillo"
+            viewModel.onEvent(LoginEvent.OnNavigated)
         }
     }
 
@@ -109,13 +94,23 @@ fun LoginScreen(
         }
     }
 
-    // Escuchar si hay un mensaje de error/éxito
+    // Traducción de las llaves de error que emite el ViewModel
+    val translatedText = when (state.snackbarMessage?.message) {
+        "error_invalid_email" -> stringResource(Res.string.error_invalid_email)
+        "error_empty_password" -> stringResource(Res.string.error_empty_password)
+        "error_verify_email" -> stringResource(Res.string.error_verify_email)
+        "error_invalid_credentials" -> stringResource(Res.string.error_invalid_credentials)
+        "error_google_login" -> stringResource(Res.string.error_google_login)
+        "error_apple_login" -> stringResource(Res.string.error_apple_login)
+        // Si no coincide con ninguna llave, asumimos que es un texto normal (ej. un error directo de Firebase)
+        else -> state.snackbarMessage?.message
+    }
+
     LaunchedEffect(state.snackbarMessage) {
         state.snackbarMessage?.let { msg ->
-            activeSnackbarMessage = msg // 👈 Guardamos el objeto para extraer sus colores luego[cite: 5]
-
+            activeSnackbarMessage = msg
             snackbarHostState.showSnackbar(
-                message = msg.message,
+                message = translatedText ?: msg.message,
                 actionLabel = msg.actionLabel,
                 withDismissAction = true,
                 duration = SnackbarDuration.Long
@@ -124,22 +119,17 @@ fun LoginScreen(
         }
     }
 
-    // ==========================================
-    // DIBUJO DE LA INTERFAZ (UI)
-    // ==========================================
-
     Scaffold(
         snackbarHost = {
             SnackbarHost(snackbarHostState) { snackbarData ->
-                // Customizamos el componente visual del Snackbar
                 activeSnackbarMessage?.let { customMsg ->
                     Snackbar(
                         snackbarData = snackbarData,
                         containerColor = customMsg.backgroundColor(),
                         contentColor = customMsg.contentColor(),
-                        actionColor = customMsg.contentColor() // Color del botón de acción si lo hubiera
+                        actionColor = customMsg.contentColor()
                     )
-                } ?: Snackbar(snackbarData = snackbarData) // Fallback de seguridad
+                } ?: Snackbar(snackbarData = snackbarData)
             }
         }
     ) { paddingValues ->
@@ -161,12 +151,12 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Bienvenido/a",
+                text = stringResource(Res.string.login_welcome),
                 style = MaterialTheme.typography.displayLarge,
                 modifier = Modifier.align(Alignment.Start)
             )
             Text(
-                text = "Inicia sesión o crea una cuenta para empezar",
+                text = stringResource(Res.string.login_subtitle),
                 style = MaterialTheme.typography.displaySmall,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.align(Alignment.Start)
@@ -174,31 +164,26 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Campo de Email
             OutlinedTextField(
                 value = state.email,
                 onValueChange = { viewModel.onEvent(LoginEvent.EmailChanged(it)) },
-                label = { Text("Email") },
+                label = { Text(stringResource(Res.string.email_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
-            // Campo de Contraseña
             OutlinedTextField(
                 value = state.password,
                 onValueChange = { viewModel.onEvent(LoginEvent.PasswordChanged(it)) },
-                label = { Text("Contraseña") },
+                label = { Text(stringResource(Res.string.password_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
-                    val image = if (passwordVisible)
-                        Icons.Filled.Visibility
-                    else Icons.Filled.VisibilityOff
-
-                    val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                    val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val description = if (passwordVisible) stringResource(Res.string.hide_password) else stringResource(Res.string.show_password)
 
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(imageVector = image, contentDescription = description)
@@ -207,23 +192,21 @@ fun LoginScreen(
             )
 
             StandardAparKTextButton(
-                text = "Olvidé mi contraseña",
+                text = stringResource(Res.string.forgot_password),
                 modifier = Modifier.align(Alignment.End),
-                onClick = { /*TODO*/ }
+                onClick = { viewModel.onEvent(LoginEvent.ResetPasswordClicked) }
             )
-
 
             if (state.isLoading) {
                 CircularProgressIndicator()
             } else {
-
                 StandardAparKButton(
                     onClick = {
                         keyboardController?.hide()
                         viewModel.onEvent(LoginEvent.LoginClicked)
                     }
                 ){
-                    Text("Iniciar Sesión",
+                    Text(stringResource(Res.string.login_button),
                         style = MaterialTheme.typography.titleSmall,
                     )
                 }
@@ -239,12 +222,11 @@ fun LoginScreen(
 
                 GoogleSignInButton(
                     modifier = Modifier.fillMaxWidth(),
-                    buttonText = "Continuar con Google",
+                    buttonText = stringResource(Res.string.google_login),
                     onTokenReceived = { idToken, accessToken ->
                         viewModel.onEvent(LoginEvent.GoogleLoginClicked(idToken, accessToken))
                     },
                     onError = { errorMessage ->
-                        // Manejar el error
                         println("Error en GoogleSignInButton: $errorMessage")
                     }
                 )
@@ -254,13 +236,12 @@ fun LoginScreen(
                         viewModel.onEvent(LoginEvent.AppleLoginClicked(idToken, nonce))
                     },
                     onError = { errorMessage ->
-                        // Manejar el error
                         println("Error en AppleSignInButton: $errorMessage")
                     }
                 )
 
                 StandardAparKTextButton(
-                    text = "¿No tienes una cuenta? Regístrate",
+                    text = stringResource(Res.string.no_account_register),
                     onClick = { viewModel.onEvent(LoginEvent.RegisterClicked) }
                 )
             }
