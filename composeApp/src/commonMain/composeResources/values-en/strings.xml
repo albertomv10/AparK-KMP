@@ -1,20 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AparK</string>
     <string name="login_welcome">Welcome</string>
     <string name="login_subtitle">Log in or create an account to get started</string>
     <string name="email_label">Email</string>
     <string name="password_label">Password</string>
+    <string name="confirm_password_label">Confirm Password</string>
     <string name="show_password">Show password</string>
     <string name="hide_password">Hide password</string>
     <string name="forgot_password">Forgot my password</string>
     <string name="login_button">Log In</string>
+    <string name="register_button">Sign Up</string>
     <string name="google_login">Continue with Google</string>
     <string name="apple_login">Continue with Apple</string>
-    <string name="no_account_register">Don\'t have an account? Sign up</string>
+    <string name="no_account_register">Don't have an account? Sign up</string>
+    <string name="register_title">Create Account</string>
+    <string name="register_subtitle">Sign up to start parking smart</string>
     
+    <!-- Error Messages -->
+    <string name="error_empty_email">Email is empty</string>
     <string name="error_invalid_email">Invalid email</string>
-    <string name="error_empty_password">Empty password</string>
+    <string name="error_empty_password">Password is empty</string>
+    <string name="error_password_too_short">Password must be at least 6 characters</string>
+    <string name="error_password_no_uppercase">Must contain at least one uppercase letter</string>
+    <string name="error_password_no_number">Must contain at least one number</string>
+    <string name="error_passwords_not_match">Passwords do not match</string>
     <string name="error_verify_email">Please verify your email before logging in</string>
     <string name="error_invalid_credentials">Incorrect credentials. Please check your email and password.</string>
     <string name="error_google_login" formatted="false">Google Error: %s</string>

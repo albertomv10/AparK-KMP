@@ -20,6 +20,7 @@ import com.albertomedina.apark.domain.usecase.RegisterUseCase
 import com.albertomedina.apark.domain.usecase.RemoveUserFromVehicleUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleUseCase
 import com.albertomedina.apark.presentation.auth.login.LoginViewModel
+import com.albertomedina.apark.presentation.auth.register.RegisterViewModel
 import com.albertomedina.apark.presentation.home.HomeViewModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.app
@@ -41,21 +42,15 @@ val sharedModule = module {
     single<FirebaseFirestore> {
         val config = get<AppConfig>()
 
-        // AQUÍ está la lógica que decías.
-        // Transformamos el booleano en el nombre de la BBDD.
         val dbName = if (config.isDebug) {
-            "apark-at"   // Nombre de tu BD de pruebas (si tienes Blaze)
+            "apark-at"
         } else {
-            "(default)"   // Producción siempre es la default
+            "(default)"
         }
 
-        // Devolvemos la instancia conectada a esa BD específica
-        // Nota: Si usas plan gratuito, ignora el dbName aquí y gestiona las colecciones en el Repo,
-        // pero la estructura es esta.
         try {
             Firebase.firestore(Firebase.app, dbName)
         } catch (e: Exception) {
-            // Fallback por si acaso
             Firebase.firestore
         }
     }
@@ -77,7 +72,6 @@ val sharedModule = module {
     // USE CASES (Factories)
     // =============================
 
-    // Vehículos
     factory { GetVehicleListUseCase(repository = get()) }
     factory { GetVehicleByIdUseCase(repository = get()) }
     factory { UpdateVehicleUseCase(repository = get()) }
@@ -90,14 +84,11 @@ val sharedModule = module {
     factory { LoginGoogleUseCase(authRepository = get()) }
     factory { LoginAppleUseCase(authRepository = get()) }
 
-
     // User
     factory { GetUserUseCase(repository = get()) }
 
     // Location
     factory { GetCurrentLocationUseCase(repository = get()) }
-
-    //viewModel { TestViewModel(get()) }
 
     viewModel {
         LoginViewModel(
@@ -109,14 +100,17 @@ val sharedModule = module {
     }
 
     viewModel {
+        RegisterViewModel(
+            registerUseCase = get()
+        )
+    }
+
+    viewModel {
         HomeViewModel()
     }
 }
 
 fun initKoin(appDeclaration: KoinAppDeclaration = {}) = startKoin {
-    appDeclaration() // Configuraciones extra (importante para Android Context)
-
-    // Cargamos siempre el módulo compartido.
-    // Pero dejamos un hueco para pasar módulos extra (platformModules)
+    appDeclaration()
     modules(sharedModule)
 }
