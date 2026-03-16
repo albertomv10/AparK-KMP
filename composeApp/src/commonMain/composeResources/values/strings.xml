@@ -1,23 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- General -->
     <string name="app_name">AparK</string>
-    <string name="login_welcome">Bienvenido/a</string>
-    <string name="login_subtitle">Inicia sesión o crea una cuenta para empezar</string>
     <string name="email_label">Email</string>
     <string name="password_label">Contraseña</string>
     <string name="confirm_password_label">Confirmar Contraseña</string>
     <string name="show_password">Mostrar contraseña</string>
     <string name="hide_password">Ocultar contraseña</string>
+
+    <!-- Login -->
+    <string name="login_welcome">Bienvenido/a</string>
+    <string name="login_subtitle">Inicia sesión o crea una cuenta para empezar</string>
     <string name="forgot_password">Olvidé mi contraseña</string>
     <string name="login_button">Iniciar Sesión</string>
-    <string name="register_button">Registrarse</string>
     <string name="google_login">Continuar con Google</string>
     <string name="apple_login">Continuar con Apple</string>
     <string name="no_account_register">¿No tienes una cuenta? Regístrate</string>
+
+    <!-- Register -->
     <string name="register_title">Crear Cuenta</string>
     <string name="register_subtitle">Regístrate para empezar a aparcar con inteligencia</string>
-    
-    <!-- Mensajes de error -->
+    <string name="register_button">Registrarse</string>
+
+    <!-- Reset Password -->
+    <string name="reset_password_title">Recuperar la contraseña</string>
+    <string name="reset_password_description">Introduce la dirección de correo de tu cuenta para recibir el email de recuperación</string>
+    <string name="reset_password_description_success">Revisa tu bandeja de entrada y en la carpeta de Spam</string>
+    <string name="reset_password_send_button">Enviar</string>
+    <string name="reset_password_resend_button">Volver a enviar</string>
+    <string name="success_reset_password_sent">Email de recuperación enviado</string>
+
+    <!-- Email Verification -->
+    <string name="email_verification_title">Verifica tu cuenta</string>
+    <string name="email_verification_description">Hemos enviado un correo de verificación a %1$s. Por favor, revisa tu bandeja de entrada.</string>
+    <string name="email_verification_button_check">Ya he verificado</string>
+    <string name="email_verification_button_resend">Reenviar correo</string>
+    <string name="email_verification_button_back">Volver a Login</string>
+
+    <!-- Common Messages & Errors -->
+    <string name="info_not_verified_yet">Aún no has verificado tu cuenta. Pulsa el enlace en el correo.</string>
+    <string name="success_resend_email">Correo de verificación enviado de nuevo.</string>
+    <string name="error_creating_user_db">Error al sincronizar tu perfil. Contacta con soporte.</string>
+    <string name="error_unknown">Ha ocurrido un error inesperado.</string>
     <string name="error_empty_email">Email vacío</string>
     <string name="error_invalid_email">Email no válido</string>
     <string name="error_empty_password">Contraseña vacía</string>
@@ -27,6 +51,6 @@
     <string name="error_passwords_not_match">Las contraseñas no coinciden</string>
     <string name="error_verify_email">Verifica tu email antes de entrar</string>
     <string name="error_invalid_credentials">Las credenciales son incorrectas. Verifica tu email y contraseña.</string>
-    <string name="error_google_login" formatted="false">Error Google: %s</string>
-    <string name="error_apple_login" formatted="false">Error Apple: %s</string>
+    <string name="error_google_login" formatted="false">Error Google: %1$s</string>
+    <string name="error_apple_login" formatted="false">Error Apple: %1$s</string>
 </resources>

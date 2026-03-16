@@ -47,7 +47,7 @@ class FirebaseAuthRepository(
         return firebaseAuth.currentUser?.isEmailVerified ?: false
     }
 
-    override fun sendEmailVerification(): Result<Unit> {
+    override suspend fun sendEmailVerification(): Result<Unit> {
         return try {
             val user = firebaseAuth.currentUser
             if (user != null) {
@@ -63,7 +63,7 @@ class FirebaseAuthRepository(
                 // Opción B (Si no cambias interfaz): No podemos ejecutarlo aquí.
 
                 // *Asumo que cambiarás la interfaz a suspend, mira la nota abajo*
-                // user.sendEmailVerification()
+                user.sendEmailVerification()
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("No user logged in"))

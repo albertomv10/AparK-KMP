@@ -1,22 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="login_welcome">Welcome</string>
-    <string name="login_subtitle">Log in or create an account to get started</string>
+    <!-- General -->
+    <string name="app_name">AparK</string>
     <string name="email_label">Email</string>
     <string name="password_label">Password</string>
     <string name="confirm_password_label">Confirm Password</string>
     <string name="show_password">Show password</string>
     <string name="hide_password">Hide password</string>
+
+    <!-- Login -->
+    <string name="login_welcome">Welcome</string>
+    <string name="login_subtitle">Log in or create an account to get started</string>
     <string name="forgot_password">Forgot my password</string>
     <string name="login_button">Log In</string>
-    <string name="register_button">Sign Up</string>
     <string name="google_login">Continue with Google</string>
     <string name="apple_login">Continue with Apple</string>
     <string name="no_account_register">Don't have an account? Sign up</string>
+
+    <!-- Register -->
     <string name="register_title">Create Account</string>
     <string name="register_subtitle">Sign up to start parking smart</string>
-    
-    <!-- Error Messages -->
+    <string name="register_button">Sign Up</string>
+
+    <!-- Reset Password -->
+    <string name="reset_password_title">Recover password</string>
+    <string name="reset_password_description">Enter your account email address to receive the recovery email</string>
+    <string name="reset_password_description_success">Check your inbox and Spam folder</string>
+    <string name="reset_password_send_button">Send</string>
+    <string name="reset_password_resend_button">Resend</string>
+    <string name="success_reset_password_sent">Recovery email sent</string>
+
+    <!-- Email Verification -->
+    <string name="email_verification_title">Verify your account</string>
+    <string name="email_verification_description">We have sent a verification email to %1$s. Please check your inbox.</string>
+    <string name="email_verification_button_check">I have already verified</string>
+    <string name="email_verification_button_resend">Resend email</string>
+    <string name="email_verification_button_back">Back to Login</string>
+
+    <!-- Common Messages & Errors -->
+    <string name="info_not_verified_yet">"You haven't verified your account yet. Click the link in the email."</string>
+    <string name="success_resend_email">Verification email sent again.</string>
+    <string name="error_creating_user_db">Error syncing your profile. Contact support.</string>
+    <string name="error_unknown">An unexpected error has occurred.</string>
     <string name="error_empty_email">Email is empty</string>
     <string name="error_invalid_email">Invalid email</string>
     <string name="error_empty_password">Password is empty</string>
@@ -26,6 +51,6 @@
     <string name="error_passwords_not_match">Passwords do not match</string>
     <string name="error_verify_email">Please verify your email before logging in</string>
     <string name="error_invalid_credentials">Incorrect credentials. Please check your email and password.</string>
-    <string name="error_google_login" formatted="false">Google Error: %s</string>
-    <string name="error_apple_login" formatted="false">Apple Error: %s</string>
+    <string name="error_google_login" formatted="false">Google Error: %1$s</string>
+    <string name="error_apple_login" formatted="false">Error Apple: %1$s</string>
 </resources>

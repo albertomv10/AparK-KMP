@@ -9,6 +9,8 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.albertomedina.apark.presentation.auth.login.LoginScreen
 import com.albertomedina.apark.presentation.auth.register.RegisterScreen
+import com.albertomedina.apark.presentation.auth.resetPassword.ResetPasswordScreen
+import com.albertomedina.apark.presentation.auth.verification.EmailVerificationScreen
 import com.albertomedina.apark.presentation.home.HomeScreen
 
 import kotlinx.serialization.Serializable
@@ -57,6 +59,7 @@ fun BasicNavigationWrapper(){
                 is Login -> NavEntry(key) {
                     LoginScreen(
                         onNavigateToHome = {
+                            backStack.clear()
                             backStack.add(Home(it))
                         },
                         onNavigateToVerify = {
@@ -82,16 +85,28 @@ fun BasicNavigationWrapper(){
                 }
                 is Home -> NavEntry(key) {
                     HomeScreen(
-                        user = key.user
+                        user = key.user,
+                        onNavigateToLogin = {
+                            backStack.clear()
+                            backStack.add(Login)
+                        }
                     )
                 }
                 is VerifyEmail -> NavEntry(key) {
-                    // Pantalla temporal hasta que la crees
-                    Text("Pantalla de Verificación de Email")
+                    EmailVerificationScreen(
+                        onNavigateToLogin = {
+                            backStack.add(Login)
+                        },
+                        onNavigateToHome = {
+                            backStack.clear()
+                            backStack.add(Home(it))
+                        }
+                    )
                 }
                 is ResetPassword -> NavEntry(key) {
-                    // Pantalla temporal hasta que la crees
-                    Text("Pantalla de Recuperar Contraseña")
+                    ResetPasswordScreen {
+                        backStack.removeLastOrNull()
+                    }
                 }
                 else -> error("Unknown key: $key")
             }

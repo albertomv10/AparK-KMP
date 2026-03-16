@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.usecase.RegisterUseCase
 import com.albertomedina.apark.utils.SnackbarMessage
+import com.albertomedina.apark.utils.validateConfirmPassword
+import com.albertomedina.apark.utils.validateEmail
+import com.albertomedina.apark.utils.validatePassword
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,8 +19,6 @@ class RegisterViewModel(
 
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
-
-    private val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$".toRegex()
 
     fun onEvent(event: RegisterEvent) {
         when (event) {
@@ -83,25 +84,7 @@ class RegisterViewModel(
         }
     }
 
-    private fun validateEmail(email: String): String? {
-        if (email.isBlank()) return "error_empty_email"
-        if (!email.matches(emailRegex)) return "error_invalid_email"
-        return null
-    }
 
-    private fun validatePassword(password: String): String? {
-        if (password.isBlank()) return "error_empty_password"
-        if (password.length < 6) return "error_password_too_short"
-        if (password.none { it.isUpperCase() }) return "error_password_no_uppercase"
-        if (password.none { it.isDigit() }) return "error_password_no_number"
-        return null
-    }
-
-    private fun validateConfirmPassword(password: String, confirm: String): String? {
-        if (confirm.isBlank()) return "error_empty_password"
-        if (password != confirm) return "error_passwords_not_match"
-        return null
-    }
 }
 
 data class RegisterUiState(

@@ -1,31 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="login_welcome">Bienvenue</string>
-    <string name="login_subtitle">Connectez-vous ou créez un compte pour commencer</string>
+    <!-- General -->
+    <string name="app_name">AparK</string>
     <string name="email_label">E-mail</string>
     <string name="password_label">Mot de passe</string>
     <string name="confirm_password_label">Confirmer le mot de passe</string>
     <string name="show_password">Afficher le mot de passe</string>
     <string name="hide_password">Masquer le mot de passe</string>
+
+    <!-- Login -->
+    <string name="login_welcome">Bienvenue</string>
+    <string name="login_subtitle">Connectez-vous ou créez un compte pour commencer</string>
     <string name="forgot_password">Mot de passe oublié</string>
     <string name="login_button">Se connecter</string>
-    <string name="register_button">"S'inscrire"</string>
     <string name="google_login">Continuer avec Google</string>
     <string name="apple_login">Continuer avec Apple</string>
-    <string name="no_account_register">Vous n'avez pas de compte ? Inscrivez-vous</string>
+    <string name="no_account_register">"Vous n'avez pas de compte ? Inscrivez-vous"</string>
+
+    <!-- Register -->
     <string name="register_title">Créer un compte</string>
     <string name="register_subtitle">Inscrivez-vous pour commencer à vous garer intelligemment</string>
-    
-    <!-- Messages d'erreur -->
-    <string name="error_empty_email">"L'e-mail est vide"</string>
+    <string name="register_button">S'inscrire</string>
+
+    <!-- Reset Password -->
+    <string name="reset_password_title">Récupérer le mot de passe</string>
+    <string name="reset_password_description">Saisissez l'adresse e-mail de votre compte pour recibir l'e-mail de recuperación</string>
+    <string name="reset_password_description_success">Vérifiez votre boîte de réception et votre dossier Spam</string>
+    <string name="reset_password_send_button">Envoyer</string>
+    <string name="reset_password_resend_button">Renvoyer</string>
+    <string name="success_reset_password_sent">E-mail de recuperación envoyé</string>
+
+    <!-- Email Verification -->
+    <string name="email_verification_title">Vérifiez votre compte</string>
+    <string name="email_verification_description">Nous avons envoyé un e-mail de vérification à %1$s. Veuillez vérifier votre boîte de réception.</string>
+    <string name="email_verification_button_check">J'ai déjà vérifié</string>
+    <string name="email_verification_button_resend">Renvoyer l'e-mail</string>
+    <string name="email_verification_button_back">Retour à la connexion</string>
+
+    <!-- Common Messages & Errors -->
+    <string name="info_not_verified_yet">Vous n'avez pas encore vérifié votre compte. Cliquez sur le lien dans l'e-mail.</string>
+    <string name="success_resend_email">E-mail de vérification renvoyé.</string>
+    <string name="error_creating_user_db">Erreur lors de la synchronisation de votre profil. Contactez le support.</string>
+    <string name="error_unknown">Une erreur inattendue s'est produite.</string>
+    <string name="error_empty_email">L'e-mail est vide</string>
     <string name="error_invalid_email">E-mail invalide</string>
-    <string name="error_empty_password">Le mot de passe est vide</string>
-    <string name="error_password_too_short">Le mot de passe doit comporter au moins 6 caractères</string>
+    <string name="error_empty_password">Mot de passe vide</string>
+    <string name="error_password_too_short">Le mot de passe doit comporter au moins 6 caracteres</string>
     <string name="error_password_no_uppercase">Doit contenir au moins une lettre majuscule</string>
     <string name="error_password_no_number">Doit contenir au moins un chiffre</string>
     <string name="error_passwords_not_match">Les mots de passe ne correspondent pas</string>
     <string name="error_verify_email">Veuillez vérifier votre e-mail avant de vous connecter</string>
     <string name="error_invalid_credentials">Identifiants incorrects. Veuillez vérifier votre e-mail et votre mot de passe.</string>
-    <string name="error_google_login" formatted="false">Erreur Google : %s</string>
-    <string name="error_apple_login" formatted="false">Erreur Apple : %s</string>
+    <string name="error_google_login" formatted="false">Erreur Google : %1$s</string>
+    <string name="error_apple_login" formatted="false">Erreur Apple : %1$s</string>
 </resources>

@@ -36,7 +36,7 @@ interface AuthRepository {
      * Sends a verification email to the currently logged-in user.
      * This should be called after registration to ensure the user verifies their email.
      */
-    fun sendEmailVerification(): Result<Unit>
+    suspend fun sendEmailVerification(): Result<Unit>
 
     /**
      * Retrieves the currently logged-in user.

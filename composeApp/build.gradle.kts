@@ -68,6 +68,8 @@ kotlin {
             implementation(libs.firebase.firestore)
 
             implementation(libs.kotlinx.serialization.json)
+
+            implementation(libs.compottie)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

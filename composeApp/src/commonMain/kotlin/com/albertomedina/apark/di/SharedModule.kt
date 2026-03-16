@@ -21,6 +21,8 @@ import com.albertomedina.apark.domain.usecase.RemoveUserFromVehicleUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleUseCase
 import com.albertomedina.apark.presentation.auth.login.LoginViewModel
 import com.albertomedina.apark.presentation.auth.register.RegisterViewModel
+import com.albertomedina.apark.presentation.auth.resetPassword.ResetPassWordViewmodel
+import com.albertomedina.apark.presentation.auth.verification.EmailVerificationViewModel
 import com.albertomedina.apark.presentation.home.HomeViewModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.app
@@ -106,7 +108,22 @@ val sharedModule = module {
     }
 
     viewModel {
-        HomeViewModel()
+        EmailVerificationViewModel(
+            authRepository = get(),
+            userRepository = get()
+        )
+    }
+
+    viewModel {
+        ResetPassWordViewmodel(
+            authRepository = get()
+        )
+    }
+
+    viewModel {
+        HomeViewModel(
+            authRepository = get()
+        )
     }
 }
 

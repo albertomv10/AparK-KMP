@@ -1,4 +1,4 @@
-package com.albertomedina.apark.presentation.auth.register
+package com.albertomedina.apark.presentation.auth.resetPassword
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,12 +14,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -40,16 +37,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import apark.composeapp.generated.resources.Res
-import apark.composeapp.generated.resources.confirm_password_label
-import apark.composeapp.generated.resources.email_label
-import apark.composeapp.generated.resources.password_label
-import apark.composeapp.generated.resources.register_button
-import apark.composeapp.generated.resources.register_subtitle
-import apark.composeapp.generated.resources.register_title
+import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.presentation.components.StandardAparKButton
 import com.albertomedina.apark.utils.SnackbarMessage
 import com.albertomedina.apark.utils.getErrorMessage
@@ -58,41 +48,37 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterScreen(
-    viewModel: RegisterViewModel = koinViewModel(),
-    onNavigateToVerify: () -> Unit,
-    onBack: () -> Unit
-) {
+fun ResetPasswordScreen(
+    viewModel: ResetPassWordViewmodel = koinViewModel(),
+    onBack:() -> Unit
+){
     val state by viewModel.uiState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    val snackbarHostState = remember{ SnackbarHostState() }
     var activeSnackbarMessage by remember { mutableStateOf<SnackbarMessage?>(null) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
-
-    LaunchedEffect(state.shouldNavigateToVerify) {
-        if (state.shouldNavigateToVerify) {
-            onNavigateToVerify()
-            viewModel.onEvent(RegisterEvent.OnNavigated)
-        }
+    val translatedText = when (state.snackbarMessage?.message) {
+        "success_reset_password_sent" -> stringResource(Res.string.success_reset_password_sent)
+        "error_invalid_email" -> stringResource(Res.string.error_invalid_email)
+        "error_unknown" -> stringResource(Res.string.error_unknown)
+        else -> state.snackbarMessage?.message
     }
 
     LaunchedEffect(state.snackbarMessage) {
         state.snackbarMessage?.let { msg ->
             activeSnackbarMessage = msg
             snackbarHostState.showSnackbar(
-                message = msg.message,
+                message = translatedText ?: msg.message,
                 actionLabel = msg.actionLabel,
                 withDismissAction = true,
                 duration = SnackbarDuration.Long
 
             )
-            viewModel.onEvent(RegisterEvent.ErrorDismissed)
+            viewModel.onEvent(ResetPasswordEvent.ErrorDismissed)
         }
     }
 
-    Scaffold(
+    Scaffold (
         snackbarHost = {
             SnackbarHost(snackbarHostState){ snackbarData ->
                 activeSnackbarMessage?.let {
@@ -103,11 +89,11 @@ fun RegisterScreen(
                         actionColor = it.contentColor()
                     )
                 }
-
-            } },
+            }
+        },
         topBar = {
             TopAppBar(
-                title = {},
+                title = { Text(stringResource(Res.string.reset_password_title)) },
                 navigationIcon = {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -118,6 +104,7 @@ fun RegisterScreen(
             )
         }
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -126,25 +113,18 @@ fun RegisterScreen(
                 .verticalScroll(rememberScrollState())
                 .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
             Text(
-                text = stringResource(Res.string.register_title),
-                style = MaterialTheme.typography.displayLarge,
+                text = if (!state.emailSent) stringResource(Res.string.reset_password_description) else stringResource(Res.string.reset_password_description_success),
+                style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.align(Alignment.Start)
             )
-            Text(
-                text = stringResource(Res.string.register_subtitle),
-                style = MaterialTheme.typography.displaySmall,
-                modifier = Modifier.align(Alignment.Start)
-            )
+            Spacer(Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // Campo Email
             OutlinedTextField(
                 value = state.email,
-                onValueChange = { viewModel.onEvent(RegisterEvent.EmailChanged(it)) },
+                onValueChange = { viewModel.onEvent(ResetPasswordEvent.EmailChanged(email = it)) },
                 label = { Text(stringResource(Res.string.email_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 isError = state.emailError != null,
@@ -153,64 +133,16 @@ fun RegisterScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Campo Contraseña
-            OutlinedTextField(
-                value = state.password,
-                onValueChange = { viewModel.onEvent(RegisterEvent.PasswordChanged(it)) },
-                label = { Text(stringResource(Res.string.password_label)) },
-                modifier = Modifier.fillMaxWidth(),
-                isError = state.passwordError != null,
-                supportingText = { state.passwordError?.let { Text(getErrorMessage(it)) } },
-                singleLine = true,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(
-                            imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = null
-                        )
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Campo Confirmar Contraseña
-            OutlinedTextField(
-                value = state.confirmPassword,
-                onValueChange = { viewModel.onEvent(RegisterEvent.ConfirmPasswordChanged(it)) },
-                label = { Text(stringResource(Res.string.confirm_password_label)) },
-                modifier = Modifier.fillMaxWidth(),
-                isError = state.confirmPasswordError != null,
-                supportingText = { state.confirmPasswordError?.let { Text(getErrorMessage(it)) } },
-                singleLine = true,
-                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                        Icon(
-                            imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = null
-                        )
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
             if (state.isLoading) {
                 CircularProgressIndicator()
             } else {
                 StandardAparKButton(
                     onClick = {
                         keyboardController?.hide()
-                        viewModel.onEvent(RegisterEvent.RegisterClicked) }
+                        viewModel.onEvent(ResetPasswordEvent.ResetPasswordClicked) }
 
                 ) {
-                    Text(stringResource(Res.string.register_button))
+                    Text(if (!state.emailSent) stringResource(Res.string.reset_password_send_button) else stringResource(Res.string.reset_password_resend_button))
                 }
             }
         }
