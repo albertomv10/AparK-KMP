@@ -17,6 +17,7 @@ kotlinx-serialization = "1.10.0"
 credentials = "1.5.0"
 
 kotlinxCoroutinesPlayServices = "1.10.2"
+mapsCompose = "8.2.2"
 splash = "1.2.0"
 playServicesLocation = "21.3.0"
 
@@ -26,10 +27,10 @@ koinComposeMultiplatform = "4.1.1"
 firebase-gitlive = "2.4.0"
 gms-google-services = "4.4.4"
 googleid = "1.2.0"
-navigation3Runtime = "1.0.1"
-navigation3Ui = "1.0.1"
 
 cmpNavigation3 = "1.0.0-alpha06"
+
+secrets = "2.0.1"
 
 [libraries]
 compottie = { module = "io.github.alexzhirkevich:compottie", version.ref = "compottie" }
@@ -45,6 +46,7 @@ androidx-lifecycle-viewmodelCompose = { module = "org.jetbrains.androidx.lifecyc
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
+
 splash-screen = {module = "androidx.core:core-splashscreen", version.ref = "splash"}
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
@@ -65,6 +67,9 @@ googleid = { group = "com.google.android.libraries.identity.googleid", name = "g
 
 jetbrains-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "cmpNavigation3" }
 
+maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "mapsCompose" }
+maps-compose-utils = { module = "com.google.maps.android:maps-compose-utils", version.ref = "mapsCompose" }
+
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -76,3 +81,5 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 gms-google-services = { id = "com.google.gms.google-services", version.ref = "gms-google-services" }
 
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin"}
+
+secretsGradlePlugin = { id ="com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "secrets"}

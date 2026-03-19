@@ -2,6 +2,8 @@ import SwiftUI
 import ComposeApp
 import FirebaseCore
 import GoogleSignIn
+import CoreLocation
+import GoogleMaps
 
 @main
 struct iOSApp: App {
@@ -9,18 +11,21 @@ struct iOSApp: App {
     static let appleAuthCoordinator = AppleAuthCoordinator()
     
     init() {
+        
+        //Firebase
         FirebaseApp.configure()
-                
-                // 1. Detectamos el modo usando el compilador de Swift
-                #if DEBUG
-                    let isDebug = true
-                #else
-                    let isDebug = false
-                #endif
-    
+        
+        // 1. Detectamos el modo usando el compilador de Swift
+        #if DEBUG
+        let isDebug = true
+        #else
+        let isDebug = false
+        #endif
+        
         
         HelperKt.doInitKoinIos(isDebug: isDebug)
         
+        //Google SignIn
         GoogleAuthBridgeKt.iosGoogleSignInProvider = { onSuccess, onError in
             signInWithGoogle(
                 onSuccess: { token, accessToken in
@@ -32,17 +37,44 @@ struct iOSApp: App {
             )
         }
         
+        //Apple SignIn
         AppleSignInButton_iosKt.iosAppleSignInProvider = { onSuccess, onError in
             iOSApp.appleAuthCoordinator.startSignIn(
-                        onSuccess: { idToken, nonce in
-                           _ = onSuccess(idToken, nonce)
-                        },
-                        onError: { errorMsg in
-                            _ = onError(errorMsg)
-                        }
-                    )
+                onSuccess: { idToken, nonce in
+                    _ = onSuccess(idToken, nonce)
+                },
+                onError: { errorMsg in
+                    _ = onError(errorMsg)
                 }
-
+            )
+        }
+        
+        //GoogleMap
+        // 1. Proporciona tu API Key
+        GMSServices.provideAPIKey(Bundle.main.object(forInfoDictionaryKey: "GoogleMapsAPIKey") as? String ?? "")
+        
+        // 2. Iniciamos la búsqueda de ubicación usando nuestro Singleton
+        MapLocationController.shared.requestPermissionsAndStart()
+        
+        // 3. Pasa la fábrica del mapa a Kotlin
+        AparKMap_iosKt.iosMapViewFactory = {
+            let options = GMSMapViewOptions()
+            // Intentamos leer la última ubicación conocida de iOS de forma instantánea
+            if let lastKnownLocation = MapLocationController.shared.locationManager.location {
+                // Si la tenemos, inicializamos el mapa directamente con ese centro y zoom 15
+                options.camera = GMSCameraPosition.camera(withTarget: lastKnownLocation.coordinate, zoom: 15)
+            }
+            let mapView = GMSMapView(options: options)
+            // Habilita el punto azul de ubicación actual
+            mapView.isMyLocationEnabled = true
+            mapView.settings.myLocationButton = false
+            
+            // 4. Le pasamos el mapa recién creado a nuestro controlador
+            MapLocationController.shared.mapView = mapView
+            
+            return mapView
+        }
+        
     }
     
     var body: some Scene {
@@ -70,7 +102,7 @@ func signInWithGoogle(onSuccess: @escaping (String, String) -> Void, onError: @e
         
         // 3. Extraemos el JWT (Token)
         guard let idToken = signInResult?.user.idToken?.tokenString,
-        let accessToken = signInResult?.user.accessToken.tokenString else {
+              let accessToken = signInResult?.user.accessToken.tokenString else {
             onError("No se pudo obtener el token de Google")
             return
         }

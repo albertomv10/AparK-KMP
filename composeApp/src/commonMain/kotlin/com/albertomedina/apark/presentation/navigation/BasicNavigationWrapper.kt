@@ -28,7 +28,7 @@ data object ResetPassword: Destiny
 @Serializable
 data object VerifyEmail: Destiny
 @Serializable
-data class Home(val user: String): Destiny
+data object Home: Destiny
 
 // Creates the required serialization configuration for open polymorphism
 private val config = SavedStateConfiguration {
@@ -48,7 +48,7 @@ fun BasicNavigationWrapper(){
 
     val backStack = rememberNavBackStack(
         config,
-        Login
+        Home
     )
 
     NavDisplay(
@@ -60,7 +60,7 @@ fun BasicNavigationWrapper(){
                     LoginScreen(
                         onNavigateToHome = {
                             backStack.clear()
-                            backStack.add(Home(it))
+                            backStack.add(Home)
                         },
                         onNavigateToVerify = {
                             backStack.add(VerifyEmail)
@@ -85,11 +85,12 @@ fun BasicNavigationWrapper(){
                 }
                 is Home -> NavEntry(key) {
                     HomeScreen(
-                        user = key.user,
                         onNavigateToLogin = {
                             backStack.clear()
                             backStack.add(Login)
-                        }
+                        },
+                        onNavigateToDetails = {},
+                        onNavigateToAddVehicle = {}
                     )
                 }
                 is VerifyEmail -> NavEntry(key) {
@@ -99,7 +100,7 @@ fun BasicNavigationWrapper(){
                         },
                         onNavigateToHome = {
                             backStack.clear()
-                            backStack.add(Home(it))
+                            backStack.add(Home)
                         }
                     )
                 }

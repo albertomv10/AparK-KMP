@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.gms.google.services)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.secretsGradlePlugin)
 }
 
 kotlin {
@@ -42,6 +43,10 @@ kotlin {
             implementation(libs.androidx.credentials)
             implementation(libs.androidx.credentials.play.services.auth)
             implementation(libs.googleid)
+
+            implementation(libs.maps.compose)
+            implementation(libs.maps.compose.utils)
+
         }
         commonMain.dependencies {
             implementation(compose.runtime)

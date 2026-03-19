@@ -10,6 +10,7 @@
 		71185FB52F2BDDE70064E648 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 71185FB42F2BDDE70064E648 /* FirebaseAuth */; };
 		71185FB72F2BDDE70064E648 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 71185FB62F2BDDE70064E648 /* FirebaseCore */; };
 		71185FB92F2BDDE70064E648 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 71185FB82F2BDDE70064E648 /* FirebaseFirestore */; };
+		71B6C6CC2F6B5CBE004DD567 /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 71B6C6CB2F6B5CBE004DD567 /* GoogleMaps */; };
 		71F566FC2F546DAE0018079C /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 71F566FB2F546DAE0018079C /* GoogleSignIn */; };
 		71F566FE2F546DAE0018079C /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 71F566FD2F546DAE0018079C /* GoogleSignInSwift */; };
 /* End PBXBuildFile section */
@@ -53,6 +54,7 @@
 			files = (
 				71F566FE2F546DAE0018079C /* GoogleSignInSwift in Frameworks */,
 				71185FB72F2BDDE70064E648 /* FirebaseCore in Frameworks */,
+				71B6C6CC2F6B5CBE004DD567 /* GoogleMaps in Frameworks */,
 				71F566FC2F546DAE0018079C /* GoogleSignIn in Frameworks */,
 				71185FB52F2BDDE70064E648 /* FirebaseAuth in Frameworks */,
 				71185FB92F2BDDE70064E648 /* FirebaseFirestore in Frameworks */,
@@ -132,6 +134,7 @@
 				71185FB82F2BDDE70064E648 /* FirebaseFirestore */,
 				71F566FB2F546DAE0018079C /* GoogleSignIn */,
 				71F566FD2F546DAE0018079C /* GoogleSignInSwift */,
+				71B6C6CB2F6B5CBE004DD567 /* GoogleMaps */,
 			);
 			productName = iosApp;
 			productReference = 3285D218D80908555BC9BBD4 /* Apark.app */;
@@ -164,6 +167,7 @@
 			packageReferences = (
 				71185FB32F2BDDE70064E648 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				71F566FA2F546DAE0018079C /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				71B6C6CA2F6B5CBE004DD567 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F4D5F7FAC9FAA4283D00D187 /* Products */;
@@ -238,6 +242,8 @@
 /* Begin XCBuildConfiguration section */
 		10AC3FF6D445BC900BEE0FE1 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 9A37D6A07A7AE3FFFD14C976 /* iosApp */;
+			baseConfigurationReferenceRelativePath = Secrets.xcconfig;
 			buildSettings = {
 				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -393,6 +399,8 @@
 		};
 		928F0C5A82DCF07779C4B0C2 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 9A37D6A07A7AE3FFFD14C976 /* iosApp */;
+			baseConfigurationReferenceRelativePath = Secrets.xcconfig;
 			buildSettings = {
 				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -454,6 +462,14 @@
 				minimumVersion = 12.8.0;
 			};
 		};
+		71B6C6CA2F6B5CBE004DD567 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googlemaps/ios-maps-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.10.0;
+			};
+		};
 		71F566FA2F546DAE0018079C /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
@@ -479,6 +495,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 71185FB32F2BDDE70064E648 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		71B6C6CB2F6B5CBE004DD567 /* GoogleMaps */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 71B6C6CA2F6B5CBE004DD567 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */;
+			productName = GoogleMaps;
 		};
 		71F566FB2F546DAE0018079C /* GoogleSignIn */ = {
 			isa = XCSwiftPackageProductDependency;
