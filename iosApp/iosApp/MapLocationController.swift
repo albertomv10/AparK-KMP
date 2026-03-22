@@ -32,8 +32,8 @@ class MapLocationController: NSObject, CLLocationManagerDelegate {
         guard let location = locations.first, let map = mapView else { return }
         
         // Animamos la cámara
-        map.animate(toLocation: location.coordinate)
-        map.animate(toZoom: 15)
+        //map.animate(toLocation: location.coordinate)
+        //map.animate(toZoom: 15)
         
         // Detenemos la búsqueda para que el usuario pueda mover el mapa libremente
         manager.stopUpdatingLocation()

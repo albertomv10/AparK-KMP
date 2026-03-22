@@ -3,6 +3,8 @@ package com.albertomedina.apark.presentation.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.model.Vehicle
+import com.albertomedina.apark.domain.repository.AuthRepository
+import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +13,8 @@ import kotlinx.coroutines.launch
 import kotlin.time.Clock
 
 class HomeViewModel(
-    // private val authRepository: AuthRepository // Comentado temporalmente para la prueba
+    private val authRepository: AuthRepository,
+    private val getVehicleListUseCase: GetVehicleListUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -19,6 +22,7 @@ class HomeViewModel(
 
     init {
         // Cargamos los datos falsos nada más arrancar
+        //loadVehicles()
         loadMockData()
     }
 
@@ -45,6 +49,18 @@ class HomeViewModel(
                 _uiState.update { it.copy(shouldNavigateToLogin = false) }
             }
         }
+    }
+
+    fun loadVehicles(){
+
+        val userId = authRepository.getCurrentUser()?.uid ?:""
+
+        viewModelScope.launch {
+            getVehicleListUseCase(userId).collect { vehicleList ->
+                _uiState.update { it.copy(vehicles = vehicleList) }
+            }
+        }
+
     }
 
     private fun loadMockData() {

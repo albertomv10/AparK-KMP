@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.presentation.components.AparKMap
@@ -31,6 +33,9 @@ fun HomeScreen(
     onNavigateToAddVehicle: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
+
+    var pagerHeight by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
 
     // 1. El carrusel ahora tiene el tamaño de vehículos + 1 (la tarjeta de Añadir)
     val pagerState = rememberPagerState(
@@ -64,7 +69,12 @@ fun HomeScreen(
             // ==========================================
             // CAPA 1: EL MAPA (Ocupa toda la pantalla)
             // ==========================================
-                AparKMap(Modifier.fillMaxSize())
+                AparKMap(
+                    Modifier.fillMaxSize(),
+                    pagerHeight,
+                    state.vehicles,
+                    state.selectedVehicleIndex
+                )
 
 
             // ==========================================
@@ -81,7 +91,10 @@ fun HomeScreen(
                             colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.4f))
                         )
                     )
-                    .padding(bottom = 32.dp, top = 32.dp) // Espacio para que respire
+                    .padding(bottom = 18.dp) // Espacio para que respire
+                    .onGloballyPositioned{ coordinates ->
+                        pagerHeight = with(density){coordinates.size.height.toDp() }
+                    }
             ) {
                 HorizontalPager(
                     state = pagerState,

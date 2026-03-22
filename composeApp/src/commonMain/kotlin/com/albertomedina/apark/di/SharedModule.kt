@@ -122,6 +122,8 @@ val sharedModule = module {
 
     viewModel {
         HomeViewModel(
+            authRepository = get(),
+            getVehicleListUseCase = get()
         )
     }
 }
