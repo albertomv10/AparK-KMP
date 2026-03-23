@@ -1,6 +1,5 @@
 package com.albertomedina.apark.di
 
-import com.albertomedina.apark.TestViewModel
 import com.albertomedina.apark.data.repository.FirebaseAuthRepository
 import com.albertomedina.apark.data.repository.FirestoreRepository
 import com.albertomedina.apark.data.repository.LocationRepositoryImpl
@@ -18,6 +17,7 @@ import com.albertomedina.apark.domain.usecase.LoginGoogleUseCase
 import com.albertomedina.apark.domain.usecase.LoginUseCase
 import com.albertomedina.apark.domain.usecase.RegisterUseCase
 import com.albertomedina.apark.domain.usecase.RemoveUserFromVehicleUseCase
+import com.albertomedina.apark.domain.usecase.UpdateVehicleLocationUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleUseCase
 import com.albertomedina.apark.presentation.auth.login.LoginViewModel
 import com.albertomedina.apark.presentation.auth.register.RegisterViewModel
@@ -79,6 +79,11 @@ val sharedModule = module {
     factory { UpdateVehicleUseCase(repository = get()) }
     factory { RemoveUserFromVehicleUseCase(repository = get()) }
     factory { GetLastVehicleLocationUseCase(repository = get()) }
+    factory { UpdateVehicleLocationUseCase(
+        vehicleRepository = get(),
+        locationRepository = get()
+        )
+    }
 
     // Auth
     factory { LoginUseCase(authRepository = get()) }
@@ -123,6 +128,7 @@ val sharedModule = module {
     viewModel {
         HomeViewModel(
             authRepository = get(),
+            updateVehicleLocationUseCase = get(),
             getVehicleListUseCase = get()
         )
     }

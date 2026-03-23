@@ -73,6 +73,7 @@ struct iOSApp: App {
             // 4. Le pasamos el mapa recién creado a nuestro controlador
             MapLocationController.shared.mapView = mapView
             
+            
             return mapView
         }
         
@@ -86,6 +87,8 @@ struct iOSApp: App {
                         right: 0
                     )
                 }
+        
+    //Mapa
         // 1. Mover la cámara
         AparKMap_iosKt.iosMapUpdateCamera = { lat, lng, animated in
             // TRUCO PRO: DispatchQueue.main.async hace que esta orden espere
@@ -126,6 +129,13 @@ struct iOSApp: App {
                     gmsMarker.title = marker.title
                     gmsMarker.map = map
                 }
+            }
+        }
+        
+        // 3. Centrar en el usuario
+        AparKMap_iosKt.iosCenterOnUserLocation = { animated in
+            DispatchQueue.main.async {
+                MapLocationController.shared.centerOnUserLocation(animated: animated.boolValue)
             }
         }
         

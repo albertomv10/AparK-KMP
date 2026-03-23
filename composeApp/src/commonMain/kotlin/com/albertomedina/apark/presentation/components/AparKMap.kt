@@ -11,5 +11,6 @@ expect fun AparKMap (
     modifier:Modifier = Modifier,
     bottomPadding: Dp = 0.dp,
     vehicles: List<Vehicle>,
-    selectedVehicleIndex: Int
+    selectedVehicleIndex: Int,
+    centerCameraTrigger: Int
     )

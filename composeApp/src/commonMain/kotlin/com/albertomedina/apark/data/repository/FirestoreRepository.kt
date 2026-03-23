@@ -29,24 +29,24 @@ class FirestoreRepository(
         return firestore.collection(FirestoreConstants.USERS_COLLECTION)
             .document(userId)
             .snapshots
-            .map { snapshot ->
-                if (!snapshot.exists) return@map emptyList<String>()
-                snapshot.data<User>().userVehicles
-            }
-            .flatMapLatest { vehicleIds ->
-                if (vehicleIds.isEmpty()) return@flatMapLatest flowOf(emptyList())
+            .flatMapLatest { userSnapshot ->
+                if (!userSnapshot.exists) return@flatMapLatest flowOf(emptyList<Vehicle>())
+                
+                val user = userSnapshot.data<User>()
+                val vehicleIds = user.userVehicles
 
-                val vehicleFlows = vehicleIds.map { vehicleId ->
+                if (vehicleIds.isEmpty()) return@flatMapLatest flowOf(emptyList<Vehicle>())
+
+                // Simplificamos: Escuchamos cada vehículo por separado y combinamos
+                val vehicleFlows = vehicleIds.map { id ->
                     firestore.collection(FirestoreConstants.CARS_COLLECTION)
-                        .document(vehicleId)
+                        .document(id)
                         .snapshots
-                        .map { vehicleSnap ->
-                            if (vehicleSnap.exists) vehicleSnap.data<Vehicle>() else null
-                        }
+                        .map { if (it.exists) it.data<Vehicle>() else null }
                 }
 
-                combine(vehicleFlows) { vehiclesArray ->
-                    vehiclesArray.filterNotNull().toList()
+                combine(vehicleFlows) { vehicles ->
+                    vehicles.filterNotNull()
                 }
             }
     }
@@ -117,17 +117,10 @@ class FirestoreRepository(
                 lastLocation = null
             )
 
-            // ⚠️ CORRECCIÓN BATCH: Instanciar, operar, commit
             val batch = firestore.batch()
-
-            // 1. Crear documento del vehículo
             batch.set(carRef, newVehicle)
-
-            // 2. Añadir ID del vehículo al usuario
             val userRef = firestore.collection(FirestoreConstants.USERS_COLLECTION).document(userId)
             batch.update(userRef, FirestoreConstants.CARS_FIELD to FieldValue.arrayUnion(carRef.id))
-
-            // 3. Commit manual
             batch.commit()
 
             Result.success(Unit)
@@ -171,19 +164,15 @@ class FirestoreRepository(
             val vehicle = vehicleSnapshot.data<Vehicle>()
 
             if (!vehicle.sharedUsers.contains(userId)) {
-                // ⚠️ CORRECCIÓN BATCH
                 val batch = firestore.batch()
-
                 batch.update(
                     vehicleSnapshot.reference,
                     FirestoreConstants.SHARED_USERS_FIELD to FieldValue.arrayUnion(userId)
                 )
-
                 batch.update(
                     firestore.collection(FirestoreConstants.USERS_COLLECTION).document(userId),
                     FirestoreConstants.CARS_FIELD to FieldValue.arrayUnion(vehicle.id)
                 )
-
                 batch.commit()
             }
             Result.success(Unit)
@@ -197,12 +186,9 @@ class FirestoreRepository(
             val carRef = firestore.collection(FirestoreConstants.CARS_COLLECTION).document(vehicleId)
             val userRef = firestore.collection(FirestoreConstants.USERS_COLLECTION).document(userId)
 
-
             val batch = firestore.batch()
-
             batch.update(carRef, FirestoreConstants.SHARED_USERS_FIELD to FieldValue.arrayRemove(userId))
             batch.update(userRef, FirestoreConstants.CARS_FIELD to FieldValue.arrayRemove(vehicleId))
-
             batch.commit()
 
             Result.success(Unit)
@@ -247,7 +233,6 @@ class FirestoreRepository(
     }
 
     override suspend fun createUser(user: User) {
-
         try {
             val docRef = firestore.collection(FirestoreConstants.USERS_COLLECTION).document(user.id)
             val snapshot = docRef.get()
@@ -256,6 +241,7 @@ class FirestoreRepository(
                 docRef.set<User>(user)
             }
         } catch (e: Exception) {
-            println("Firestore: Error al crear usuario -> ${e.message}")        }
+            println("Firestore: Error al crear usuario -> ${e.message}")
+        }
     }
 }

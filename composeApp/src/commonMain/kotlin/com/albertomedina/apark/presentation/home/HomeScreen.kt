@@ -10,6 +10,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -73,8 +74,23 @@ fun HomeScreen(
                     Modifier.fillMaxSize(),
                     pagerHeight,
                     state.vehicles,
-                    state.selectedVehicleIndex
+                    state.selectedVehicleIndex,
+                    state.centerCameraTrigger
                 )
+
+            FloatingActionButton(
+                onClick = { viewModel.onEvent(HomeEvent.CenterMapOnUserClicked) },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = paddingValues.calculateTopPadding(), end = 16.dp),
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MyLocation,
+                    contentDescription = "Centrar en mi ubicación"
+                )
+            }
 
 
             // ==========================================
@@ -91,10 +107,10 @@ fun HomeScreen(
                             colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.4f))
                         )
                     )
-                    .padding(bottom = 18.dp) // Espacio para que respire
                     .onGloballyPositioned{ coordinates ->
                         pagerHeight = with(density){coordinates.size.height.toDp() }
                     }
+                    .padding(bottom = 108.dp) // Espacio para que respire
             ) {
                 HorizontalPager(
                     state = pagerState,
@@ -120,15 +136,15 @@ fun HomeScreen(
             }
 
             // Botón de Logout temporal arriba a la derecha (para no perder la funcionalidad)
-            IconButton(
-                onClick = { viewModel.onEvent(HomeEvent.SignOutClicked) },
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), RoundedCornerShape(50))
-            ) {
-                Text("Salir", modifier = Modifier.padding(4.dp))
-            }
+//            IconButton(
+//                onClick = { viewModel.onEvent(HomeEvent.SignOutClicked) },
+//                modifier = Modifier
+//                    .align(Alignment.TopEnd)
+//                    .padding(16.dp)
+//                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), RoundedCornerShape(50))
+//            ) {
+//                Text("Salir", modifier = Modifier.padding(4.dp))
+//            }
         }
     }
 }

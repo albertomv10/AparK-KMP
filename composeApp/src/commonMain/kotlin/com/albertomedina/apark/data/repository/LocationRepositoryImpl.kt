@@ -11,23 +11,20 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 class LocationRepositoryImpl(
-    private val locationSource: LocationSource, // Inyectamos la interfaz
+    private val locationSource: LocationSource,
     private val firestore: FirebaseFirestore //TODO quitar
 ) : LocationRepository {
 
     override fun getUserLocation(): Flow<Vehicle.LocationModel?> = flow {
-        // AQUÍ está la lógica compartida: El timeout de 8 segundos
+        // Intentamos obtener una ubicación fresca con un timeout
         val location = withTimeoutOrNull(8000L) {
-            withContext(Dispatchers.Main){
-                locationSource.getFreshLocation()
-            }
-
+            locationSource.getFreshLocation()
         }
 
         if (location != null) {
             emit(location)
         } else {
-            // El fallback compartido
+            // Si falla el timeout, emitimos la última conocida
             emit(locationSource.getLastKnownLocation())
         }
     }
@@ -37,10 +34,22 @@ class LocationRepositoryImpl(
     }
 
     override suspend fun getCurrentLocation(): Vehicle.LocationModel {
-        TODO("Not yet implemented")
+        // Esta función es la que usa el UseCase para "Aparcar aquí"
+        return withContext(Dispatchers.Default) {
+            val freshLocation = withTimeoutOrNull(5000L) {
+                locationSource.getFreshLocation()
+            }
+            
+            // Fallback: Si no hay fresca, intentamos la última conocida. 
+            // Si ninguna existe, lanzamos excepción.
+            freshLocation 
+                ?: locationSource.getLastKnownLocation() 
+                ?: throw Exception("No se ha podido obtener la ubicación actual")
+        }
     }
 
     override fun getLocationUpdates(): Flow<Vehicle.LocationModel> {
+        // Podrías implementar esto si quieres seguimiento en tiempo real
         TODO("Not yet implemented")
     }
 }

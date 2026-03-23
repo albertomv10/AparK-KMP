@@ -1,21 +1,16 @@
-//
-//  MapLocationController.swift
-//  iosApp
-//
-//  Created by Alberto Medina on 19/3/26.
-//
-
 import CoreLocation
 import GoogleMaps
 
-// Esta clase maneja la ubicación de forma independiente
 class MapLocationController: NSObject, CLLocationManagerDelegate {
     
-    // Creamos una instancia compartida (Singleton)
     static let shared = MapLocationController()
     
     let locationManager = CLLocationManager()
-    var mapView: GMSMapView? // Aquí guardaremos la referencia al mapa
+    var mapView: GMSMapView?
+    
+    private var shouldCenterCamera = false
+    // 👇 Guardamos si la cámara debe animarse cuando el GPS responda
+    private var animateNextCameraMove = false
     
     override init() {
         super.init()
@@ -27,15 +22,52 @@ class MapLocationController: NSObject, CLLocationManagerDelegate {
         locationManager.startUpdatingLocation()
     }
     
-    // El delegado que escucha cuando el GPS encuentra tu ubicación
+    // Recibimos el parámetro animated
+    func centerOnUserLocation(animated: Bool) {
+        locationManager.requestWhenInUseAuthorization()
+        
+        if let location = mapView?.myLocation ?? locationManager.location {
+            // Ya tenemos la ubicación instantáneamente
+            moveCamera(to: location.coordinate, animated: animated)
+        } else {
+            // No la tenemos. Encendemos el GPS y guardamos si queríamos animación
+            shouldCenterCamera = true
+            animateNextCameraMove = animated
+            locationManager.startUpdatingLocation()
+        }
+    }
+    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.first, let map = mapView else { return }
+        guard let location = locations.first else { return }
         
-        // Animamos la cámara
-        //map.animate(toLocation: location.coordinate)
-        //map.animate(toZoom: 15)
+        if shouldCenterCamera {
+            // Movemos la cámara usando la preferencia que guardamos
+            moveCamera(to: location.coordinate, animated: animateNextCameraMove)
+            shouldCenterCamera = false
+        }
         
-        // Detenemos la búsqueda para que el usuario pueda mover el mapa libremente
         manager.stopUpdatingLocation()
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("AparK: Error obteniendo ubicación (\(error.localizedDescription))")
+        shouldCenterCamera = false
+    }
+    
+    // Función auxiliar para no repetir el código del CATransaction
+    private func moveCamera(to coordinate: CLLocationCoordinate2D, animated: Bool) {
+        guard let map = mapView else { return }
+        let camera = GMSCameraPosition.camera(withTarget: coordinate, zoom: 15)
+        
+        CATransaction.begin()
+        if animated {
+            CATransaction.setAnimationDuration(0.8)
+            CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: .easeInEaseOut))
+        } else {
+            // Teletransporte instantáneo (0.0 segundos)
+            CATransaction.setAnimationDuration(0.0)
+        }
+        map.animate(to: camera)
+        CATransaction.commit()
     }
 }
