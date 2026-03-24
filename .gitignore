@@ -1,20 +1,36 @@
+# --- IDE y Sistema ---
 *.iml
 .kotlin
 .gradle
-**/build/
-xcuserdata
-!src/**/build/
-local.properties
 .idea
 .DS_Store
 captures
 .externalNativeBuild
 .cxx
+node_modules/
+xcuserdata/
+
+# --- Build ---
+**/build/
+!src/**/build/
+
+# --- Configuración Local y Sensible (Crucial para Repos Públicos) ---
+local.properties
+.env
+*.jks
+*.keystore
+
+# --- Secretos de iOS ---
+**/Secrets.xcconfig
+**/GoogleService-Info.plist
+
+# --- Secretos de Android ---
+**/google-services.json
+
+# --- Xcode ---
 *.xcodeproj/*
 !*.xcodeproj/project.pbxproj
 !*.xcodeproj/xcshareddata/
 !*.xcodeproj/project.xcworkspace/
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
-**/Secrets.xcconfig
-node_modules/

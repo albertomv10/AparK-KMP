@@ -8,12 +8,10 @@ class UpdateVehicleLocationUseCase(
     private val vehicleRepository: VehicleRepository,
     private val locationRepository: LocationRepository
 ) {
-    suspend operator fun invoke(vehicleId: String): Result<Unit> {
+    suspend operator fun invoke(vehicleId: String, previousLocation:Vehicle.LocationModel? = null): Result<Unit> {
         return try {
-            // 1. Obtenemos la ubicación dentro del caso de uso
-            val location = locationRepository.getCurrentLocation()
-            
-            // 2. Actualizamos el repositorio de vehículos
+            val location = previousLocation ?: locationRepository.getCurrentLocation()
+
             vehicleRepository.updateVehicleLocation(vehicleId, location)
         } catch (e: Exception) {
             Result.failure(e)
