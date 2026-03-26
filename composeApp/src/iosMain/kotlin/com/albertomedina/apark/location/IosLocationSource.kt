@@ -89,7 +89,7 @@ class IosLocationSource : LocationSource {
             // iOS da el tiempo en segundos desde 2001 o 1970 dependiendo la propiedad.
             // timeIntervalSince1970 da segundos, multiplicamos por 1000 para milisegundos (standard Kotlin)
             timestamp = (this.timestamp.timeIntervalSince1970 * 1000).toLong(),
-            user = ""
+            user = null
         )
     }
 }

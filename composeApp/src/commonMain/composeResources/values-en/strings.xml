@@ -7,6 +7,7 @@
     <string name="confirm_password_label">Confirm Password</string>
     <string name="show_password">Show password</string>
     <string name="hide_password">Hide password</string>
+    <string name="undo">Undo</string>
 
     <!-- Login -->
     <string name="login_welcome">Welcome</string>
@@ -37,6 +38,14 @@
     <string name="email_verification_button_resend">Resend email</string>
     <string name="email_verification_button_back">Back to Login</string>
 
+    <!-- Home -->
+    <string name="home_last_time">Last time: %1$s</string>
+    <string name="home_parked_by">By %1$s</string>
+    <string name="home_park_here">Park here</string>
+    <string name="home_add_vehicle">Add new vehicle</string>
+    <string name="home_center_map">Center on my location</string>
+    <string name="success_location_updated">Location updated successfully</string>
+
     <!-- Common Messages & Errors -->
     <string name="info_not_verified_yet">"You haven't verified your account yet. Click the link in the email."</string>
     <string name="success_resend_email">Verification email sent again.</string>
@@ -51,6 +60,9 @@
     <string name="error_passwords_not_match">Passwords do not match</string>
     <string name="error_verify_email">Please verify your email before logging in</string>
     <string name="error_invalid_credentials">Incorrect credentials. Please check your email and password.</string>
-    <string name="error_google_login" formatted="false">Google Error: %1$s</string>
-    <string name="error_apple_login" formatted="false">Error Apple: %1$s</string>
+    <string name="error_location_save">Error saving your location</string>
+    <string name="error_gps_permissions">GPS error. Check permissions</string>
+    <string name="error_undo_failed">Action could not be undone</string>
+    <string name="error_google_login" formatted="false">Google Error: %s</string>
+    <string name="error_apple_login" formatted="false">Apple Error: %s</string>
 </resources>

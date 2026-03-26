@@ -22,10 +22,14 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import apark.composeapp.generated.resources.Res
+import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.presentation.components.AparKMap
+import com.albertomedina.apark.presentation.components.DynamicTimeText
 import com.albertomedina.apark.utils.SnackbarMessage
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.albertomedina.apark.utils.toSmartTimeLabel
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -42,19 +46,40 @@ fun HomeScreen(
     var pagerHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
 
+    // Traducción dinámica de mensajes del ViewModel
+    val translatedText = when (state.snackbarMessage?.message) {
+        "success_location_updated" -> stringResource(Res.string.success_location_updated)
+        "error_location_save" -> stringResource(Res.string.error_location_save)
+        "error_gps_permissions" -> stringResource(Res.string.error_gps_permissions)
+        "error_undo_failed" -> stringResource(Res.string.error_undo_failed)
+        else -> state.snackbarMessage?.message
+    }
+
+    val undoLabel = stringResource(Res.string.undo)
+
     LaunchedEffect(state.snackbarMessage) {
+        state.snackbarMessage?.let { msg ->
+            activeSnackbarMessage = msg
+            
+            // Si hay datos para deshacer, mostramos el Snackbar con acción
+            val result = if (state.locationUpdateSuccessData != null) {
+                snackbarHostState.showSnackbar(
+                    message = translatedText ?: msg.message,
+                    actionLabel = undoLabel,
+                    withDismissAction = true,
+                    duration = SnackbarDuration.Long
+                )
+            } else {
+                snackbarHostState.showSnackbar(
+                    message = translatedText ?: msg.message,
+                    withDismissAction = true,
+                    duration = SnackbarDuration.Long
+                )
+                SnackbarResult.Dismissed
+            }
 
-        state.locationUpdateSuccessData?.let { undoData ->
-            state.snackbarMessage?.let { msg ->
-                activeSnackbarMessage = msg
-            val result = snackbarHostState.showSnackbar(
-                message = msg.message ,
-                actionLabel = "Deshacer",
-                duration = SnackbarDuration.Long
-            )
-
-            when (result) {
-                SnackbarResult.ActionPerformed -> {
+            if (result == SnackbarResult.ActionPerformed) {
+                state.locationUpdateSuccessData?.let { undoData ->
                     viewModel.onEvent(
                         HomeEvent.UndoLocationClicked(
                             undoData.vehicleId,
@@ -62,31 +87,22 @@ fun HomeScreen(
                         )
                     )
                 }
-                SnackbarResult.Dismissed -> {
-                    // Se cerró solo (pasó el tiempo) o lo deslizó. No hacemos nada especial.
-                }
             }
-
             viewModel.onEvent(HomeEvent.SnackBarDismissed)
-
-            }
         }
     }
     
-    // 1. El carrusel ahora tiene el tamaño de vehículos + 1 (la tarjeta de Añadir)
     val pagerState = rememberPagerState(
         initialPage = 0,
         pageCount = { state.vehicles.size + 1 }
     )
 
-    // 2. Control de deslizamiento (Solo enfocamos el mapa si NO es la tarjeta de Añadir)
     LaunchedEffect(pagerState.currentPage) {
-        if (pagerState.currentPage < state.vehicles.size) {
+        if (pagerState.currentPage <= state.vehicles.size) {
             viewModel.onEvent(HomeEvent.OnVehicleSwiped(pagerState.currentPage))
         }
     }
 
-    // Navegación de logout
     LaunchedEffect(state.shouldNavigateToLogin) {
         if (state.shouldNavigateToLogin) {
             onNavigateToLogin()
@@ -94,28 +110,15 @@ fun HomeScreen(
         }
     }
 
-    // Quitamos el FAB del Scaffold porque ahora la tarjeta tiene el "+"
-    Scaffold (
-        snackbarHost = {
-
-        }
-    ) { paddingValues ->
-
-        // BOX es la clave: Permite superponer elementos
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            // ==========================================
-            // CAPA 1: EL MAPA (Ocupa toda la pantalla)
-            // ==========================================
-                AparKMap(
-                    Modifier.fillMaxSize(),
-                    pagerHeight,
-                    state.vehicles,
-                    state.selectedVehicleIndex,
-                    state.centerCameraTrigger
-                )
+    Scaffold { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize()) {
+            AparKMap(
+                Modifier.fillMaxSize(),
+                pagerHeight,
+                state.vehicles,
+                state.selectedVehicleIndex,
+                state.centerCameraTrigger
+            )
 
             FloatingActionButton(
                 onClick = { viewModel.onEvent(HomeEvent.CenterMapOnUserClicked) },
@@ -127,15 +130,15 @@ fun HomeScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.MyLocation,
-                    contentDescription = "Centrar en mi ubicación"
+                    contentDescription = stringResource(Res.string.home_center_map)
                 )
             }
 
             SnackbarHost(
                 snackbarHostState,
                 modifier = Modifier
-                    .align(Alignment.TopCenter) // 👈 ¡LA MAGIA! Lo anclamos arriba al centro
-                    .padding(top = paddingValues.calculateTopPadding())       // Le damos un poco de aire para que no se pegue al "Notch" o borde del móvil
+                    .align(Alignment.TopCenter)
+                    .padding(top = paddingValues.calculateTopPadding())
                     .zIndex(1f)
             ) { snackbarData ->
                 activeSnackbarMessage?.let { customMsg ->
@@ -148,12 +151,6 @@ fun HomeScreen(
                 } ?: Snackbar(snackbarData = snackbarData)
             }
 
-
-            // ==========================================
-            // CAPA 2: EL CARRUSEL FLOTANTE
-            // ==========================================
-            // TRUCO PRO: Añadimos un degradado negro abajo para que las tarjetas
-            // siempre se lean bien aunque el mapa debajo sea blanco
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -166,23 +163,22 @@ fun HomeScreen(
                     .onGloballyPositioned{ coordinates ->
                         pagerHeight = with(density){coordinates.size.height.toDp() }
                     }
-                    .padding(bottom = 108.dp) // Espacio para que respire
+                    .padding(bottom = 108.dp)
             ) {
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 48.dp), // Tarjetas más asomadas
+                    contentPadding = PaddingValues(horizontal = 48.dp),
                     pageSpacing = 16.dp
                 ) { page ->
-
-                    // LÓGICA DE TARJETAS
                     if (page == state.vehicles.size) {
-                        // Si es la última página, pintamos la tarjeta de Añadir
                         AddVehicleCard(onClick = onNavigateToAddVehicle)
                     } else {
-                        // Si es una página normal, pintamos el vehículo
                         val vehicle = state.vehicles[page]
+
                         VehicleCard(
+                            isLoading = state.isLoading,
+                            isSpecificLoading = state.updatingVehicleId == vehicle.id,
                             vehicle = vehicle,
                             onClick = { onNavigateToDetails(vehicle.id) },
                             onUpdateLocation = { viewModel.onEvent(HomeEvent.UpdateLocationClicked(vehicle.id)) }
@@ -190,30 +186,22 @@ fun HomeScreen(
                     }
                 }
             }
-
-            // Botón de Logout temporal arriba a la derecha (para no perder la funcionalidad)
-//            IconButton(
-//                onClick = { viewModel.onEvent(HomeEvent.SignOutClicked) },
-//                modifier = Modifier
-//                    .align(Alignment.TopEnd)
-//                    .padding(16.dp)
-//                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), RoundedCornerShape(50))
-//            ) {
-//                Text("Salir", modifier = Modifier.padding(4.dp))
-//            }
         }
     }
 }
 
-// --- Componentes Visuales ---
-
 @Composable
-@Preview
-fun VehicleCard(vehicle: Vehicle, onClick: () -> Unit, onUpdateLocation: () -> Unit) {
+fun VehicleCard(
+    vehicle: Vehicle,
+    isLoading: Boolean,           // Estado global para deshabilitar
+    isSpecificLoading: Boolean,   // Estado local para mostrar el spinner    vehicle: Vehicle,
+    onClick: () -> Unit,
+    onUpdateLocation: () -> Unit
+    ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp), // Altura fija para que todas las tarjetas sean iguales
+            .height(180.dp),
         onClick = onClick,
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
@@ -223,26 +211,48 @@ fun VehicleCard(vehicle: Vehicle, onClick: () -> Unit, onUpdateLocation: () -> U
         ) {
             Column {
                 Text(text = vehicle.name, style = MaterialTheme.typography.titleLarge)
+
+                val timestamp = vehicle.lastLocation?.timestamp
+
+                val lastLocation = vehicle.lastLocation
+                val userName = lastLocation?.user?.name?.takeIf { it.isNotBlank() }
+                val userEmail = lastLocation?.user?.email?.takeIf { it.isNotBlank() }
+
+                val displayName = userName ?: userEmail ?: ""
+                val updatedBy = stringResource(Res.string.home_parked_by, displayName)
+
+                DynamicTimeText(
+                    timestamp = timestamp,
+                    text = Res.string.home_last_time,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
                 Text(
-                    text = "Última vez: Hace 2 horas",
+                    text = updatedBy,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
-            Button(
-                onClick = onUpdateLocation,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Aparcar aquí")
+            if (isLoading && isSpecificLoading){
+                CircularProgressIndicator()
+            }else{
+                Button(
+                    onClick = onUpdateLocation,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading
+                ) {
+                    Text(stringResource(Res.string.home_park_here))
+                }
             }
+
+
         }
     }
 }
 
 @Composable
 fun AddVehicleCard(onClick: () -> Unit) {
-    // Tarjeta de diseño distinto (borde punteado o color sutil)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -258,13 +268,13 @@ fun AddVehicleCard(onClick: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = "Añadir Vehículo",
+                contentDescription = stringResource(Res.string.home_add_vehicle),
                 modifier = Modifier.size(48.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Añadir nuevo vehículo",
+                text = stringResource(Res.string.home_add_vehicle),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )

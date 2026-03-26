@@ -66,8 +66,7 @@ val sharedModule = module {
 
     single<LocationRepository> {
         LocationRepositoryImpl(
-        locationSource = get(),
-        firestore = get()
+        locationSource = get()
     ) }
 
     // =============================
@@ -81,7 +80,9 @@ val sharedModule = module {
     factory { GetLastVehicleLocationUseCase(repository = get()) }
     factory { UpdateVehicleLocationUseCase(
         vehicleRepository = get(),
-        locationRepository = get()
+        locationRepository = get(),
+        authRepository = get(),
+        userRepository = get()
         )
     }
 

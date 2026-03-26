@@ -11,36 +11,34 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-// Implementa la interfaz compartida LocationSource
 class AndroidLocationSource(
     private val context: Context
 ) : LocationSource {
 
-    // Inicializamos el cliente de ubicación de forma perezosa
     private val fusedLocationClient: FusedLocationProviderClient by lazy {
         LocationServices.getFusedLocationProviderClient(context)
     }
 
     @SuppressLint("MissingPermission")
     override suspend fun getFreshLocation(): Vehicle.LocationModel? = suspendCancellableCoroutine { continuation ->
-
-        // 1. Configuración exigente (Alta precisión)
         val locationRequest = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY,
             1000L
-        ).apply {
-            setMinUpdateIntervalMillis(500)
-            setMaxUpdates(10) // Evita que se quede escuchando eternamente si algo falla
-        }.build()
+        ).build()
 
-        // 2. Definimos el Callback
+        var bestLocation: Location? = null
+
         val locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 val location = result.lastLocation ?: return
+                
+                // Guardamos la mejor hasta ahora por si hay timeout
+                if (bestLocation == null || location.accuracy < (bestLocation?.accuracy ?: Float.MAX_VALUE)) {
+                    bestLocation = location
+                }
 
-                // 3. El filtro de precisión (< 15 metros)
-                // Si la ubicación es buena, la devolvemos y cerramos el chiringuito.
-                if (location.accuracy < 15f) {
+                // Si llegamos a 20m (igual que iOS), devolvemos ya
+                if (location.accuracy <= 20f) {
                     if (continuation.isActive) {
                         continuation.resume(location.toDomainModel())
                         fusedLocationClient.removeLocationUpdates(this)
@@ -49,16 +47,18 @@ class AndroidLocationSource(
             }
         }
 
-        // 4. Solicitamos las actualizaciones
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
             locationCallback,
             Looper.getMainLooper()
         )
 
-        // 5. Limpieza automática
-        // Esto se ejecuta si el repositorio cancela la corrutina (el timeout de 8s)
         continuation.invokeOnCancellation {
+            // Si el repositorio cancela por timeout, intentamos devolver la mejor que pillamos
+            if (!continuation.isCompleted) {
+                // Nota: en un suspendCancellableCoroutine real no puedes resumir aquí fácilmente,
+                // pero al menos nos aseguramos de parar el GPS.
+            }
             fusedLocationClient.removeLocationUpdates(locationCallback)
         }
     }
@@ -78,14 +78,12 @@ class AndroidLocationSource(
             }
     }
 
-    // --- Función de Mapeo Privada ---
-    // Convierte el objeto nativo de Android al modelo compartido de tu Dominio
     private fun Location.toDomainModel(): Vehicle.LocationModel {
         return Vehicle.LocationModel(
             latitude = this.latitude,
             longitude = this.longitude,
             timestamp = this.time,
-            user = "" // El repositorio o el UseCase se encargarán de poner el ID del usuario si hace falta
+            user = null
         )
     }
 }

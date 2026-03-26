@@ -12,7 +12,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 class LocationRepositoryImpl(
     private val locationSource: LocationSource,
-    private val firestore: FirebaseFirestore //TODO quitar
 ) : LocationRepository {
 
     override fun getUserLocation(): Flow<Vehicle.LocationModel?> = flow {
@@ -27,10 +26,6 @@ class LocationRepositoryImpl(
             // Si falla el timeout, emitimos la última conocida
             emit(locationSource.getLastKnownLocation())
         }
-    }
-
-    override suspend fun saveParking(data: Any) {
-        firestore.collection("parkings").add(data) //TODO quitar
     }
 
     override suspend fun getCurrentLocation(): Vehicle.LocationModel {
@@ -48,8 +43,4 @@ class LocationRepositoryImpl(
         }
     }
 
-    override fun getLocationUpdates(): Flow<Vehicle.LocationModel> {
-        // Podrías implementar esto si quieres seguimiento en tiempo real
-        TODO("Not yet implemented")
-    }
 }

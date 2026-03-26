@@ -2,7 +2,6 @@ package com.albertomedina.apark.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.albertomedina.apark.data.repository.FirestoreRepository
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
@@ -13,7 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 
 class HomeViewModel(
     private val authRepository: AuthRepository,
@@ -64,7 +62,6 @@ class HomeViewModel(
         val userId = authRepository.getCurrentUser()?.uid
         
         if (userId.isNullOrBlank()) {
-            println("HomeViewModel: No se pueden cargar vehículos porque el userId es nulo o vacío")
             return
         }
 
@@ -78,10 +75,9 @@ class HomeViewModel(
     private fun updateVehicleLocation(vehicleId: String) {
         val vehicle = _uiState.value.vehicles.find { it.id == vehicleId }
         val previousLocation = vehicle?.lastLocation
-        _uiState.update { it.copy(isLoading = true) }
+        _uiState.update { it.copy(isLoading = true, updatingVehicleId = vehicleId) }
 
         viewModelScope.launch {
-
             try {
                 val result = updateVehicleLocationUseCase(vehicleId)
 
@@ -91,19 +87,19 @@ class HomeViewModel(
                             _uiState.update { state ->
                                 state.copy(
                                     locationUpdateSuccessData = UndoLocationData(vehicleId, previousLocation),
-                                    snackbarMessage = SnackbarMessage.Success("Ubicación actualizada correctamente")
+                                    snackbarMessage = SnackbarMessage.Success("success_location_updated")
                                 )
                             }
                         }
                     },
-                    onFailure = { error ->
-                        _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("Error al guardar tu ubicacion")) }
+                    onFailure = {
+                        _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_location_save")) }
                     }
                 )
             } catch (e: Exception) {
-                _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("Error de GPS. Comprueba los permisos"))}
+                _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_gps_permissions"))}
             } finally {
-                _uiState.update { it.copy(isLoading = false) }
+                _uiState.update { it.copy(isLoading = false, updatingVehicleId = null) }
             }
         }
     }
@@ -111,21 +107,19 @@ class HomeViewModel(
     private fun undoVehicleLocation(vehicleId: String, previousLocation: Vehicle.LocationModel) {
         _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
-
             val result = updateVehicleLocationUseCase(vehicleId, previousLocation)
 
             result.fold(
                 onSuccess = {
-
+                    // Opcional: mostrar mensaje de que se deshizo correctamente
                 },
                 onFailure = {
-                    _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("No se pudo deshacer la acción")) }
+                    _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_undo_failed")) }
                 }
             )
             _uiState.update { it.copy(isLoading = false) }
         }
     }
-
 }
 
 data class HomeUiState(
@@ -133,6 +127,7 @@ data class HomeUiState(
     val vehicles: List<Vehicle> = emptyList(),
     val selectedVehicleIndex: Int = 0,
     val isLoading: Boolean = false,
+    val updatingVehicleId: String? = null,
     val centerCameraTrigger: Int = 0,
     val shouldNavigateToLogin: Boolean = false,
     val locationUpdateSuccessData: UndoLocationData? = null,

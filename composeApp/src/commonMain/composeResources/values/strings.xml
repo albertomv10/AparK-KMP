@@ -7,6 +7,7 @@
     <string name="confirm_password_label">Confirmar Contraseña</string>
     <string name="show_password">Mostrar contraseña</string>
     <string name="hide_password">Ocultar contraseña</string>
+    <string name="undo">Deshacer</string>
 
     <!-- Login -->
     <string name="login_welcome">Bienvenido/a</string>
@@ -37,6 +38,14 @@
     <string name="email_verification_button_resend">Reenviar correo</string>
     <string name="email_verification_button_back">Volver a Login</string>
 
+    <!-- Home -->
+    <string name="home_last_time">Última vez: %1$s</string>
+    <string name="home_parked_by">Por %1$s</string>
+    <string name="home_park_here">Aparcar aquí</string>
+    <string name="home_add_vehicle">Añadir nuevo vehículo</string>
+    <string name="home_center_map">Centrar en mi ubicación</string>
+    <string name="success_location_updated">Ubicación actualizada correctamente</string>
+
     <!-- Common Messages & Errors -->
     <string name="info_not_verified_yet">Aún no has verificado tu cuenta. Pulsa el enlace en el correo.</string>
     <string name="success_resend_email">Correo de verificación enviado de nuevo.</string>
@@ -51,6 +60,9 @@
     <string name="error_passwords_not_match">Las contraseñas no coinciden</string>
     <string name="error_verify_email">Verifica tu email antes de entrar</string>
     <string name="error_invalid_credentials">Las credenciales son incorrectas. Verifica tu email y contraseña.</string>
-    <string name="error_google_login" formatted="false">Error Google: %1$s</string>
-    <string name="error_apple_login" formatted="false">Error Apple: %1$s</string>
+    <string name="error_location_save">Error al guardar tu ubicación</string>
+    <string name="error_gps_permissions">Error de GPS. Comprueba los permisos</string>
+    <string name="error_undo_failed">No se pudo deshacer la acción</string>
+    <string name="error_google_login" formatted="false">Error Google: %s</string>
+    <string name="error_apple_login" formatted="false">Error Apple: %s</string>
 </resources>

@@ -6,8 +6,6 @@ import kotlinx.coroutines.flow.Flow
 interface LocationRepository {
     fun getUserLocation(): Flow<Vehicle.LocationModel?>
 
-    suspend fun saveParking(data: Any) //TODO quitar
-
     suspend fun getCurrentLocation(): Vehicle.LocationModel
-    fun getLocationUpdates(): Flow<Vehicle.LocationModel>
+
 }
