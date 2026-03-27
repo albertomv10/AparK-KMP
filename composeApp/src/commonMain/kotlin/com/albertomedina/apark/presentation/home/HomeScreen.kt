@@ -28,7 +28,6 @@ import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.presentation.components.AparKMap
 import com.albertomedina.apark.presentation.components.DynamicTimeText
 import com.albertomedina.apark.utils.SnackbarMessage
-import com.albertomedina.apark.utils.toSmartTimeLabel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 

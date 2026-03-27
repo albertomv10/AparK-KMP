@@ -20,7 +20,7 @@
 
     <!-- Register -->
     <string name="register_title">Créer un compte</string>
-    <string name="register_subtitle">Inscrivez-vous pour commencer à vous garer intelligemment</string>
+    <string name="register_subtitle">Inscrivez-vous pour comenzar à vous garer intelligemment</string>
     <string name="register_button">S'inscrire</string>
 
     <!-- Reset Password -->
@@ -46,8 +46,26 @@
     <string name="home_center_map">Centrer sur ma position</string>
     <string name="success_location_updated">Position mise à jour avec succès</string>
 
+    <!-- Time & Dates -->
+    <string name="time_less_than_minute">À l'instant</string>
+    <string name="time_ago_minutes">Il y a %1$d min</string>
+    <string name="time_ago_hours">Il y a %1$d h</string>
+    <string name="time_yesterday">Hier à %1$s</string>
+    <string name="month_jan">janv.</string>
+    <string name="month_feb">févr.</string>
+    <string name="month_mar">mars</string>
+    <string name="month_apr">avr.</string>
+    <string name="month_may">mai</string>
+    <string name="month_jun">juin</string>
+    <string name="month_jul">juil.</string>
+    <string name="month_aug">août</string>
+    <string name="month_sep">sept.</string>
+    <string name="month_oct">oct.</string>
+    <string name="month_nov">nov.</string>
+    <string name="month_dec">déc.</string>
+
     <!-- Common Messages & Errors -->
-    <string name="info_not_verified_yet">"Vous n'avez pas encore vérifié votre compte. Cliquez sur le lien dans l'e-mail."</string>
+    <string name="info_not_verified_yet">Vous n'avez pas encore vérifié votre compte. Cliquez sur le lien dans l'e-mail.</string>
     <string name="success_resend_email">E-mail de vérification renvoyé.</string>
     <string name="error_creating_user_db">Erreur lors de la synchronisation de votre profil. Contactez le support.</string>
     <string name="error_unknown">Une erreur inattendue s'est produite.</string>

@@ -40,14 +40,32 @@
 
     <!-- Home -->
     <string name="home_last_time">Last time: %1$s</string>
-    <string name="home_parked_by">By %1$s</string>
     <string name="home_park_here">Park here</string>
     <string name="home_add_vehicle">Add new vehicle</string>
     <string name="home_center_map">Center on my location</string>
+    <string name="home_parked_by">Parked by %1$s</string>
     <string name="success_location_updated">Location updated successfully</string>
 
+    <!-- Time & Dates -->
+    <string name="time_less_than_minute">Just now</string>
+    <string name="time_ago_minutes">%1$d min ago</string>
+    <string name="time_ago_hours">%1$d h ago</string>
+    <string name="time_yesterday">Yesterday at %1$d</string>
+    <string name="month_jan">Jan</string>
+    <string name="month_feb">Feb</string>
+    <string name="month_mar">Mar</string>
+    <string name="month_apr">Apr</string>
+    <string name="month_may">May</string>
+    <string name="month_jun">Jun</string>
+    <string name="month_jul">Jul</string>
+    <string name="month_aug">Aug</string>
+    <string name="month_sep">Sep</string>
+    <string name="month_oct">Oct</string>
+    <string name="month_nov">Nov</string>
+    <string name="month_dec">Dec</string>
+
     <!-- Common Messages & Errors -->
-    <string name="info_not_verified_yet">"You haven't verified your account yet. Click the link in the email."</string>
+    <string name="info_not_verified_yet">You haven't verified your account yet. Click the link in the email.</string>
     <string name="success_resend_email">Verification email sent again.</string>
     <string name="error_creating_user_db">Error syncing your profile. Contact support.</string>
     <string name="error_unknown">An unexpected error has occurred.</string>

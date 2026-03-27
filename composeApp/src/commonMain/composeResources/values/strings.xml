@@ -40,11 +40,29 @@
 
     <!-- Home -->
     <string name="home_last_time">Última vez: %1$s</string>
-    <string name="home_parked_by">Por %1$s</string>
     <string name="home_park_here">Aparcar aquí</string>
     <string name="home_add_vehicle">Añadir nuevo vehículo</string>
     <string name="home_center_map">Centrar en mi ubicación</string>
+    <string name="home_parked_by">Aparcado por %1$s</string>
     <string name="success_location_updated">Ubicación actualizada correctamente</string>
+
+    <!-- Time & Dates -->
+    <string name="time_less_than_minute">Hace un momento</string>
+    <string name="time_ago_minutes">Hace %1$d min</string>
+    <string name="time_ago_hours">Hace %1$d h</string>
+    <string name="time_yesterday">Ayer a las %1$d</string>
+    <string name="month_jan">ene</string>
+    <string name="month_feb">feb</string>
+    <string name="month_mar">mar</string>
+    <string name="month_apr">abr</string>
+    <string name="month_may">may</string>
+    <string name="month_jun">jun</string>
+    <string name="month_jul">jul</string>
+    <string name="month_aug">ago</string>
+    <string name="month_sep">sep</string>
+    <string name="month_oct">oct</string>
+    <string name="month_nov">nov</string>
+    <string name="month_dec">dic</string>
 
     <!-- Common Messages & Errors -->
     <string name="info_not_verified_yet">Aún no has verificado tu cuenta. Pulsa el enlace en el correo.</string>
