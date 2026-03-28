@@ -1,7 +1,8 @@
 import CoreLocation
 import GoogleMaps
+import ComposeApp
 
-class MapLocationController: NSObject, CLLocationManagerDelegate {
+class MapLocationController: NSObject, CLLocationManagerDelegate, GMSMapViewDelegate {
     
     static let shared = MapLocationController()
     
@@ -53,6 +54,22 @@ class MapLocationController: NSObject, CLLocationManagerDelegate {
         print("AparK: Error obteniendo ubicación (\(error.localizedDescription))")
         shouldCenterCamera = false
     }
+    
+    func mapView(_ mapView: GMSMapView, didEndDragging marker: GMSMarker) {
+            
+            // 1. Rescatamos el ID del vehículo que guardamos en userData
+            guard let vehicleId = marker.userData as? String else { return }
+            
+            let newLat = marker.position.latitude
+            let newLng = marker.position.longitude
+            
+            // 2. Lo enviamos de vuelta a Kotlin
+            AparKMap_iosKt.iosOnMarkerDragged?(
+                vehicleId,
+                KotlinDouble(value: newLat),
+                KotlinDouble(value: newLng)
+            )
+        }
     
     // Función auxiliar para no repetir el código del CATransaction
     private func moveCamera(to coordinate: CLLocationCoordinate2D, animated: Bool) {

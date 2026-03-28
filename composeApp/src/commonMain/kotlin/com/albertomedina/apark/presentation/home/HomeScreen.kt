@@ -111,12 +111,17 @@ fun HomeScreen(
 
     Scaffold { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
+
             AparKMap(
                 Modifier.fillMaxSize(),
                 pagerHeight,
                 state.vehicles,
                 state.selectedVehicleIndex,
-                state.centerCameraTrigger
+                state.centerCameraTrigger,
+                onMarkerDragged = {id, latitude, longitude ->
+                    viewModel.onEvent(HomeEvent.OnMarkerDragged(id, latitude, longitude))
+
+                }
             )
 
             FloatingActionButton(

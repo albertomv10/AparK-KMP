@@ -69,6 +69,7 @@ struct iOSApp: App {
             // Habilita el punto azul de ubicación actual
             mapView.isMyLocationEnabled = true
             mapView.settings.myLocationButton = false
+            mapView.delegate = MapLocationController.shared
             
             // 4. Le pasamos el mapa recién creado a nuestro controlador
             MapLocationController.shared.mapView = mapView
@@ -127,6 +128,8 @@ struct iOSApp: App {
                     let position = CLLocationCoordinate2D(latitude: marker.lat, longitude: marker.lng)
                     let gmsMarker = GMSMarker(position: position)
                     gmsMarker.title = marker.title
+                    gmsMarker.isDraggable = true
+                    gmsMarker.userData = marker.id
                     gmsMarker.map = map
                 }
             }

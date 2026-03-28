@@ -14,13 +14,17 @@ class UpdateVehicleLocationUseCase(
     private val authRepository: AuthRepository,
     private val userRepository: UserRepository
 ) {
-    suspend operator fun invoke(vehicleId: String, previousLocation:Vehicle.LocationModel? = null): Result<Unit> {
+    suspend operator fun invoke(
+        vehicleId: String,
+        manualLocation:Vehicle.LocationModel? = null,
+        isUndo: Boolean = false
+    ): Result<Unit> {
         return try {
-            val finalLocation = if (previousLocation != null) {
-                previousLocation
+            val finalLocation = if (isUndo && manualLocation != null) {
+                manualLocation
             } else {
 
-                val location = locationRepository.getCurrentLocation()
+                val location = manualLocation?: locationRepository.getCurrentLocation()
 
                 val userId = authRepository.getCurrentUser()?.uid
                     ?: return Result.failure(Exception("No user logged in"))

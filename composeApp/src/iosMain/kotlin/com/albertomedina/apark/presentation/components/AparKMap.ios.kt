@@ -23,6 +23,8 @@ var updateMapPadding: ((Double) -> Unit)? = null
 var iosMapUpdateCamera: ((Double, Double, Boolean) -> Unit)? = null
 var iosMapUpdateMarkers: ((List<IosMapMarker>) -> Unit)? = null
 var iosCenterOnUserLocation: ((Boolean) -> Unit)? = null
+
+var iosOnMarkerDragged: ((String, Double, Double) -> Unit)? = null
 @OptIn(ExperimentalForeignApi::class)
 @Composable
 actual fun AparKMap(
@@ -30,7 +32,8 @@ actual fun AparKMap(
     bottomPadding: Dp,
     vehicles: List<Vehicle>,
     selectedVehicleIndex: Int,
-    centerCameraTrigger:Int
+    centerCameraTrigger:Int,
+    onMarkerDragged: (String, Double, Double) -> Unit
 ) {
     var isFirstLoad by remember { mutableStateOf(true) }
     //Avisar a Swift de los marcadores
@@ -65,6 +68,12 @@ actual fun AparKMap(
     LaunchedEffect(centerCameraTrigger) {
         if (centerCameraTrigger > 0) {
             iosCenterOnUserLocation?.invoke(true)
+        }
+    }
+
+    LaunchedEffect(onMarkerDragged) {
+        iosOnMarkerDragged = { id, lat, lng ->
+            onMarkerDragged(id, lat, lng)
         }
     }
 

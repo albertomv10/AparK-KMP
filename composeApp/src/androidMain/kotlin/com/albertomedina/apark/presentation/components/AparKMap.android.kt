@@ -25,6 +25,8 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
+import com.google.maps.android.compose.rememberUpdatedMarkerState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
 
@@ -34,13 +36,15 @@ actual fun AparKMap(
     bottomPadding: Dp,
     vehicles: List<Vehicle>,
     selectedVehicleIndex: Int,
-    centerCameraTrigger: Int
+    centerCameraTrigger: Int,
+    onMarkerDragged: (String, Double, Double) -> Unit
 ) {
 
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val cameraPositionState = rememberCameraPositionState()
     var isFirstLoad by remember { mutableStateOf(true) }
+
 
     LaunchedEffect(vehicles.size) {
         if (vehicles.isEmpty()) {
@@ -119,9 +123,35 @@ actual fun AparKMap(
     ){
         vehicles.forEach { vehicle ->
             vehicle.lastLocation?.let { loc ->
+
+                val markerState = remember(vehicle.id) {
+                    MarkerState(position = LatLng(loc.latitude, loc.longitude))
+                }
+
+                LaunchedEffect(loc) {
+                    if (!markerState.isDragging) {
+                        markerState.position = LatLng(loc.latitude, loc.longitude)
+                    }
+                }
+
+                LaunchedEffect(markerState.isDragging) {
+                    if (!markerState.isDragging) {
+                        val hasMoved = markerState.position.latitude != loc.latitude ||
+                                markerState.position.longitude != loc.longitude
+
+                        if (hasMoved) {
+                            onMarkerDragged(
+                                vehicle.id,
+                                markerState.position.latitude,
+                                markerState.position.longitude
+                            )
+                        }
+                    }
+                }
+
                 Marker(
-                    state = MarkerState(position = LatLng(loc.latitude, loc.longitude)),
-                    title = vehicle.name, // Aparece al pulsar el pin
+                    state = markerState,
+                    title = vehicle.name,
                     snippet = vehicle.model,
                     draggable = true
                 )

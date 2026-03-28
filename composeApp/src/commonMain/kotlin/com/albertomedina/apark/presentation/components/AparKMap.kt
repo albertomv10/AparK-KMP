@@ -12,5 +12,6 @@ expect fun AparKMap (
     bottomPadding: Dp = 0.dp,
     vehicles: List<Vehicle>,
     selectedVehicleIndex: Int,
-    centerCameraTrigger: Int
+    centerCameraTrigger: Int,
+    onMarkerDragged: (String, Double, Double) -> Unit
     )

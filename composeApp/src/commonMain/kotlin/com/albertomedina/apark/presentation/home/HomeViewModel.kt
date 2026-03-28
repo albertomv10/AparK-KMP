@@ -31,36 +31,53 @@ class HomeViewModel(
             is HomeEvent.OnVehicleSwiped -> {
                 _uiState.update { it.copy(selectedVehicleIndex = event.newIndex) }
             }
+
             is HomeEvent.UpdateLocationClicked -> {
                 updateVehicleLocation(event.vehicleId)
             }
+
             is HomeEvent.VehicleDetailsClicked -> {
-                println("Navegando a detalles del vehículo: ${event.vehicleId}")
+
             }
+
             is HomeEvent.AddVehicleClicked -> {
-                println("Navegando a crear nuevo vehículo")
+
             }
+
             is HomeEvent.UndoLocationClicked -> {
                 undoVehicleLocation(event.vehicleId, event.previousLocation)
             }
-            is HomeEvent.CenterMapOnUserClicked -> {
-                _uiState.update { it.copy(centerCameraTrigger = it.centerCameraTrigger + 1)}
+
+            is HomeEvent.OnMarkerDragged -> {
+                saveManualLocation(event.vehicleId, event.latitude, event.longitude)
             }
+
+            is HomeEvent.CenterMapOnUserClicked -> {
+                _uiState.update { it.copy(centerCameraTrigger = it.centerCameraTrigger + 1) }
+            }
+
             is HomeEvent.SignOutClicked -> {
                 _uiState.update { it.copy(shouldNavigateToLogin = true) }
             }
+
             is HomeEvent.NavigationHandled -> {
                 _uiState.update { it.copy(shouldNavigateToLogin = false) }
             }
+
             is HomeEvent.SnackBarDismissed -> {
-                _uiState.update { it.copy(locationUpdateSuccessData = null, snackbarMessage = null) }
+                _uiState.update {
+                    it.copy(
+                        locationUpdateSuccessData = null,
+                        snackbarMessage = null
+                    )
+                }
             }
         }
     }
 
-    fun loadVehicles(){
+    fun loadVehicles() {
         val userId = authRepository.getCurrentUser()?.uid
-        
+
         if (userId.isNullOrBlank()) {
             return
         }
@@ -86,7 +103,10 @@ class HomeViewModel(
                         if (previousLocation != null) {
                             _uiState.update { state ->
                                 state.copy(
-                                    locationUpdateSuccessData = UndoLocationData(vehicleId, previousLocation),
+                                    locationUpdateSuccessData = UndoLocationData(
+                                        vehicleId,
+                                        previousLocation
+                                    ),
                                     snackbarMessage = SnackbarMessage.Success("success_location_updated")
                                 )
                             }
@@ -97,7 +117,7 @@ class HomeViewModel(
                     }
                 )
             } catch (e: Exception) {
-                _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_gps_permissions"))}
+                _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_gps_permissions")) }
             } finally {
                 _uiState.update { it.copy(isLoading = false, updatingVehicleId = null) }
             }
@@ -107,17 +127,52 @@ class HomeViewModel(
     private fun undoVehicleLocation(vehicleId: String, previousLocation: Vehicle.LocationModel) {
         _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
-            val result = updateVehicleLocationUseCase(vehicleId, previousLocation)
+            val result = updateVehicleLocationUseCase(vehicleId, previousLocation, true)
 
             result.fold(
                 onSuccess = {
-                    // Opcional: mostrar mensaje de que se deshizo correctamente
+
                 },
                 onFailure = {
                     _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_undo_failed")) }
                 }
             )
             _uiState.update { it.copy(isLoading = false) }
+        }
+    }
+
+    private fun saveManualLocation(vehicleId: String, latitude: Double, longitude: Double) {
+        _uiState.update { it.copy(isLoading = true, updatingVehicleId = vehicleId) }
+        val vehicle = _uiState.value.vehicles.find { it.id == vehicleId }
+        val previousLocation = vehicle?.lastLocation
+        viewModelScope.launch {
+            val result = updateVehicleLocationUseCase(
+                vehicleId = vehicleId,
+                manualLocation = Vehicle.LocationModel(
+                    latitude = latitude,
+                    longitude = longitude
+                )
+            )
+            result.fold(
+                onSuccess = {
+                    if (previousLocation != null) {
+                        _uiState.update { state ->
+                            state.copy(
+                                locationUpdateSuccessData = UndoLocationData(
+                                    vehicleId,
+                                    previousLocation
+                                ),
+                                snackbarMessage = SnackbarMessage.Success("success_location_updated")
+                            )
+                        }
+                    }
+                },
+                onFailure = {
+                    _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_location_save")) }
+                }
+            )
+
+            _uiState.update { it.copy(isLoading = false, updatingVehicleId = null) }
         }
     }
 }
@@ -144,6 +199,11 @@ sealed class HomeEvent {
     data class UpdateLocationClicked(val vehicleId: String) : HomeEvent()
     data class VehicleDetailsClicked(val vehicleId: String) : HomeEvent()
     data class UndoLocationClicked(val vehicleId:String, val previousLocation: Vehicle.LocationModel): HomeEvent()
+    data class OnMarkerDragged(
+        val vehicleId: String,
+        val latitude: Double,
+        val longitude: Double
+    ) : HomeEvent()
     data object CenterMapOnUserClicked : HomeEvent()
     data object AddVehicleClicked : HomeEvent()
     data object SignOutClicked : HomeEvent()
