@@ -48,7 +48,7 @@ fun BasicNavigationWrapper(){
 
     val backStack = rememberNavBackStack(
         config,
-        Login
+        Home
     )
 
     NavDisplay(

@@ -26,6 +26,7 @@ import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.presentation.components.AparKMap
+import com.albertomedina.apark.presentation.components.AparkBottomNavigationBar
 import com.albertomedina.apark.presentation.components.DynamicTimeText
 import com.albertomedina.apark.utils.SnackbarMessage
 import org.jetbrains.compose.resources.stringResource
@@ -109,7 +110,9 @@ fun HomeScreen(
         }
     }
 
-    Scaffold { paddingValues ->
+    Scaffold(
+        bottomBar = { AparkBottomNavigationBar() },
+    ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
 
             AparKMap(
@@ -127,8 +130,8 @@ fun HomeScreen(
             FloatingActionButton(
                 onClick = { viewModel.onEvent(HomeEvent.CenterMapOnUserClicked) },
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = paddingValues.calculateTopPadding(), end = 16.dp),
+                    .align(Alignment.BottomEnd)
+                    .padding(bottom = pagerHeight + 8.dp, end = 16.dp),
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary
             ) {
@@ -167,7 +170,7 @@ fun HomeScreen(
                     .onGloballyPositioned{ coordinates ->
                         pagerHeight = with(density){coordinates.size.height.toDp() }
                     }
-                    .padding(bottom = 108.dp)
+                    .padding(bottom = paddingValues.calculateBottomPadding() + 24.dp)
             ) {
                 HorizontalPager(
                     state = pagerState,
