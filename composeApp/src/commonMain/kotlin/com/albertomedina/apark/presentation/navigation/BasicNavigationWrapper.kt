@@ -12,6 +12,7 @@ import com.albertomedina.apark.presentation.auth.register.RegisterScreen
 import com.albertomedina.apark.presentation.auth.resetPassword.ResetPasswordScreen
 import com.albertomedina.apark.presentation.auth.verification.EmailVerificationScreen
 import com.albertomedina.apark.presentation.home.HomeScreen
+import com.albertomedina.apark.presentation.splash.SplashScreen
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
@@ -19,6 +20,8 @@ import kotlinx.serialization.modules.polymorphic
 
 @Serializable
 sealed interface Destiny: NavKey
+@Serializable
+data object Splash: Destiny
 @Serializable
 data object Login: Destiny
 @Serializable
@@ -34,6 +37,7 @@ data object Home: Destiny
 private val config = SavedStateConfiguration {
     serializersModule = SerializersModule {
         polymorphic(NavKey::class) {
+            subclass(Splash::class, Splash.serializer())
             subclass(Login::class, Login.serializer())
             subclass(Register::class, Register.serializer())
             subclass(ResetPassword::class, ResetPassword.serializer())
@@ -48,7 +52,7 @@ fun BasicNavigationWrapper(){
 
     val backStack = rememberNavBackStack(
         config,
-        Home
+        Splash
     )
 
     NavDisplay(
@@ -56,6 +60,18 @@ fun BasicNavigationWrapper(){
         onBack = { backStack.removeLastOrNull() },
         entryProvider = { key ->
             when(key){
+                is Splash -> NavEntry(key) {
+                    SplashScreen(
+                        onNavigateToHome = {
+                            backStack.clear()
+                            backStack.add(Home)
+                        },
+                        onNavigateToLogin = {
+                            backStack.clear()
+                            backStack.add(Login)
+                        }
+                    )
+                }
                 is Login -> NavEntry(key) {
                     LoginScreen(
                         onNavigateToHome = {

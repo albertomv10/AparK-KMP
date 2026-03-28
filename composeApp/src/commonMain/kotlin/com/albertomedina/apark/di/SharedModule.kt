@@ -24,6 +24,7 @@ import com.albertomedina.apark.presentation.auth.register.RegisterViewModel
 import com.albertomedina.apark.presentation.auth.resetPassword.ResetPassWordViewmodel
 import com.albertomedina.apark.presentation.auth.verification.EmailVerificationViewModel
 import com.albertomedina.apark.presentation.home.HomeViewModel
+import com.albertomedina.apark.presentation.splash.SplashViewModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.app
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -97,6 +98,8 @@ val sharedModule = module {
 
     // Location
     factory { GetCurrentLocationUseCase(repository = get()) }
+
+    viewModel { SplashViewModel(authRepository = get()) }
 
     viewModel {
         LoginViewModel(
