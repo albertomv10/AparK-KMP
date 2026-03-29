@@ -28,6 +28,8 @@ import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.presentation.components.AparKMap
 import com.albertomedina.apark.presentation.components.AparkBottomNavigationBar
 import com.albertomedina.apark.presentation.components.DynamicTimeText
+import com.albertomedina.apark.presentation.components.LocationPermissionHandler
+import com.albertomedina.apark.utils.OpenAppSettingsHandler
 import com.albertomedina.apark.utils.SnackbarMessage
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -45,6 +47,24 @@ fun HomeScreen(
     var activeSnackbarMessage by remember { mutableStateOf<SnackbarMessage?>(null) }
     var pagerHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
+
+    var hasLocationPermission by remember { mutableStateOf(false) }
+
+    OpenAppSettingsHandler(
+        trigger = state.openSettingsTrigger,
+        onSettingsOpened = {  }
+    )
+
+    LocationPermissionHandler(
+        onPermissionGranted = {
+            hasLocationPermission = true
+        },
+        onPermissionDenied = {
+            hasLocationPermission = false
+            // Opcional: Aquí podrías disparar un evento a tu ViewModel
+            // para mostrar un Snackbar que diga: "Necesitamos tu ubicación para aparcar"
+        }
+    )
 
     // Traducción dinámica de mensajes del ViewModel
     val translatedText = when (state.snackbarMessage?.message) {
@@ -66,7 +86,14 @@ fun HomeScreen(
                 snackbarHostState.showSnackbar(
                     message = translatedText ?: msg.message,
                     actionLabel = undoLabel,
-                    withDismissAction = true,
+                    withDismissAction = false,
+                    duration = SnackbarDuration.Long
+                )
+            }else if (msg.message == "error_gps_permissions") {
+                snackbarHostState.showSnackbar(
+                    message = "Permisos de GPS denegados. Ve a ajustes para activarlos.",
+                    actionLabel = "Ajustes",
+                    withDismissAction = false,
                     duration = SnackbarDuration.Long
                 )
             } else {
@@ -79,13 +106,19 @@ fun HomeScreen(
             }
 
             if (result == SnackbarResult.ActionPerformed) {
-                state.locationUpdateSuccessData?.let { undoData ->
-                    viewModel.onEvent(
-                        HomeEvent.UndoLocationClicked(
-                            undoData.vehicleId,
-                            undoData.previousLocation
+
+                if (msg.message == "error_gps_permissions"){
+                    viewModel.onEvent(HomeEvent.OpenSettingsClicked)
+                }else{
+                    state.locationUpdateSuccessData?.let { undoData ->
+                        viewModel.onEvent(
+                            HomeEvent.UndoLocationClicked(
+                                undoData.vehicleId,
+                                undoData.previousLocation
+                            )
                         )
-                    )
+                    }
+
                 }
             }
             viewModel.onEvent(HomeEvent.SnackBarDismissed)
@@ -128,7 +161,13 @@ fun HomeScreen(
             )
 
             FloatingActionButton(
-                onClick = { viewModel.onEvent(HomeEvent.CenterMapOnUserClicked) },
+                onClick = {
+                    if (hasLocationPermission){
+                        viewModel.onEvent(HomeEvent.CenterMapOnUserClicked)
+                    }else{
+                        viewModel.onEvent(HomeEvent.PermisionsDenied)
+                    }
+                          },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(bottom = pagerHeight + 8.dp, end = 16.dp),
@@ -188,7 +227,13 @@ fun HomeScreen(
                             isSpecificLoading = state.updatingVehicleId == vehicle.id,
                             vehicle = vehicle,
                             onClick = { onNavigateToDetails(vehicle.id) },
-                            onUpdateLocation = { viewModel.onEvent(HomeEvent.UpdateLocationClicked(vehicle.id)) }
+                            onUpdateLocation = {
+                                if (hasLocationPermission){
+                                    viewModel.onEvent(HomeEvent.UpdateLocationClicked(vehicle.id))
+                                }else{
+                                    viewModel.onEvent(HomeEvent.PermisionsDenied)
+                                }
+                            }
                         )
                     }
                 }

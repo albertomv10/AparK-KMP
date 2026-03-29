@@ -45,6 +45,8 @@ actual fun AparKMap(
     val cameraPositionState = rememberCameraPositionState()
     var isFirstLoad by remember { mutableStateOf(true) }
 
+    val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
     LaunchedEffect(vehicles.size) {
         if (vehicles.isEmpty()) {
@@ -67,8 +69,7 @@ actual fun AparKMap(
 
     LaunchedEffect(centerCameraTrigger) {
         if (centerCameraTrigger > 0) {
-            val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
 
             if (hasFine || hasCoarse) {
                 try {
@@ -112,7 +113,7 @@ actual fun AparKMap(
         }
     }
 
-    val properties = MapProperties(isMyLocationEnabled = true)
+    val properties = MapProperties(isMyLocationEnabled = hasFine)
     val uiSettings = MapUiSettings(myLocationButtonEnabled = false, zoomControlsEnabled = false)
     GoogleMap(
         modifier = modifier,

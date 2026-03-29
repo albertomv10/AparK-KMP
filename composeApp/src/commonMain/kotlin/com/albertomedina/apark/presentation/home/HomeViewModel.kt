@@ -72,6 +72,13 @@ class HomeViewModel(
                     )
                 }
             }
+            is HomeEvent.OpenSettingsClicked -> {
+                _uiState.update { it.copy(openSettingsTrigger = it.openSettingsTrigger + 1) }
+            }
+
+            is HomeEvent.PermisionsDenied -> {
+                _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_gps_permissions")) }
+            }
         }
     }
 
@@ -184,6 +191,7 @@ data class HomeUiState(
     val isLoading: Boolean = false,
     val updatingVehicleId: String? = null,
     val centerCameraTrigger: Int = 0,
+    val openSettingsTrigger: Int = 0,
     val shouldNavigateToLogin: Boolean = false,
     val locationUpdateSuccessData: UndoLocationData? = null,
     val snackbarMessage: SnackbarMessage? = null
@@ -204,6 +212,8 @@ sealed class HomeEvent {
         val latitude: Double,
         val longitude: Double
     ) : HomeEvent()
+    data object PermisionsDenied : HomeEvent()
+    data object OpenSettingsClicked : HomeEvent()
     data object CenterMapOnUserClicked : HomeEvent()
     data object AddVehicleClicked : HomeEvent()
     data object SignOutClicked : HomeEvent()
