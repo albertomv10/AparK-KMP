@@ -16,7 +16,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
 import platform.UIKit.UIView
 
-data class IosMapMarker(val id: String, val lat: Double, val lng: Double, val title: String)
+data class IosMapMarker(val id: String, val lat: Double, val lng: Double, val title: String, val colorIndex:Int)
 var iosMapViewFactory: (() -> UIView)? = null
 var updateMapPadding: ((Double) -> Unit)? = null
 
@@ -38,9 +38,9 @@ actual fun AparKMap(
     var isFirstLoad by remember { mutableStateOf(true) }
     //Avisar a Swift de los marcadores
     LaunchedEffect(vehicles) {
-        val markers = vehicles.mapNotNull { vehicle ->
+        val markers = vehicles.mapIndexedNotNull { index, vehicle ->
             vehicle.lastLocation?.let { loc ->
-                IosMapMarker(vehicle.id, loc.latitude, loc.longitude, vehicle.name)
+                IosMapMarker(vehicle.id, loc.latitude, loc.longitude, vehicle.name, index)
             }
         }
         iosMapUpdateMarkers?.invoke(markers)

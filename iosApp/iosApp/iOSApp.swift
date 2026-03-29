@@ -124,9 +124,18 @@ struct iOSApp: App {
             if let map = MapLocationController.shared.mapView {
                 map.clear() // Borra los pines antiguos para no duplicarlos
                 
+                let markerColors: [UIColor] = [
+                            .systemBlue, .systemRed,  .systemGreen, .systemYellow,
+                                .systemOrange, .cyan, .systemPink, .systemPurple, .magenta
+                            ]
+                
                 for marker in markers {
                     let position = CLLocationCoordinate2D(latitude: marker.lat, longitude: marker.lng)
                     let gmsMarker = GMSMarker(position: position)
+                    let index = Int(marker.colorIndex)
+                    let colorToUse = index < markerColors.count ? markerColors[index] : UIColor.systemTeal
+                    
+                    gmsMarker.icon = GMSMarker.markerImage(with: colorToUse)
                     gmsMarker.title = marker.title
                     gmsMarker.isDraggable = true
                     gmsMarker.userData = marker.id

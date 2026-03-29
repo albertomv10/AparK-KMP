@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import com.albertomedina.apark.domain.model.Vehicle
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -115,6 +116,19 @@ actual fun AparKMap(
 
     val properties = MapProperties(isMyLocationEnabled = hasFine)
     val uiSettings = MapUiSettings(myLocationButtonEnabled = false, zoomControlsEnabled = false)
+    val markers = listOf(
+        BitmapDescriptorFactory.HUE_AZURE,
+        BitmapDescriptorFactory.HUE_GREEN,
+        BitmapDescriptorFactory.HUE_YELLOW,
+        BitmapDescriptorFactory.HUE_MAGENTA,
+        BitmapDescriptorFactory.HUE_ORANGE,
+        BitmapDescriptorFactory.HUE_RED,
+        BitmapDescriptorFactory.HUE_ROSE,
+        BitmapDescriptorFactory.HUE_BLUE,
+        BitmapDescriptorFactory.HUE_CYAN,
+        BitmapDescriptorFactory.HUE_VIOLET,
+        BitmapDescriptorFactory.HUE_ROSE,
+    )
     GoogleMap(
         modifier = modifier,
         cameraPositionState = cameraPositionState,
@@ -149,11 +163,17 @@ actual fun AparKMap(
                         }
                     }
                 }
+                val icon = if (vehicles.indexOf(vehicle) >= markers.size) {
+                    BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+                } else {
+                    BitmapDescriptorFactory.defaultMarker(markers[vehicles.indexOf(vehicle)])
+                }
 
                 Marker(
                     state = markerState,
                     title = vehicle.name,
                     snippet = vehicle.model,
+                    icon = icon,
                     draggable = true
                 )
             }
