@@ -5,6 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.month_apr
 import apark.composeapp.generated.resources.month_aug
@@ -85,6 +86,8 @@ fun DynamicTimeText(
 
     Text(
         text = message,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
         style = style,
         color = color
     )

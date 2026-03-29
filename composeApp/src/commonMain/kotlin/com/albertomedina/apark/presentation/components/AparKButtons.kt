@@ -2,6 +2,7 @@ package com.albertomedina.apark.presentation.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -12,6 +13,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -27,7 +29,7 @@ fun StandardAparKButton(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .height(42.dp),
+            .heightIn(min =42.dp),
         enabled = enabled,
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(containerColor = color)
@@ -40,12 +42,12 @@ fun StandardAparKButton(
 fun StandardAparKTextButton(modifier: Modifier = Modifier, text: String, onClick: () -> Unit) {
     TextButton(
         modifier = modifier
-            .padding(vertical = 4.dp)
-            .height(32.dp),
+            .padding(vertical = 4.dp),
         onClick = { onClick() }) {
         Text(text,
             style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center
         )
     }
 

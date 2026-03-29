@@ -144,9 +144,9 @@ fun LoginScreen(
                     )
                 )
                 .padding(paddingValues)
-                .padding(32.dp)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
-                .imePadding(),
+                .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -242,6 +242,7 @@ fun LoginScreen(
 
                 StandardAparKTextButton(
                     text = stringResource(Res.string.no_account_register),
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
                     onClick = { viewModel.onEvent(LoginEvent.RegisterClicked) }
                 )
             }

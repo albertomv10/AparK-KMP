@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import apark.composeapp.generated.resources.Res
@@ -262,7 +263,13 @@ fun VehicleCard(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text(text = vehicle.name, style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = vehicle.name,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleLarge
+                )
+
 
                 val timestamp = vehicle.lastLocation?.timestamp
 
@@ -282,6 +289,8 @@ fun VehicleCard(
 
                 Text(
                     text = updatedBy,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
