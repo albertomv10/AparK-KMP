@@ -16,11 +16,11 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
 import platform.UIKit.UIView
 
-data class IosMapMarker(val id: String, val lat: Double, val lng: Double, val title: String, val colorIndex:Int)
+data class IosMapMarker(val id: String, val lat: Double, val lng: Double, val title: String, val vehicleIndex:Int, val selectedVehicleIndex: Int)
 var iosMapViewFactory: (() -> UIView)? = null
 var updateMapPadding: ((Double) -> Unit)? = null
 
-var iosMapUpdateCamera: ((Double, Double, Boolean) -> Unit)? = null
+var iosMapUpdateCamera: ((Double, Double, Double, Boolean) -> Unit)? = null
 var iosMapUpdateMarkers: ((List<IosMapMarker>) -> Unit)? = null
 var iosCenterOnUserLocation: ((Boolean) -> Unit)? = null
 
@@ -36,11 +36,16 @@ actual fun AparKMap(
     onMarkerDragged: (String, Double, Double) -> Unit
 ) {
     var isFirstLoad by remember { mutableStateOf(true) }
+
+    // Variables de estado para detectar cambios de posición vs cambios de tarjeta
+    var lastVehicleId by remember { mutableStateOf<String?>(null) }
+    var lastProcessedLocation by remember { mutableStateOf<Vehicle.LocationModel?>(null) }
+
     //Avisar a Swift de los marcadores
-    LaunchedEffect(vehicles) {
+    LaunchedEffect(vehicles, selectedVehicleIndex) {
         val markers = vehicles.mapIndexedNotNull { index, vehicle ->
             vehicle.lastLocation?.let { loc ->
-                IosMapMarker(vehicle.id, loc.latitude, loc.longitude, vehicle.name, index)
+                IosMapMarker(vehicle.id, loc.latitude, loc.longitude, vehicle.name, index, selectedVehicleIndex)
             }
         }
         iosMapUpdateMarkers?.invoke(markers)
@@ -49,10 +54,33 @@ actual fun AparKMap(
     //Avisar a Swift para mover la cámara
     LaunchedEffect(selectedVehicleIndex, vehicles) {
         if (vehicles.isNotEmpty() && selectedVehicleIndex < vehicles.size) {
-            val loc = vehicles[selectedVehicleIndex].lastLocation
-            if (loc != null) {
-                iosMapUpdateCamera?.invoke(loc.latitude, loc.longitude, !isFirstLoad)
+            val currentVehicle = vehicles[selectedVehicleIndex]
+            val currentLocation = currentVehicle.lastLocation
+
+            if (currentLocation != null) {
+                // Lógica de detección: ¿Es el mismo coche pero se ha movido?
+                val isSameVehicle = lastVehicleId == currentVehicle.id
+                val locationChanged = lastProcessedLocation != null &&
+                        (lastProcessedLocation!!.latitude != currentLocation.latitude ||
+                                lastProcessedLocation!!.longitude != currentLocation.longitude)
+
+                // 20.0 si es actualización/arrastre, 17.0 si es un cambio de tarjeta (swipe)
+                val targetZoom =
+                    if (isSameVehicle && locationChanged && !isFirstLoad) 20.0 else 17.0
+
+                // Invocamos a Swift pasando el nuevo parámetro de zoom
+                // Nota: Asegúrate de que iosMapUpdateCamera acepte Double como 3er parámetro
+                iosMapUpdateCamera?.invoke(
+                    currentLocation.latitude,
+                    currentLocation.longitude,
+                    targetZoom,
+                    !isFirstLoad
+                )
+
+                // Actualizamos referencias
                 isFirstLoad = false
+                lastProcessedLocation = currentLocation
+                lastVehicleId = currentVehicle.id
             }
         }
     }

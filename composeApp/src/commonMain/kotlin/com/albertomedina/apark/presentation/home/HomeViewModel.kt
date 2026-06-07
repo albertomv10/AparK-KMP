@@ -110,6 +110,7 @@ class HomeViewModel(
                         if (previousLocation != null) {
                             _uiState.update { state ->
                                 state.copy(
+
                                     locationUpdateSuccessData = UndoLocationData(
                                         vehicleId,
                                         previousLocation

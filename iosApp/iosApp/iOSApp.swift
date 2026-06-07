@@ -91,13 +91,13 @@ struct iOSApp: App {
         
     //Mapa
         // 1. Mover la cámara
-        AparKMap_iosKt.iosMapUpdateCamera = { lat, lng, animated in
+        AparKMap_iosKt.iosMapUpdateCamera = { lat, lng, zoom, animated in
             // TRUCO PRO: DispatchQueue.main.async hace que esta orden espere
             // un milisegundo a que el mapa ya tenga su tamaño real en pantalla.
             DispatchQueue.main.async {
                 if let map = MapLocationController.shared.mapView {
                     
-                    let camera = GMSCameraPosition.camera(withLatitude: lat.doubleValue, longitude: lng.doubleValue, zoom: 15.0)
+                    let camera = GMSCameraPosition.camera(withLatitude: lat.doubleValue, longitude: lng.doubleValue, zoom: zoom.floatValue)
                     
                     if animated.boolValue {
                         // MOVIMIENTO SUAVE (Al deslizar tarjetas)
@@ -132,8 +132,9 @@ struct iOSApp: App {
                 for marker in markers {
                     let position = CLLocationCoordinate2D(latitude: marker.lat, longitude: marker.lng)
                     let gmsMarker = GMSMarker(position: position)
-                    let index = Int(marker.colorIndex)
-                    let colorToUse = index < markerColors.count ? markerColors[index] : UIColor.systemTeal
+                    let vehicleIndex = Int(marker.vehicleIndex)
+                    let selectedVehicleIndex = Int(marker.selectedVehicleIndex)
+                    let colorToUse = if(selectedVehicleIndex == vehicleIndex) { UIColor.systemRed } else { UIColor.systemBlue}
                     
                     gmsMarker.icon = GMSMarker.markerImage(with: colorToUse)
                     gmsMarker.title = marker.title

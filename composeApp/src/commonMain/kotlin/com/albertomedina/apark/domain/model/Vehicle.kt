@@ -12,7 +12,7 @@ data class Vehicle(
     val inviteCode: String? = null,
     val ownerId: String = "",
     val sharedUsers: List<String> = emptyList(),
-    val lastLocation: LocationModel? = null
+    val lastLocation: LocationModel? = LocationModel()
 )  {
     @Serializable
     data class LocationModel(

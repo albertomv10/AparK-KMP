@@ -13,7 +13,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.albertomedina.apark.domain.model.Vehicle
 import com.google.android.gms.location.LocationServices
@@ -28,8 +27,6 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.compose.rememberMarkerState
-import com.google.maps.android.compose.rememberUpdatedMarkerState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
 
@@ -75,28 +72,43 @@ actual fun AparKMap(
     val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
-    LaunchedEffect(vehicles.size) {
-        if (vehicles.isEmpty()) {
-            delay(200)
-            val hasFineLocation = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            val hasCoarseLocation = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    var lastVehicleId by remember { mutableStateOf<String?>(null) }
+    var lastProcessedLocation by remember { mutableStateOf<Vehicle.LocationModel?>(null) }
 
-            if (hasFineLocation || hasCoarseLocation) {
-                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                    if (location != null) {
-                        cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                            LatLng(location.latitude, location.longitude),
-                            15f
-                        )
-                    }
+    LaunchedEffect(selectedVehicleIndex, vehicles) {
+        if (vehicles.isNotEmpty() && selectedVehicleIndex < vehicles.size) {
+            val currentVehicle = vehicles[selectedVehicleIndex]
+            val currentLocation = currentVehicle.lastLocation
+
+            if (currentLocation != null) {
+                val isNewSelection = lastVehicleId != currentVehicle.id
+                val locationChanged = lastProcessedLocation != null &&
+                        (lastProcessedLocation!!.latitude != currentLocation.latitude ||
+                                lastProcessedLocation!!.longitude != currentLocation.longitude)
+
+                // Requisito: 20f si se actualiza, 18f si se cambia de tarjeta o carga inicial
+                val targetZoom = if (locationChanged && !isNewSelection) 20f else 18f
+
+                val cameraUpdate = CameraUpdateFactory.newLatLngZoom(
+                    LatLng(currentLocation.latitude, currentLocation.longitude),
+                    targetZoom
+                )
+
+                if (isFirstLoad) {
+                    cameraPositionState.move(cameraUpdate)
+                    isFirstLoad = false
+                } else {
+                    cameraPositionState.animate(cameraUpdate, durationMs = 1000)
                 }
+
+                lastProcessedLocation = currentLocation
+                lastVehicleId = currentVehicle.id
             }
         }
     }
 
     LaunchedEffect(centerCameraTrigger) {
         if (centerCameraTrigger > 0) {
-
 
             if (hasFine || hasCoarse) {
                 try {
@@ -106,7 +118,7 @@ actual fun AparKMap(
 
                         cameraPositionState.animate(
                             update = CameraUpdateFactory.newLatLngZoom(
-                                LatLng(location.latitude, location.longitude), 15f
+                                LatLng(location.latitude, location.longitude), 16f
                             ),
                             durationMs = 800
                         )
@@ -118,27 +130,29 @@ actual fun AparKMap(
         }
     }
 
-    LaunchedEffect(selectedVehicleIndex, vehicles) {
-        if (vehicles.isNotEmpty() && selectedVehicleIndex < vehicles.size) {
-            val location = vehicles[selectedVehicleIndex].lastLocation
-            if (location != null) {
-                // Preparamos el movimiento a la ciudad del coche con zoom 15
-                val cameraUpdate = CameraUpdateFactory.newLatLngZoom(
-                    LatLng(location.latitude, location.longitude),
-                    15f
-                )
 
-                if (isFirstLoad) {
-                    // TELETRANSPORTE INSTANTÁNEO
-                    cameraPositionState.move(cameraUpdate)
-                    isFirstLoad = false
-                } else {
-                    // ANIMACIÓN SUAVE AL DESLIZAR
-                    cameraPositionState.animate(cameraUpdate, durationMs = 800)
-                }
-            }
-        }
-    }
+
+//    LaunchedEffect(selectedVehicleIndex, vehicles) {
+//        if (vehicles.isNotEmpty() && selectedVehicleIndex < vehicles.size) {
+//            val location = vehicles[selectedVehicleIndex].lastLocation
+//            if (location != null) {
+//                // Preparamos el movimiento a la ciudad del coche con zoom 15
+//                val cameraUpdate = CameraUpdateFactory.newLatLngZoom(
+//                    LatLng(location.latitude, location.longitude),
+//                    17f
+//                )
+//
+//                if (isFirstLoad) {
+//                    // TELETRANSPORTE INSTANTÁNEO
+//                    cameraPositionState.move(cameraUpdate)
+//                    isFirstLoad = false
+//                } else {
+//                    // ANIMACIÓN SUAVE AL DESLIZAR
+//                    cameraPositionState.animate(cameraUpdate, durationMs = 800)
+//                }
+//            }
+//        }
+//    }
 
     val uiSettings = MapUiSettings(myLocationButtonEnabled = false, zoomControlsEnabled = false)
     val isDarkMode = isSystemInDarkTheme()
@@ -149,19 +163,6 @@ actual fun AparKMap(
             mapStyleOptions = if (isDarkMode) MapStyleOptions(darkMapStyleJson) else null
         )
     }
-    val markers = listOf(
-        BitmapDescriptorFactory.HUE_AZURE,
-        BitmapDescriptorFactory.HUE_GREEN,
-        BitmapDescriptorFactory.HUE_YELLOW,
-        BitmapDescriptorFactory.HUE_MAGENTA,
-        BitmapDescriptorFactory.HUE_ORANGE,
-        BitmapDescriptorFactory.HUE_RED,
-        BitmapDescriptorFactory.HUE_ROSE,
-        BitmapDescriptorFactory.HUE_BLUE,
-        BitmapDescriptorFactory.HUE_CYAN,
-        BitmapDescriptorFactory.HUE_VIOLET,
-        BitmapDescriptorFactory.HUE_ROSE,
-    )
 
     GoogleMap(
         modifier = modifier,
@@ -170,7 +171,7 @@ actual fun AparKMap(
         uiSettings = uiSettings,
         contentPadding = PaddingValues(bottom = bottomPadding)
     ){
-        vehicles.forEach { vehicle ->
+        vehicles.forEachIndexed { index, vehicle ->
             vehicle.lastLocation?.let { loc ->
 
                 val markerState = remember(vehicle.id) {
@@ -197,17 +198,18 @@ actual fun AparKMap(
                         }
                     }
                 }
-                val icon = if (vehicles.indexOf(vehicle) >= markers.size) {
+
+                val iconMarker = if (index == selectedVehicleIndex){
+                    BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+                }else{
                     BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
-                } else {
-                    BitmapDescriptorFactory.defaultMarker(markers[vehicles.indexOf(vehicle)])
                 }
 
                 Marker(
                     state = markerState,
                     title = vehicle.name,
                     snippet = vehicle.model,
-                    icon = icon,
+                    icon = iconMarker,
                     draggable = true
                 )
             }
