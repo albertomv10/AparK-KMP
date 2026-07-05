@@ -1,0 +1,9 @@
+{
+  "mcp": {
+    "firebase": {
+      "type": "local",
+      "command": ["npx", "-y", "firebase-tools@latest", "mcp"],
+      "enabled": true
+    }
+  }
+}

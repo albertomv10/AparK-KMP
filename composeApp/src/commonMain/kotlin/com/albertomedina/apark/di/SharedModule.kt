@@ -52,11 +52,7 @@ val sharedModule = module {
             "(default)"
         }
 
-        try {
-            Firebase.firestore(Firebase.app, dbName)
-        } catch (e: Exception) {
-            Firebase.firestore
-        }
+        Firebase.firestore(Firebase.app, dbName)
     }
     single<FirebaseAuth>{ Firebase.auth }
 
