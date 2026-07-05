@@ -132,7 +132,7 @@ val sharedModule = module {
             authRepository = get(),
             updateVehicleLocationUseCase = get(),
             getVehicleListUseCase = get(),
-            singOutUseCase = get()
+            signOutUseCase = get()
         )
     }
 }

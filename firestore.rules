@@ -9,7 +9,7 @@ service cloud.firestore {
     }
 
     // Vehicles collection
-    match /cars/{carId} {
+    match /vehicles/{vehicleId} {
 
       // Read: owner or any shared user
       allow read: if request.auth != null

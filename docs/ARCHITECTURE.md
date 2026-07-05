@@ -75,7 +75,7 @@ Preparatory fixes before adding add-vehicle and vehicle-detail screens. See chan
 | Fixed `SingOutUseCase` typo → `SignOutUseCase` | `SingOutUseCase.kt` → `SignOutUseCase.kt` | All references updated (class, imports, parameters) |
 | Version-controlled Security Rules | `firestore.rules`, `firebase.json` | Owner-only writes, shared users can update `lastLocation` with email validation via `auth.token.email` |
 | Version-controlled indexes | `firestore.indexes.json` | Empty (no composite indexes needed yet) |
-| Deployed rules + indexes to Firebase | `(default)` DB | Rules apply to all databases via `{database}` wildcard |
+| Deployed rules + indexes to Firebase | Both databases | Rules use `match /vehicles/` (was `match /cars/` — wrong collection name) |
 | Enabled delete protection | Both `(default)` and `apark-at` | Prevents accidental database deletion |
 
 ### `fix/logout-data-leak`
@@ -92,7 +92,7 @@ Preparatory fixes before adding add-vehicle and vehicle-detail screens. See chan
 | Collection | Document ID | Key Fields |
 |------------|-------------|------------|
 | `users` | `FirebaseAuth.uid` | `email`, `name`, `userVehicles: List<String>` (vehicle IDs) |
-| `cars` | Auto-generated | `name`, `ownerId`, `sharedUsers: List<String>`, `inviteCode`, `lastLocation: LocationModel` |
+| `vehicles` | Auto-generated | `name`, `ownerId`, `sharedUsers: List<String>`, `inviteCode`, `lastLocation: LocationModel` |
 
 Debug builds use database name `"apark-at"`; release uses `"(default)"`. Configured in `SharedModule.kt`.
 
