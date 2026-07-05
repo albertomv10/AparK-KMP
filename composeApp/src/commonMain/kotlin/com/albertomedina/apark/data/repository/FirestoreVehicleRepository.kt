@@ -4,7 +4,6 @@ import com.albertomedina.apark.data.util.FirestoreConstants
 import com.albertomedina.apark.domain.model.User
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.domain.model.Vehicle.LocationModel
-import com.albertomedina.apark.domain.repository.UserRepository
 import com.albertomedina.apark.domain.repository.VehicleRepository
 import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -15,14 +14,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlin.random.Random
 
-class FirestoreRepository(
+class FirestoreVehicleRepository(
     private val firestore: FirebaseFirestore
-) : VehicleRepository, UserRepository {
-
-    // ==========================================
-    // IMPLEMENTACIÓN VEHICLE REPOSITORY
-    // ==========================================
+) : VehicleRepository {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getVehiclesForUser(userId: String): Flow<List<Vehicle>> {
@@ -31,13 +27,12 @@ class FirestoreRepository(
             .snapshots
             .flatMapLatest { userSnapshot ->
                 if (!userSnapshot.exists) return@flatMapLatest flowOf(emptyList<Vehicle>())
-                
+
                 val user = userSnapshot.data<User>()
                 val vehicleIds = user.userVehicles
 
                 if (vehicleIds.isEmpty()) return@flatMapLatest flowOf(emptyList<Vehicle>())
 
-                // Simplificamos: Escuchamos cada vehículo por separado y combinamos
                 val vehicleFlows = vehicleIds.map { id ->
                     firestore.collection(FirestoreConstants.CARS_COLLECTION)
                         .document(id)
@@ -67,7 +62,6 @@ class FirestoreRepository(
             val snapshot = firestore.collection(FirestoreConstants.CARS_COLLECTION)
                 .document(vehicleId)
                 .get()
-
             if (snapshot.exists) snapshot.data<Vehicle>().lastLocation else null
         } catch (e: Exception) {
             null
@@ -211,37 +205,5 @@ class FirestoreRepository(
     private fun generateInviteCode(): String {
         val chars = ('A'..'Z') + ('0'..'9')
         return (1..6).map { chars.random() }.joinToString("")
-    }
-
-    // ==========================================
-    // IMPLEMENTACIÓN USER REPOSITORY
-    // ==========================================
-
-    override fun getUser(userId: String): Flow<User> {
-        return firestore.collection(FirestoreConstants.USERS_COLLECTION)
-            .document(userId)
-            .snapshots
-            .map {
-                if (it.exists) it.data<User>() else User(id = userId)
-            }
-    }
-
-    override suspend fun updateUserCars(userId: String, carIds: List<String>) {
-        firestore.collection(FirestoreConstants.USERS_COLLECTION)
-            .document(userId)
-            .update(FirestoreConstants.CARS_FIELD to carIds)
-    }
-
-    override suspend fun createUser(user: User) {
-        try {
-            val docRef = firestore.collection(FirestoreConstants.USERS_COLLECTION).document(user.id)
-            val snapshot = docRef.get()
-
-            if (!snapshot.exists) {
-                docRef.set<User>(user)
-            }
-        } catch (e: Exception) {
-            println("Firestore: Error al crear usuario -> ${e.message}")
-        }
     }
 }

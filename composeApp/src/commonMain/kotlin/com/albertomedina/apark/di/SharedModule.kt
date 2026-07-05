@@ -1,7 +1,8 @@
 package com.albertomedina.apark.di
 
 import com.albertomedina.apark.data.repository.FirebaseAuthRepository
-import com.albertomedina.apark.data.repository.FirestoreRepository
+import com.albertomedina.apark.data.repository.FirestoreUserRepository
+import com.albertomedina.apark.data.repository.FirestoreVehicleRepository
 import com.albertomedina.apark.data.repository.LocationRepositoryImpl
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.repository.LocationRepository
@@ -59,9 +60,8 @@ val sharedModule = module {
     }
     single<FirebaseAuth>{ Firebase.auth }
 
-    single<VehicleRepository> { FirestoreRepository(firestore = get()) }
-
-    single<UserRepository> { FirestoreRepository(firestore = get()) }
+    single<VehicleRepository> { FirestoreVehicleRepository(firestore = get()) }
+    single<UserRepository> { FirestoreUserRepository(firestore = get()) }
 
     single<AuthRepository> { FirebaseAuthRepository(firebaseAuth = get()) }
 

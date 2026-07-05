@@ -6,6 +6,6 @@ class ShareVehicleWithUserUseCase (
     private val vehicleRepository: VehicleRepository
 ) {
     suspend operator fun invoke(vehicleId: String, userId: String) {
-        vehicleRepository.shareVehicleWithUser(vehicleId, vehicleId)
+        vehicleRepository.shareVehicleWithUser(vehicleId, userId)
     }
 }
