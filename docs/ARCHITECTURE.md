@@ -57,6 +57,15 @@ Preparatory fixes before adding add-vehicle and vehicle-detail screens. See chan
 | Fixed `vehicleId` → `userId` | `ShareVehicleWithUserUseCase.kt:9` | Function received `vehicleId` instead of `userId`, making sharing non-functional |
 | Split `FirestoreRepository` | `FirestoreVehicleRepository.kt`, `FirestoreUserRepository.kt` | Violated SRP — 13 methods spanning two domains. Split into vehicle and user classes |
 | Single Firestore instance in Koin | `SharedModule.kt` | Previously created two separate `FirestoreRepository` instances. Now one `FirebaseFirestore` shared by both repositories |
+| Added `$schema` to `opencode.json` | `opencode.json` | Schema annotation for IDE validation |
+
+### OpenCode Configuration (this session)
+
+| Change | File(s) | Reason |
+|--------|---------|--------|
+| Added Firebase MCP server config | `opencode.json` | `npx firebase-tools@latest mcp` for Firestore/Auth inspection via MCP |
+| Created `.firebaserc` | `.firebaserc` | Pins Firebase project `apark-617fd` |
+| Investigated MCP not showing up | — | Root cause: OpenCode was launched from `~/` not project root; MCP config in per-project `opencode.json` is invisible when running from a different directory |
 
 ### `fix/logout-data-leak`
 
