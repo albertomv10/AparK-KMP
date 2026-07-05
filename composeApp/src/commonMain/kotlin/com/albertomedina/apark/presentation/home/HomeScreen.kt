@@ -9,10 +9,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +51,8 @@ fun HomeScreen(
     var activeSnackbarMessage by remember { mutableStateOf<SnackbarMessage?>(null) }
     var pagerHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
+
+    var showMenu by remember { mutableStateOf(false) }
 
     var hasLocationPermission by remember { mutableStateOf(false) }
 
@@ -179,6 +184,39 @@ fun HomeScreen(
                     imageVector = Icons.Default.MyLocation,
                     contentDescription = stringResource(Res.string.home_center_map)
                 )
+            }
+
+            FloatingActionButton(
+                onClick = {
+                    showMenu = true
+                },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = paddingValues.calculateTopPadding() + 16.dp, end = 16.dp),
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = ""
+                )
+
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false },
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Logout") }, // Asegúrate de tener este string
+                        leadingIcon = {
+                            Icon(Icons.Default.Logout, contentDescription = null)
+                        },
+                        onClick = {
+                            showMenu = false
+                            viewModel.onEvent(HomeEvent.SignOutClicked)
+                        }
+                    )
+                }
             }
 
             SnackbarHost(

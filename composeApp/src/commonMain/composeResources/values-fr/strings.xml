@@ -41,7 +41,7 @@
     <!-- Home -->
     <string name="home_last_time">Dernière fois : %1$s</string>
     <string name="home_parked_by">Pour %1$s</string>
-    <string name="home_park_here">Se garer ici</string>
+    <string name="home_park_here">Garer</string>
     <string name="home_add_vehicle">Ajouter un nouveau véhicule</string>
     <string name="home_center_map">Centrer sur ma position</string>
     <string name="success_location_updated">Position mise à jour avec succès</string>

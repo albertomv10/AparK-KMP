@@ -40,7 +40,7 @@
 
     <!-- Home -->
     <string name="home_last_time">Última vez: %1$s</string>
-    <string name="home_park_here">Aparcar aquí</string>
+    <string name="home_park_here">Aparcar</string>
     <string name="home_add_vehicle">Añadir nuevo vehículo</string>
     <string name="home_center_map">Centrar en mi ubicación</string>
     <string name="home_parked_by">Aparcado por %1$s</string>

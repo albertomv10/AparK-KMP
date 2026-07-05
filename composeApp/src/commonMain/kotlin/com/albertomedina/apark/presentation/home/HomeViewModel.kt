@@ -1,29 +1,54 @@
 package com.albertomedina.apark.presentation.home
 
+import androidx.compose.animation.core.copy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
+import com.albertomedina.apark.domain.usecase.SingOutUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleLocationUseCase
 import com.albertomedina.apark.utils.SnackbarMessage
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val authRepository: AuthRepository,
     private val updateVehicleLocationUseCase: UpdateVehicleLocationUseCase,
-    private val getVehicleListUseCase: GetVehicleListUseCase
+    private val getVehicleListUseCase: GetVehicleListUseCase,
+    private val singOutUseCase: SingOutUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        loadVehicles()
+        observeAuthState()
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeAuthState() {
+        viewModelScope.launch {
+            authRepository.authStateChanges
+                .map { it?.uid }
+                .flatMapLatest { userId ->
+                    if (!userId.isNullOrBlank()) {
+                        getVehicleListUseCase(userId)
+                    } else {
+                        flowOf(emptyList())
+                    }
+                }
+                .collect { vehicleList ->
+                    _uiState.update { it.copy(vehicles = vehicleList) }
+                }
+        }
     }
 
     fun onEvent(event: HomeEvent) {
@@ -57,7 +82,7 @@ class HomeViewModel(
             }
 
             is HomeEvent.SignOutClicked -> {
-                _uiState.update { it.copy(shouldNavigateToLogin = true) }
+                performSingOut()
             }
 
             is HomeEvent.NavigationHandled -> {
@@ -78,20 +103,6 @@ class HomeViewModel(
 
             is HomeEvent.PermisionsDenied -> {
                 _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_gps_permissions")) }
-            }
-        }
-    }
-
-    fun loadVehicles() {
-        val userId = authRepository.getCurrentUser()?.uid
-
-        if (userId.isNullOrBlank()) {
-            return
-        }
-
-        viewModelScope.launch {
-            getVehicleListUseCase(userId).collect { vehicleList ->
-                _uiState.update { it.copy(vehicles = vehicleList) }
             }
         }
     }
@@ -181,6 +192,16 @@ class HomeViewModel(
             )
 
             _uiState.update { it.copy(isLoading = false, updatingVehicleId = null) }
+        }
+    }
+
+    private fun performSingOut(){
+        _uiState.update { it.copy(isLoading = true) }
+        viewModelScope.launch {
+            singOutUseCase().fold(
+                onSuccess = { _uiState.update { it.copy(isLoading = false, shouldNavigateToLogin = true) } },
+                onFailure = { _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_sing_out")) } }
+            )
         }
     }
 }
