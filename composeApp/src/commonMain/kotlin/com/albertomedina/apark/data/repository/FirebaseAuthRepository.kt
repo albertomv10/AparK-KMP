@@ -5,10 +5,12 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.auth.GoogleAuthProvider
 import dev.gitlive.firebase.auth.OAuthProvider
+import kotlinx.coroutines.flow.Flow
 
 class FirebaseAuthRepository(
     private val firebaseAuth: FirebaseAuth
 ) : AuthRepository {
+    override val authStateChanges: Flow<FirebaseUser?> = firebaseAuth.authStateChanged
 
     override suspend fun login(email: String, password: String): Result<Unit> {
         return try {

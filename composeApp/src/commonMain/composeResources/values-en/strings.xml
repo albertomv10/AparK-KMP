@@ -40,7 +40,7 @@
 
     <!-- Home -->
     <string name="home_last_time">Last time: %1$s</string>
-    <string name="home_park_here">Park here</string>
+    <string name="home_park_here">Park</string>
     <string name="home_add_vehicle">Add new vehicle</string>
     <string name="home_center_map">Center on my location</string>
     <string name="home_parked_by">Parked by %1$s</string>
