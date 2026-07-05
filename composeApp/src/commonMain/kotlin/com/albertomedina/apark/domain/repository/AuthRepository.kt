@@ -1,9 +1,11 @@
 package com.albertomedina.apark.domain.repository
 
 import dev.gitlive.firebase.auth.FirebaseUser
+import kotlinx.coroutines.flow.Flow
 
 
 interface AuthRepository {
+    val authStateChanges: Flow<FirebaseUser?>
     /**
      * Attempts to log in a user with the provided email and password.
      * @param email The user's email address.
