@@ -67,6 +67,17 @@ Preparatory fixes before adding add-vehicle and vehicle-detail screens. See chan
 | Created `.firebaserc` | `.firebaserc` | Pins Firebase project `apark-617fd` |
 | Investigated MCP not showing up | — | Root cause: OpenCode was launched from `~/` not project root; MCP config in per-project `opencode.json` is invisible when running from a different directory |
 
+### `main` — merged branches (this session)
+
+| Change | File(s) | Reason |
+|--------|---------|--------|
+| Merged `fix/pre-features-foundation` + `fix/logout-data-leak` into `main` | — | Combined all fixes into main |
+| Fixed `SingOutUseCase` typo → `SignOutUseCase` | `SingOutUseCase.kt` → `SignOutUseCase.kt` | All references updated (class, imports, parameters) |
+| Version-controlled Security Rules | `firestore.rules`, `firebase.json` | Owner-only writes, shared users can update `lastLocation` with email validation via `auth.token.email` |
+| Version-controlled indexes | `firestore.indexes.json` | Empty (no composite indexes needed yet) |
+| Deployed rules + indexes to Firebase | `(default)` DB | Rules apply to all databases via `{database}` wildcard |
+| Enabled delete protection | Both `(default)` and `apark-at` | Prevents accidental database deletion |
+
 ### `fix/logout-data-leak`
 
 | Change | File(s) | Reason |
@@ -87,7 +98,6 @@ Debug builds use database name `"apark-at"`; release uses `"(default)"`. Configu
 
 ## Known Issues
 
-- (Fixed) `SignOutUseCase` — sign-out use case
 - Apple Sign-In on Android is a no-op
 - Bottom navigation tabs (Map, My Cars, Profile) are cosmetic — no actual navigation
 - No add-vehicle or vehicle-detail screens (upcoming)

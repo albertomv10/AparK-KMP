@@ -61,21 +61,22 @@ Targets Android + iOS from a single `:composeApp` module.
 - Only 1 placeholder test (`ComposeAppCommonTest.kt`)
 - Apple Sign-In on Android is a no-op
 - GPS permission denied message uses hardcoded Spanish string instead of resource key
-- Firebase Security Rules and indexes not version-controlled (planned)
 
 ## Recent Changes
 
-- Auth data leak fixed via `flatMapLatest` on `authStateChanges` Flow (`fix/logout-data-leak` branch)
+- Both fix branches merged to `main` (`fix/pre-features-foundation` + `fix/logout-data-leak`)
+- Auth data leak fixed via `flatMapLatest` on `authStateChanges` Flow
 - `ShareVehicleWithUserUseCase` bug fixed: `vehicleId` → `userId`
 - Monolithic `FirestoreRepository` split into `FirestoreVehicleRepository` + `FirestoreUserRepository`
 - Silent try-catch fallback in Firestore init removed (fail fast on DB misconfiguration)
 - Firebase MCP configured in `opencode.json` with `.firebaserc`
+- `SingOutUseCase` renamed to `SignOutUseCase` (typo fix)
+- Firestore Security Rules (`firestore.rules`) and indexes (`firestore.indexes.json`) version-controlled and deployed
+- Delete protection enabled on both `(default)` and `apark-at` databases
 
 ## Git Branches
 
-- `fix/pre-features-foundation` — current branch, contains foundation fixes before vehicle CRUD screens
-- `fix/logout-data-leak` — auth data leak fix (not merged to main)
-- `main` — primary branch
+- `main` — primary branch (all fixes merged)
 
 ## Tests
 

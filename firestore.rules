@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // User profiles: only the owner can read/write their own document
+    match /users/{userId} {
+      allow read, write: if request.auth != null
+                          && request.auth.uid == userId;
+    }
+
+    // Vehicles collection
+    match /cars/{carId} {
+
+      // Read: owner or any shared user
+      allow read: if request.auth != null
+                  && (request.auth.uid == resource.data.ownerId
+                      || request.auth.uid in resource.data.sharedUsers);
+
+      // Create: must claim ownership
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.ownerId;
+
+      // Delete: owner only
+      allow delete: if request.auth != null
+                    && request.auth.uid == resource.data.ownerId;
+
+      // Update: owner may change anything;
+      // shared users may only update lastLocation and must set their own email
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.ownerId
+        ||
+        (
+          request.auth.uid in resource.data.sharedUsers
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLocation'])
+          && request.resource.data.lastLocation.user.email == request.auth.token.email
+        )
+      );
+    }
+  }
+}
