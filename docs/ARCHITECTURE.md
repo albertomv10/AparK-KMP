@@ -73,7 +73,7 @@ Preparatory fixes before adding add-vehicle and vehicle-detail screens. See chan
 |--------|---------|--------|
 | Added `authStateChanges` Flow | `AuthRepository.kt`, `FirebaseAuthRepository.kt` | Expose reactive auth state for ViewModel observation |
 | Reactive vehicle loading | `HomeViewModel.kt` | Old `loadVehicles()` in `init` never ran on re-login. New `observeAuthState()` uses `flatMapLatest` |
-| Logout button + flow | `HomeScreen.kt`, `SingOutUseCase.kt`, `SharedModule.kt` | Added DropdownMenu with Logout option that signs out and navigates to Login |
+| Logout button + flow | `HomeScreen.kt`, `SignOutUseCase.kt`, `SharedModule.kt` | Added DropdownMenu with Logout option that signs out and navigates to Login |
 | AGENTS.md | Root | AI configuration file for project context |
 
 ## Firestore Collections
@@ -87,7 +87,7 @@ Debug builds use database name `"apark-at"`; release uses `"(default)"`. Configu
 
 ## Known Issues
 
-- `SingOutUseCase.kt` filename has typo (should be `SignOutUseCase`)
+- (Fixed) `SignOutUseCase` — sign-out use case
 - Apple Sign-In on Android is a no-op
 - Bottom navigation tabs (Map, My Cars, Profile) are cosmetic — no actual navigation
 - No add-vehicle or vehicle-detail screens (upcoming)

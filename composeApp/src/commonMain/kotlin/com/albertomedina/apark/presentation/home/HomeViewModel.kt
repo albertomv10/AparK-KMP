@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
-import com.albertomedina.apark.domain.usecase.SingOutUseCase
+import com.albertomedina.apark.domain.usecase.SignOutUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleLocationUseCase
 import com.albertomedina.apark.utils.SnackbarMessage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,7 +23,7 @@ class HomeViewModel(
     private val authRepository: AuthRepository,
     private val updateVehicleLocationUseCase: UpdateVehicleLocationUseCase,
     private val getVehicleListUseCase: GetVehicleListUseCase,
-    private val singOutUseCase: SingOutUseCase
+    private val signOutUseCase: SignOutUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -82,7 +82,7 @@ class HomeViewModel(
             }
 
             is HomeEvent.SignOutClicked -> {
-                performSingOut()
+                performSignOut()
             }
 
             is HomeEvent.NavigationHandled -> {
@@ -195,10 +195,10 @@ class HomeViewModel(
         }
     }
 
-    private fun performSingOut(){
+    private fun performSignOut(){
         _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
-            singOutUseCase().fold(
+            signOutUseCase().fold(
                 onSuccess = { _uiState.update { it.copy(isLoading = false, shouldNavigateToLogin = true) } },
                 onFailure = { _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_sing_out")) } }
             )

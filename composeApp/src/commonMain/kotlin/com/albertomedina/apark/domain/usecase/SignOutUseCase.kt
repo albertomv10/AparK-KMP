@@ -2,7 +2,7 @@ package com.albertomedina.apark.domain.usecase
 
 import com.albertomedina.apark.domain.repository.AuthRepository
 
-class SingOutUseCase(
+class SignOutUseCase(
     private val authRepository: AuthRepository
 ) {
     suspend operator fun invoke(): Result<Unit>{

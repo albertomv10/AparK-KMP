@@ -56,7 +56,7 @@ Targets Android + iOS from a single `:composeApp` module.
 
 ## Known Incomplete / Buggy Areas
 
-- `SingOutUseCase` filename has typo (should be `SignOutUseCase`)
+- `SignOutUseCase` — use case for logout flow
 - No add-vehicle screen or vehicle-detail screen — navigation callbacks are no-ops
 - Only 1 placeholder test (`ComposeAppCommonTest.kt`)
 - Apple Sign-In on Android is a no-op
