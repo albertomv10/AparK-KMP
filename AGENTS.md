@@ -5,6 +5,15 @@
 Kotlin Multiplatform (KMP) + Compose Multiplatform app for tracking parked vehicles.
 Targets Android + iOS from a single `:composeApp` module.
 
+## Way of working — Spec-Driven Development
+
+This project uses **Spec-Driven Development**. Before writing code for a feature,
+author the spec, then the design, then the tasks. See [`docs/PROCESS.md`](docs/PROCESS.md)
+for the full loop and how each phase maps to plan mode. Specs live in
+[`docs/specs/`](docs/specs/) (one folder `NNN-name/` per feature with `spec.md`,
+`design.md`, `tasks.md`); shipped changes are logged in [`CHANGELOG.md`](CHANGELOG.md).
+Integrate to `main` via Pull Request, never direct pushes.
+
 ## OpenCode Setup
 
 - **Launch from project root**: `opencode` must be run from `/Users/albertomedina/AndroidStudioProjects/Apark` to load per-project `opencode.json` (which contains MCP server config and other settings).
