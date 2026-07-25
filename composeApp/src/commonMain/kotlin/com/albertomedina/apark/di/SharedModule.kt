@@ -8,6 +8,7 @@ import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.repository.LocationRepository
 import com.albertomedina.apark.domain.repository.UserRepository
 import com.albertomedina.apark.domain.repository.VehicleRepository
+import com.albertomedina.apark.domain.usecase.CreateVehicleUseCase
 import com.albertomedina.apark.domain.usecase.GetCurrentLocationUseCase
 import com.albertomedina.apark.domain.usecase.GetLastVehicleLocationUseCase
 import com.albertomedina.apark.domain.usecase.GetUserUseCase
@@ -25,6 +26,7 @@ import com.albertomedina.apark.presentation.auth.login.LoginViewModel
 import com.albertomedina.apark.presentation.auth.register.RegisterViewModel
 import com.albertomedina.apark.presentation.auth.resetPassword.ResetPassWordViewmodel
 import com.albertomedina.apark.presentation.auth.verification.EmailVerificationViewModel
+import com.albertomedina.apark.presentation.addvehicle.AddVehicleViewModel
 import com.albertomedina.apark.presentation.home.HomeViewModel
 import com.albertomedina.apark.presentation.splash.SplashViewModel
 import dev.gitlive.firebase.Firebase
@@ -72,6 +74,7 @@ val sharedModule = module {
     // =============================
 
     factory { GetVehicleListUseCase(repository = get()) }
+    factory { CreateVehicleUseCase(repository = get()) }
     factory { GetVehicleByIdUseCase(repository = get()) }
     factory { UpdateVehicleUseCase(repository = get()) }
     factory { RemoveUserFromVehicleUseCase(repository = get()) }
@@ -133,6 +136,13 @@ val sharedModule = module {
             updateVehicleLocationUseCase = get(),
             getVehicleListUseCase = get(),
             signOutUseCase = get()
+        )
+    }
+
+    viewModel {
+        AddVehicleViewModel(
+            createVehicleUseCase = get(),
+            authRepository = get()
         )
     }
 }

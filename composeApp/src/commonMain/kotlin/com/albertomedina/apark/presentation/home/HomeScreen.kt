@@ -1,10 +1,10 @@
 package com.albertomedina.apark.presentation.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -309,29 +310,39 @@ fun VehicleCard(
                 )
 
 
-                val timestamp = vehicle.lastLocation?.timestamp
-
                 val lastLocation = vehicle.lastLocation
-                val userName = lastLocation?.user?.name?.takeIf { it.isNotBlank() }
-                val userEmail = lastLocation?.user?.email?.takeIf { it.isNotBlank() }
+                val hasLocation = lastLocation != null && lastLocation.timestamp != 0L
 
-                val displayName = userName ?: userEmail ?: ""
-                val updatedBy = stringResource(Res.string.home_parked_by, displayName)
+                if (!hasLocation) {
+                    Text(
+                        text = stringResource(Res.string.home_not_parked_yet),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    val userName = lastLocation.user?.name?.takeIf { it.isNotBlank() }
+                    val userEmail = lastLocation.user?.email?.takeIf { it.isNotBlank() }
 
-                DynamicTimeText(
-                    timestamp = timestamp,
-                    text = Res.string.home_last_time,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                    val displayName = userName ?: userEmail ?: ""
+                    val updatedBy = stringResource(Res.string.home_parked_by, displayName)
 
-                Text(
-                    text = updatedBy,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                    DynamicTimeText(
+                        timestamp = lastLocation.timestamp,
+                        text = Res.string.home_last_time,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Text(
+                        text = updatedBy,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             if (isLoading && isSpecificLoading){
                 CircularProgressIndicator()
@@ -353,29 +364,41 @@ fun VehicleCard(
 @Composable
 fun AddVehicleCard(onClick: () -> Unit) {
     Card(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp)
-            .border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+            .height(180.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f)
+        ),
+        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.45f))
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = stringResource(Res.string.home_add_vehicle),
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(56.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = stringResource(Res.string.home_add_vehicle),
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
             )
         }
     }

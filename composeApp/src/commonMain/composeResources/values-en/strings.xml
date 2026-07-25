@@ -83,4 +83,13 @@
     <string name="error_undo_failed">Action could not be undone</string>
     <string name="error_google_login" formatted="false">Google Error: %s</string>
     <string name="error_apple_login" formatted="false">Apple Error: %s</string>
+    <string name="add_vehicle_title">New vehicle</string>
+    <string name="add_vehicle_name_label">Vehicle name</string>
+    <string name="add_vehicle_name_error">Enter a name</string>
+    <string name="add_vehicle_plate_label">License plate (optional)</string>
+    <string name="add_vehicle_save">Save</string>
+    <string name="add_vehicle_back">Back</string>
+    <string name="add_vehicle_error_not_authenticated">You must be signed in to add a vehicle</string>
+    <string name="add_vehicle_error_generic">Couldn't create the vehicle. Please try again</string>
+    <string name="home_not_parked_yet">Not parked yet</string>
 </resources>

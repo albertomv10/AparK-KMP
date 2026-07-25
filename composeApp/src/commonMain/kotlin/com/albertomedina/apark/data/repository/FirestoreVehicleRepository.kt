@@ -9,11 +9,14 @@ import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.where
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.retryWhen
 import kotlin.random.Random
 
 class FirestoreVehicleRepository(
@@ -38,6 +41,20 @@ class FirestoreVehicleRepository(
                         .document(id)
                         .snapshots
                         .map { if (it.exists) it.data<Vehicle>() else null }
+                        // A listen can fail transiently (watch-stream races right after a batch
+                        // write), so retry before giving up: dropping a just-created vehicle
+                        // would hide it until the app restarts.
+                        .retryWhen { _, attempt ->
+                            if (attempt < MAX_SNAPSHOT_RETRIES) {
+                                delay(SNAPSHOT_RETRY_DELAY_MS)
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                        // Still failing: the document was deleted (dangling id) or the user lost
+                        // access. Drop that vehicle instead of letting the error kill the stream.
+                        .catch { emit(null) }
                 }
 
                 combine(vehicleFlows) { vehicles ->
@@ -97,7 +114,7 @@ class FirestoreVehicleRepository(
         }
     }
 
-    override suspend fun createVehicle(userId: String, name: String): Result<Unit> {
+    override suspend fun createVehicle(userId: String, name: String, licensePlate: String): Result<Unit> {
         return try {
             val carRef = firestore.collection(FirestoreConstants.CARS_COLLECTION).document
             val inviteCode = generateInviteCode()
@@ -105,6 +122,7 @@ class FirestoreVehicleRepository(
             val newVehicle = Vehicle(
                 id = carRef.id,
                 name = name,
+                licensePlate = licensePlate,
                 ownerId = userId,
                 sharedUsers = emptyList(),
                 inviteCode = inviteCode,
@@ -205,5 +223,10 @@ class FirestoreVehicleRepository(
     private fun generateInviteCode(): String {
         val chars = ('A'..'Z') + ('0'..'9')
         return (1..6).map { chars.random() }.joinToString("")
+    }
+
+    private companion object {
+        const val MAX_SNAPSHOT_RETRIES = 3L
+        const val SNAPSHOT_RETRY_DELAY_MS = 1000L
     }
 }

@@ -10,6 +10,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.albertomedina.apark.presentation.auth.login.LoginScreen
 import com.albertomedina.apark.presentation.auth.register.RegisterScreen
 import com.albertomedina.apark.presentation.auth.resetPassword.ResetPasswordScreen
+import com.albertomedina.apark.presentation.addvehicle.AddVehicleScreen
 import com.albertomedina.apark.presentation.auth.verification.EmailVerificationScreen
 import com.albertomedina.apark.presentation.home.HomeScreen
 import com.albertomedina.apark.presentation.splash.SplashScreen
@@ -32,6 +33,8 @@ data object ResetPassword: Destiny
 data object VerifyEmail: Destiny
 @Serializable
 data object Home: Destiny
+@Serializable
+data object AddVehicle: Destiny
 
 // Creates the required serialization configuration for open polymorphism
 private val config = SavedStateConfiguration {
@@ -43,6 +46,7 @@ private val config = SavedStateConfiguration {
             subclass(ResetPassword::class, ResetPassword.serializer())
             subclass(VerifyEmail::class, VerifyEmail.serializer())
             subclass(Home::class, Home.serializer())
+            subclass(AddVehicle::class, AddVehicle.serializer())
         }
     }
 }
@@ -106,7 +110,16 @@ fun BasicNavigationWrapper(){
                             backStack.add(Login)
                         },
                         onNavigateToDetails = {},
-                        onNavigateToAddVehicle = {}
+                        onNavigateToAddVehicle = {
+                            backStack.add(AddVehicle)
+                        }
+                    )
+                }
+                is AddVehicle -> NavEntry(key) {
+                    AddVehicleScreen(
+                        onBack = {
+                            backStack.removeLastOrNull()
+                        }
                     )
                 }
                 is VerifyEmail -> NavEntry(key) {

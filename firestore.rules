@@ -16,9 +16,18 @@ service cloud.firestore {
                   && (request.auth.uid == resource.data.ownerId
                       || request.auth.uid in resource.data.sharedUsers);
 
-      // Create: must claim ownership
+      // Create: caller must claim ownership and provide a valid, "empty" vehicle
+      // (no shared users and no location yet). Optional fields are read defensively
+      // because empty defaults (licensePlate, sharedUsers) may be omitted on write.
       allow create: if request.auth != null
-                    && request.auth.uid == request.resource.data.ownerId;
+                    && request.auth.uid == request.resource.data.ownerId
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.name.size() <= 60
+                    && request.resource.data.get('licensePlate', '') is string
+                    && request.resource.data.get('licensePlate', '').size() <= 15
+                    && request.resource.data.get('sharedUsers', []).size() == 0
+                    && request.resource.data.get('lastLocation', null) == null;
 
       // Delete: owner only
       allow delete: if request.auth != null
