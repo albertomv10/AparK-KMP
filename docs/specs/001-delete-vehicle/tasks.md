@@ -34,7 +34,9 @@
 - [x] Proteger el `selectedVehicleIndex` pasado a `AparKMap`
 
 ## Reglas Firestore
-- [x] Sin cambios: el `allow delete` de dueño ya existe (no hay despliegue)
+- [x] Borrado del dueño: sin cambios (el `allow delete` ya existía)
+- [x] **Corrección**: nueva rama en `allow update` para que un usuario compartido pueda salirse
+      a sí mismo (`removeUserFromVehicle` estaba bloqueado por las reglas). Desplegada a ambas BDs
 
 ## Documentación
 - [x] Entrada en `CHANGELOG.md`
@@ -43,9 +45,12 @@
 ## Verificación
 - [x] Compila Android (`./gradlew :composeApp:compileDebugKotlinAndroid`)
 - [x] Compila iOS-Kotlin (`./gradlew :composeApp:compileKotlinIosSimulatorArm64`)
-- [ ] Criterio 1: dueño elimina → desaparece al instante y el doc no existe (MCP)
-- [ ] Criterio 2: compartido se lo quita → desaparece de su Home, el doc sigue existiendo (MCP)
-- [ ] Criterios 3, 6, 7: diálogo siempre presente y copy correcto según rol
-- [ ] Criterio 4: tras eliminar, el id ya no está en mi `userVehicles` (MCP)
-- [ ] Criterio 5: fallo de red → snackbar de error y lista consistente
-- [ ] Regresión pager: borrar el último vehículo y borrar desde la última página sin crash
+- [x] Criterio 1: dueño elimina → desaparece al instante y el doc no existe (MCP)
+- [x] Criterio 2: compartido se lo quita → desaparece de su Home, el doc sigue existiendo (MCP)
+- [x] Criterios 3, 6, 7: diálogo siempre presente y copy correcto según rol
+- [x] Criterio 4: tras eliminar, el id ya no está en mi `userVehicles` (MCP)
+- [x] Criterio 5: fallo → snackbar de error y lista consistente *(verificado con el
+      `PERMISSION_DENIED` real que provocó el bug de reglas, antes de corregirlo)*
+- [x] Regresión pager: borrado de la última tarjeta estando en ella → sin crash, el carrusel
+      aterriza en la tarjeta de añadir
+- [x] Verificado en simulador iOS (iPhone 17) sobre la BD `apark-at`

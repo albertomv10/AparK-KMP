@@ -29,6 +29,10 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   a las bases de datos `(default)` y `apark-at`.
 
 ### Fixed
+- Un usuario con el que se comparte un vehículo no podía quitárselo de su lista: las reglas
+  solo le permitían modificar `lastLocation`, así que la operación se rechazaba con
+  `PERMISSION_DENIED`. Se añadió una rama a la regla `allow update` que permite a un miembro
+  salirse a sí mismo (y solo a sí mismo) de `sharedUsers`.
 - Posible `IndexOutOfBoundsException` en el carrusel de la Home: el pager accedía a la lista
   de vehículos por índice sin protección y no acotaba la página seleccionada, por lo que al
   encoger la lista (p. ej. al eliminar) podía apuntar fuera de rango.

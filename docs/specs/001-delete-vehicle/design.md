@@ -47,7 +47,31 @@ proyecto— con copy distinto según seas dueño o miembro compartido.
 - **Modelo**: sin cambios.
 - **Firestore**: un único `batch` atómico → `delete(vehicles/{id})` + `arrayRemove` del id en
   `users/{uid}.userVehicles`. Ambas escrituras están permitidas por las reglas actuales.
-- **Reglas**: **ninguna modificación** (el `allow delete` de dueño ya existe). No hay despliegue.
+- **Reglas**: el borrado del dueño **no** requiere cambios (`allow delete` ya existía), pero el
+  flujo "quitármelo" **sí**. Ver la corrección más abajo.
+
+### Corrección durante la implementación: el flujo del miembro compartido estaba bloqueado
+
+La suposición inicial de que bastaba con reutilizar `removeUserFromVehicle` **era incorrecta**.
+Ese método modifica `sharedUsers`, pero la regla `allow update` solo permitía a un usuario
+compartido tocar `lastLocation`, así que Firestore denegaba la operación con
+`PERMISSION_DENIED`. Era código muerto —nunca había estado conectado a ninguna UI—, por lo que
+el fallo nunca se había manifestado. Se detectó al **ejecutar** el criterio 2 en el simulador.
+
+Solución: una tercera rama en `allow update` que permite a un usuario **salirse a sí mismo**,
+y solo a sí mismo:
+
+```
+|| (
+  request.auth.uid in resource.data.sharedUsers
+  && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sharedUsers'])
+  && !(request.auth.uid in request.resource.data.sharedUsers)
+  && resource.data.sharedUsers.removeAll([request.auth.uid]) == request.resource.data.sharedUsers
+)
+```
+
+Las dos últimas condiciones impiden que alguien use esta vía para expulsar a otros miembros.
+Desplegada a `(default)` y `apark-at`.
 
 ## Decisiones y alternativas consideradas
 
