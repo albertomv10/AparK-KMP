@@ -141,6 +141,25 @@ class FirestoreVehicleRepository(
         }
     }
 
+    override suspend fun deleteVehicle(vehicleId: String, userId: String): Result<Unit> {
+        return try {
+            val carRef = firestore.collection(FirestoreConstants.CARS_COLLECTION).document(vehicleId)
+            val userRef = firestore.collection(FirestoreConstants.USERS_COLLECTION).document(userId)
+
+            // Deletes the vehicle and drops it from the caller's own list atomically. Other
+            // members keep a dangling id until the cleanup function (spec 002) exists; the
+            // vehicle stream already discards those.
+            val batch = firestore.batch()
+            batch.delete(carRef)
+            batch.update(userRef, FirestoreConstants.CARS_FIELD to FieldValue.arrayRemove(vehicleId))
+            batch.commit()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun updateVehicle(vehicle: Vehicle): Result<Unit> {
         return try {
             firestore.collection(FirestoreConstants.CARS_COLLECTION)

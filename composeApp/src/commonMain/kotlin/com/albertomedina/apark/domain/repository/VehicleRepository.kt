@@ -11,6 +11,7 @@ interface VehicleRepository {
     suspend fun updateVehicleLocation(vehicleId: String, location: LocationModel): Result<Unit>
     suspend fun shareVehicleWithUser(vehicleId: String, userId: String)
     suspend fun createVehicle(userId: String, name: String, licensePlate: String = ""): Result<Unit>
+    suspend fun deleteVehicle(vehicleId: String, userId: String): Result<Unit>
     suspend fun updateVehicle(vehicle: Vehicle): Result<Unit>
     suspend fun joinVehicleByCodeOrId(identifier: String, userId: String): Result<Unit>
     suspend fun removeUserFromVehicle(vehicleId: String, userId: String): Result<Unit>

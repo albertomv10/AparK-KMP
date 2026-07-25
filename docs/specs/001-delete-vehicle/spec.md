@@ -1,7 +1,7 @@
 # Spec: Eliminar vehículo
 
 - **ID**: 001-delete-vehicle
-- **Estado**: En revisión
+- **Estado**: Aprobada
 - **Fecha**: 2026-07-25
 
 ## Problema / Por qué
@@ -56,6 +56,14 @@ primera no existe todavía.
    documento **sigue existiendo** y el dueño lo sigue viendo.
 3. **Dado** cualquier flujo de eliminación, **cuando** se me presenta la acción,
    **entonces** aparece un **diálogo de confirmación** antes de ejecutarla.
+6. **Dado** que soy el **dueño** de un vehículo, **cuando** se muestra el diálogo de
+   confirmación, **entonces** el texto advierte explícitamente de que la acción
+   **elimina el vehículo por completo y para todos los miembros**, y de que si desea
+   que el vehículo siga existiendo debe **transferir la propiedad** a otro miembro
+   (funcionalidad futura; ver *Fuera de alcance*).
+7. **Dado** que soy un **usuario compartido**, **cuando** se muestra el diálogo de
+   confirmación, **entonces** el texto deja claro que **solo se quita de mi lista** y
+   que el vehículo seguirá existiendo para el resto.
 4. **Dado** que soy el dueño y elimino el vehículo, **cuando** se completa,
    **entonces** el ID del vehículo ya no está en **mi** `userVehicles`.
 5. **Dado** un fallo de red/permiso durante la eliminación, **cuando** ocurre,
@@ -83,5 +91,7 @@ primera no existe todavía.
 
 - Undo / restaurar un vehículo eliminado.
 - Historial o soft-delete permanente visible al usuario.
-- Transferencia de propiedad como alternativa al borrado (ya existe
-  `transferVehicleOwnership`, pero no forma parte de esta feature).
+- **Transferir la propiedad** como alternativa al borrado: el repositorio ya expone
+  `transferVehicleOwnership`, pero **no hay UI** y no se implementa aquí. Esta feature
+  solo la **menciona** en el diálogo del dueño (criterio 6) como camino recomendado
+  para conservar el vehículo; la funcionalidad llegará en una spec posterior.
