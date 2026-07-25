@@ -97,7 +97,7 @@ class FirestoreVehicleRepository(
         }
     }
 
-    override suspend fun createVehicle(userId: String, name: String): Result<Unit> {
+    override suspend fun createVehicle(userId: String, name: String, licensePlate: String): Result<Unit> {
         return try {
             val carRef = firestore.collection(FirestoreConstants.CARS_COLLECTION).document
             val inviteCode = generateInviteCode()
@@ -105,6 +105,7 @@ class FirestoreVehicleRepository(
             val newVehicle = Vehicle(
                 id = carRef.id,
                 name = name,
+                licensePlate = licensePlate,
                 ownerId = userId,
                 sharedUsers = emptyList(),
                 inviteCode = inviteCode,

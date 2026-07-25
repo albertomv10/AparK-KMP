@@ -78,7 +78,7 @@ fun DynamicTimeText(
             "${relativeTime.day} $month"
         }
 
-        else -> {}
+        else -> ""
     }
 
 

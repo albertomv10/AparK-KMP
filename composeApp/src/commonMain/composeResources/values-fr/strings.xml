@@ -83,4 +83,13 @@
     <string name="error_undo_failed">L'action n'a pas pu être annulée</string>
     <string name="error_google_login" formatted="false">Erreur Google : %s</string>
     <string name="error_apple_login" formatted="false">Erreur Apple : %s</string>
+    <string name="add_vehicle_title">Nouveau véhicule</string>
+    <string name="add_vehicle_name_label">Nom du véhicule</string>
+    <string name="add_vehicle_name_error">Saisissez un nom</string>
+    <string name="add_vehicle_plate_label">Plaque d'immatriculation (facultatif)</string>
+    <string name="add_vehicle_save">Enregistrer</string>
+    <string name="add_vehicle_back">Retour</string>
+    <string name="add_vehicle_error_not_authenticated">Vous devez être connecté pour ajouter un véhicule</string>
+    <string name="add_vehicle_error_generic">Impossible de créer le véhicule. Veuillez réessayer</string>
+    <string name="home_not_parked_yet">Pas encore garé</string>
 </resources>

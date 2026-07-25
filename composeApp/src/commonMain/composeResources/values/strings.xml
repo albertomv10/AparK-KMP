@@ -83,4 +83,13 @@
     <string name="error_undo_failed">No se pudo deshacer la acción</string>
     <string name="error_google_login" formatted="false">Error Google: %s</string>
     <string name="error_apple_login" formatted="false">Error Apple: %s</string>
+    <string name="add_vehicle_title">Nuevo vehículo</string>
+    <string name="add_vehicle_name_label">Nombre del vehículo</string>
+    <string name="add_vehicle_name_error">Introduce un nombre</string>
+    <string name="add_vehicle_plate_label">Matrícula (opcional)</string>
+    <string name="add_vehicle_save">Guardar</string>
+    <string name="add_vehicle_back">Volver</string>
+    <string name="add_vehicle_error_not_authenticated">Debes iniciar sesión para añadir un vehículo</string>
+    <string name="add_vehicle_error_generic">No se pudo crear el vehículo. Inténtalo de nuevo</string>
+    <string name="home_not_parked_yet">Aún no aparcado</string>
 </resources>
