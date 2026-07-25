@@ -53,6 +53,8 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            // Common BackHandler (androidx.compose.ui.backhandler); not pulled in by compose.ui
+            implementation("org.jetbrains.compose.ui:ui-backhandler:${libs.versions.composeMultiplatform.get()}")
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             

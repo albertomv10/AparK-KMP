@@ -92,4 +92,17 @@
     <string name="add_vehicle_error_not_authenticated">You must be signed in to add a vehicle</string>
     <string name="add_vehicle_error_generic">Couldn't create the vehicle. Please try again</string>
     <string name="home_not_parked_yet">Not parked yet</string>
+    <string name="delete_vehicle_action">Delete vehicle</string>
+    <string name="remove_vehicle_action">Remove from my list</string>
+    <string name="delete_vehicle_confirm_title">Delete %1$s?</string>
+    <string name="delete_vehicle_confirm_message">This deletes the vehicle completely and for all of its members, and cannot be undone. If you want the vehicle to remain, transfer ownership to another member first.</string>
+    <string name="delete_vehicle_confirm_action">Delete</string>
+    <string name="remove_vehicle_confirm_title">Remove %1$s from your list?</string>
+    <string name="remove_vehicle_confirm_message">The vehicle will no longer appear in your list, but it will still exist for the other members.</string>
+    <string name="remove_vehicle_confirm_action">Remove</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete_vehicle_success_deleted">Vehicle deleted</string>
+    <string name="delete_vehicle_success_removed">Vehicle removed from your list</string>
+    <string name="delete_vehicle_error">Could not complete the action. Please try again</string>
+    <string name="delete_vehicle_error_not_authenticated">You must be signed in to do this</string>
 </resources>

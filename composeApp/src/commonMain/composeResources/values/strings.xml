@@ -92,4 +92,17 @@
     <string name="add_vehicle_error_not_authenticated">Debes iniciar sesión para añadir un vehículo</string>
     <string name="add_vehicle_error_generic">No se pudo crear el vehículo. Inténtalo de nuevo</string>
     <string name="home_not_parked_yet">Aún no aparcado</string>
+    <string name="delete_vehicle_action">Eliminar vehículo</string>
+    <string name="remove_vehicle_action">Quitar de mi lista</string>
+    <string name="delete_vehicle_confirm_title">¿Eliminar %1$s?</string>
+    <string name="delete_vehicle_confirm_message">Esta acción elimina el vehículo por completo y para todos sus miembros, y no se puede deshacer. Si quieres que el vehículo siga existiendo, transfiere antes la propiedad a otro miembro.</string>
+    <string name="delete_vehicle_confirm_action">Eliminar</string>
+    <string name="remove_vehicle_confirm_title">¿Quitar %1$s de tu lista?</string>
+    <string name="remove_vehicle_confirm_message">El vehículo dejará de aparecer en tu lista, pero seguirá existiendo para el resto de miembros.</string>
+    <string name="remove_vehicle_confirm_action">Quitar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="delete_vehicle_success_deleted">Vehículo eliminado</string>
+    <string name="delete_vehicle_success_removed">Vehículo quitado de tu lista</string>
+    <string name="delete_vehicle_error">No se pudo completar la acción. Inténtalo de nuevo</string>
+    <string name="delete_vehicle_error_not_authenticated">Debes iniciar sesión para hacer esto</string>
 </resources>

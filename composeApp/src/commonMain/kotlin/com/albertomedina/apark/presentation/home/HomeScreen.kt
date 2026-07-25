@@ -3,6 +3,9 @@ package com.albertomedina.apark.presentation.home
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,6 +14,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
@@ -18,11 +23,13 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -30,6 +37,7 @@ import androidx.compose.ui.zIndex
 import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.domain.model.Vehicle
+import com.albertomedina.apark.presentation.components.AparKConfirmDialog
 import com.albertomedina.apark.presentation.components.AparKMap
 import com.albertomedina.apark.presentation.components.AparkBottomNavigationBar
 import com.albertomedina.apark.presentation.components.DynamicTimeText
@@ -39,7 +47,7 @@ import com.albertomedina.apark.utils.SnackbarMessage
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
@@ -79,6 +87,10 @@ fun HomeScreen(
         "error_location_save" -> stringResource(Res.string.error_location_save)
         "error_gps_permissions" -> stringResource(Res.string.error_gps_permissions)
         "error_undo_failed" -> stringResource(Res.string.error_undo_failed)
+        HomeViewModel.SUCCESS_DELETED_KEY -> stringResource(Res.string.delete_vehicle_success_deleted)
+        HomeViewModel.SUCCESS_REMOVED_KEY -> stringResource(Res.string.delete_vehicle_success_removed)
+        HomeViewModel.ERROR_DELETE_KEY -> stringResource(Res.string.delete_vehicle_error)
+        HomeViewModel.ERROR_NOT_AUTHENTICATED_KEY -> stringResource(Res.string.delete_vehicle_error_not_authenticated)
         else -> state.snackbarMessage?.message
     }
 
@@ -143,11 +155,27 @@ fun HomeScreen(
         }
     }
 
+    // Deleting shrinks the list: pull the current page back into range, otherwise the pager
+    // keeps pointing past the end (and the map would render a stale selection).
+    LaunchedEffect(state.vehicles.size) {
+        val lastPage = state.vehicles.size
+        if (pagerState.currentPage > lastPage) {
+            pagerState.scrollToPage(lastPage)
+            viewModel.onEvent(HomeEvent.OnVehicleSwiped(lastPage))
+        }
+    }
+
     LaunchedEffect(state.shouldNavigateToLogin) {
         if (state.shouldNavigateToLogin) {
             onNavigateToLogin()
             viewModel.onEvent(HomeEvent.NavigationHandled)
         }
+    }
+
+    // While editing, back leaves the mode rather than the screen. Only enabled in edit mode,
+    // so normal back behaviour is untouched.
+    BackHandler(enabled = state.isEditMode) {
+        viewModel.onEvent(HomeEvent.EditModeExited)
     }
 
     Scaffold(
@@ -159,13 +187,27 @@ fun HomeScreen(
                 Modifier.fillMaxSize(),
                 pagerHeight,
                 state.vehicles,
-                state.selectedVehicleIndex,
+                state.selectedVehicleIndex.coerceIn(0, maxOf(0, state.vehicles.lastIndex)),
                 state.centerCameraTrigger,
                 onMarkerDragged = {id, latitude, longitude ->
                     viewModel.onEvent(HomeEvent.OnMarkerDragged(id, latitude, longitude))
 
                 }
             )
+
+            // While editing, a scrim locks the map: it swallows gestures that would otherwise
+            // pan it or drag a marker, dims it to signal the mode, and doubles as the way out.
+            if (state.isEditMode) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.25f))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { viewModel.onEvent(HomeEvent.EditModeExited) }
+                )
+            }
 
             FloatingActionButton(
                 onClick = {
@@ -251,50 +293,92 @@ fun HomeScreen(
                     }
                     .padding(bottom = paddingValues.calculateBottomPadding() + 24.dp)
             ) {
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 48.dp),
-                    pageSpacing = 16.dp
-                ) { page ->
-                    if (page == state.vehicles.size) {
-                        AddVehicleCard(onClick = onNavigateToAddVehicle)
-                    } else {
-                        val vehicle = state.vehicles[page]
+                Column(modifier = Modifier.fillMaxWidth()) {
 
-                        VehicleCard(
-                            isLoading = state.isLoading,
-                            isSpecificLoading = state.updatingVehicleId == vehicle.id,
-                            vehicle = vehicle,
-                            onClick = { onNavigateToDetails(vehicle.id) },
-                            onUpdateLocation = {
-                                if (hasLocationPermission){
-                                    viewModel.onEvent(HomeEvent.UpdateLocationClicked(vehicle.id))
-                                }else{
-                                    viewModel.onEvent(HomeEvent.PermisionsDenied)
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 48.dp),
+                        pageSpacing = 16.dp
+                    ) { page ->
+                        // getOrNull: while the list shrinks after a delete, the pager can
+                        // briefly render a page index that no longer exists.
+                        val vehicle = state.vehicles.getOrNull(page)
+
+                        if (vehicle == null) {
+                            AddVehicleCard(onClick = onNavigateToAddVehicle)
+                        } else {
+                            VehicleCard(
+                                isLoading = state.isLoading,
+                                isSpecificLoading = state.updatingVehicleId == vehicle.id,
+                                vehicle = vehicle,
+                                isEditMode = state.isEditMode,
+                                isOwner = vehicle.ownerId == state.currentUserId,
+                                onClick = { onNavigateToDetails(vehicle.id) },
+                                onLongClick = { viewModel.onEvent(HomeEvent.VehicleLongPressed) },
+                                onDelete = { viewModel.onEvent(HomeEvent.DeleteVehicleClicked(vehicle.id)) },
+                                onUpdateLocation = {
+                                    if (hasLocationPermission){
+                                        viewModel.onEvent(HomeEvent.UpdateLocationClicked(vehicle.id))
+                                    }else{
+                                        viewModel.onEvent(HomeEvent.PermisionsDenied)
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
+            }
+
+            state.pendingDeletion?.let { pending ->
+                AparKConfirmDialog(
+                    title = if (pending.isOwner) {
+                        stringResource(Res.string.delete_vehicle_confirm_title, pending.vehicleName)
+                    } else {
+                        stringResource(Res.string.remove_vehicle_confirm_title, pending.vehicleName)
+                    },
+                    text = if (pending.isOwner) {
+                        stringResource(Res.string.delete_vehicle_confirm_message)
+                    } else {
+                        stringResource(Res.string.remove_vehicle_confirm_message)
+                    },
+                    confirmLabel = if (pending.isOwner) {
+                        stringResource(Res.string.delete_vehicle_confirm_action)
+                    } else {
+                        stringResource(Res.string.remove_vehicle_confirm_action)
+                    },
+                    dismissLabel = stringResource(Res.string.cancel),
+                    isDestructive = pending.isOwner,
+                    onConfirm = { viewModel.onEvent(HomeEvent.DeleteConfirmed) },
+                    onDismiss = { viewModel.onEvent(HomeEvent.DeleteDismissed) }
+                )
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun VehicleCard(
     vehicle: Vehicle,
     isLoading: Boolean,           // Estado global para deshabilitar
     isSpecificLoading: Boolean,   // Estado local para mostrar el spinner    vehicle: Vehicle,
+    isEditMode: Boolean,
+    isOwner: Boolean,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    onDelete: () -> Unit,
     onUpdateLocation: () -> Unit
     ) {
+    Box {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp),
-        onClick = onClick,
+            .height(180.dp)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(
@@ -350,13 +434,41 @@ fun VehicleCard(
                 Button(
                     onClick = onUpdateLocation,
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !isLoading
+                    // Disabled while editing so the card cannot be parked by accident.
+                    enabled = !isLoading && !isEditMode
                 ) {
                     Text(stringResource(Res.string.home_park_here))
                 }
             }
 
 
+        }
+    }
+
+        if (isEditMode) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.onError,
+                shadowElevation = 4.dp,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .size(32.dp)
+                    .clickable { onDelete() }
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = if (isOwner) Icons.Default.Delete else Icons.Default.Close,
+                        contentDescription = if (isOwner) {
+                            stringResource(Res.string.delete_vehicle_action)
+                        } else {
+                            stringResource(Res.string.remove_vehicle_action)
+                        },
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
         }
     }
 }

@@ -33,8 +33,8 @@ service cloud.firestore {
       allow delete: if request.auth != null
                     && request.auth.uid == resource.data.ownerId;
 
-      // Update: owner may change anything;
-      // shared users may only update lastLocation and must set their own email
+      // Update: owner may change anything; shared users may only update lastLocation
+      // (setting their own email), or leave the vehicle by removing themselves.
       allow update: if request.auth != null && (
         request.auth.uid == resource.data.ownerId
         ||
@@ -42,6 +42,14 @@ service cloud.firestore {
           request.auth.uid in resource.data.sharedUsers
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLocation'])
           && request.resource.data.lastLocation.user.email == request.auth.token.email
+        )
+        ||
+        (
+          // Leaving: the caller may drop themselves, and only themselves, from sharedUsers.
+          request.auth.uid in resource.data.sharedUsers
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sharedUsers'])
+          && !(request.auth.uid in request.resource.data.sharedUsers)
+          && resource.data.sharedUsers.removeAll([request.auth.uid]) == request.resource.data.sharedUsers
         )
       );
     }

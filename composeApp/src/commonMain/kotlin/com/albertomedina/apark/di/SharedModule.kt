@@ -9,6 +9,7 @@ import com.albertomedina.apark.domain.repository.LocationRepository
 import com.albertomedina.apark.domain.repository.UserRepository
 import com.albertomedina.apark.domain.repository.VehicleRepository
 import com.albertomedina.apark.domain.usecase.CreateVehicleUseCase
+import com.albertomedina.apark.domain.usecase.DeleteVehicleUseCase
 import com.albertomedina.apark.domain.usecase.GetCurrentLocationUseCase
 import com.albertomedina.apark.domain.usecase.GetLastVehicleLocationUseCase
 import com.albertomedina.apark.domain.usecase.GetUserUseCase
@@ -75,6 +76,7 @@ val sharedModule = module {
 
     factory { GetVehicleListUseCase(repository = get()) }
     factory { CreateVehicleUseCase(repository = get()) }
+    factory { DeleteVehicleUseCase(repository = get()) }
     factory { GetVehicleByIdUseCase(repository = get()) }
     factory { UpdateVehicleUseCase(repository = get()) }
     factory { RemoveUserFromVehicleUseCase(repository = get()) }
@@ -135,7 +137,9 @@ val sharedModule = module {
             authRepository = get(),
             updateVehicleLocationUseCase = get(),
             getVehicleListUseCase = get(),
-            signOutUseCase = get()
+            signOutUseCase = get(),
+            deleteVehicleUseCase = get(),
+            removeUserFromVehicleUseCase = get()
         )
     }
 

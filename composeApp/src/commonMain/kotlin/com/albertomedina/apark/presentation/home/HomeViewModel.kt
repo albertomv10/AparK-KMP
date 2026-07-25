@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.domain.repository.AuthRepository
+import com.albertomedina.apark.domain.usecase.DeleteVehicleUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
+import com.albertomedina.apark.domain.usecase.RemoveUserFromVehicleUseCase
 import com.albertomedina.apark.domain.usecase.SignOutUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleLocationUseCase
 import com.albertomedina.apark.utils.SnackbarMessage
@@ -23,7 +25,9 @@ class HomeViewModel(
     private val authRepository: AuthRepository,
     private val updateVehicleLocationUseCase: UpdateVehicleLocationUseCase,
     private val getVehicleListUseCase: GetVehicleListUseCase,
-    private val signOutUseCase: SignOutUseCase
+    private val signOutUseCase: SignOutUseCase,
+    private val deleteVehicleUseCase: DeleteVehicleUseCase,
+    private val removeUserFromVehicleUseCase: RemoveUserFromVehicleUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -39,6 +43,8 @@ class HomeViewModel(
             authRepository.authStateChanges
                 .map { it?.uid }
                 .flatMapLatest { userId ->
+                    // Keep the uid around: the UI needs it to tell owner from shared member.
+                    _uiState.update { it.copy(currentUserId = userId) }
                     if (!userId.isNullOrBlank()) {
                         getVehicleListUseCase(userId)
                     } else {
@@ -103,6 +109,26 @@ class HomeViewModel(
 
             is HomeEvent.PermisionsDenied -> {
                 _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_gps_permissions")) }
+            }
+
+            is HomeEvent.VehicleLongPressed -> {
+                _uiState.update { it.copy(isEditMode = true) }
+            }
+
+            is HomeEvent.EditModeExited -> {
+                _uiState.update { it.copy(isEditMode = false) }
+            }
+
+            is HomeEvent.DeleteVehicleClicked -> {
+                askDeleteConfirmation(event.vehicleId)
+            }
+
+            is HomeEvent.DeleteConfirmed -> {
+                confirmDeletion()
+            }
+
+            is HomeEvent.DeleteDismissed -> {
+                _uiState.update { it.copy(pendingDeletion = null) }
             }
         }
     }
@@ -195,6 +221,66 @@ class HomeViewModel(
         }
     }
 
+    private fun askDeleteConfirmation(vehicleId: String) {
+        val vehicle = _uiState.value.vehicles.find { it.id == vehicleId } ?: return
+        val currentUserId = _uiState.value.currentUserId
+
+        if (currentUserId == null) {
+            _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error(ERROR_NOT_AUTHENTICATED_KEY)) }
+            return
+        }
+
+        _uiState.update {
+            it.copy(
+                pendingDeletion = PendingDeletion(
+                    vehicleId = vehicleId,
+                    vehicleName = vehicle.name,
+                    isOwner = vehicle.ownerId == currentUserId
+                )
+            )
+        }
+    }
+
+    private fun confirmDeletion() {
+        val pending = _uiState.value.pendingDeletion ?: return
+        val userId = _uiState.value.currentUserId ?: return
+
+        _uiState.update {
+            it.copy(isLoading = true, updatingVehicleId = pending.vehicleId, pendingDeletion = null)
+        }
+
+        viewModelScope.launch {
+            try {
+                // Owner deletes the vehicle for everyone; a shared member only drops their own
+                // membership, leaving the vehicle intact for the rest.
+                val result = if (pending.isOwner) {
+                    deleteVehicleUseCase(pending.vehicleId, userId)
+                } else {
+                    removeUserFromVehicleUseCase(pending.vehicleId, userId)
+                }
+
+                result.fold(
+                    onSuccess = {
+                        val successKey = if (pending.isOwner) SUCCESS_DELETED_KEY else SUCCESS_REMOVED_KEY
+                        _uiState.update {
+                            it.copy(
+                                isEditMode = false,
+                                snackbarMessage = SnackbarMessage.Success(successKey)
+                            )
+                        }
+                    },
+                    onFailure = {
+                        _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error(ERROR_DELETE_KEY)) }
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error(ERROR_DELETE_KEY)) }
+            } finally {
+                _uiState.update { it.copy(isLoading = false, updatingVehicleId = null) }
+            }
+        }
+    }
+
     private fun performSignOut(){
         _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
@@ -204,10 +290,18 @@ class HomeViewModel(
             )
         }
     }
+
+    companion object {
+        const val SUCCESS_DELETED_KEY = "delete_vehicle_success_deleted"
+        const val SUCCESS_REMOVED_KEY = "delete_vehicle_success_removed"
+        const val ERROR_DELETE_KEY = "delete_vehicle_error"
+        const val ERROR_NOT_AUTHENTICATED_KEY = "delete_vehicle_error_not_authenticated"
+    }
 }
 
 data class HomeUiState(
     val userEmail: String = "",
+    val currentUserId: String? = null,
     val vehicles: List<Vehicle> = emptyList(),
     val selectedVehicleIndex: Int = 0,
     val isLoading: Boolean = false,
@@ -216,7 +310,16 @@ data class HomeUiState(
     val openSettingsTrigger: Int = 0,
     val shouldNavigateToLogin: Boolean = false,
     val locationUpdateSuccessData: UndoLocationData? = null,
-    val snackbarMessage: SnackbarMessage? = null
+    val snackbarMessage: SnackbarMessage? = null,
+    val isEditMode: Boolean = false,
+    val pendingDeletion: PendingDeletion? = null
+)
+
+/** A delete awaiting user confirmation. [isOwner] decides which action (and copy) applies. */
+data class PendingDeletion(
+    val vehicleId: String,
+    val vehicleName: String,
+    val isOwner: Boolean
 )
 
 data class UndoLocationData(
@@ -241,4 +344,9 @@ sealed class HomeEvent {
     data object SignOutClicked : HomeEvent()
     data object NavigationHandled : HomeEvent()
     data object SnackBarDismissed : HomeEvent()
+    data object VehicleLongPressed : HomeEvent()
+    data object EditModeExited : HomeEvent()
+    data class DeleteVehicleClicked(val vehicleId: String) : HomeEvent()
+    data object DeleteConfirmed : HomeEvent()
+    data object DeleteDismissed : HomeEvent()
 }

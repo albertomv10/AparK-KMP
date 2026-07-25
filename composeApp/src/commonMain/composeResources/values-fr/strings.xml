@@ -92,4 +92,17 @@
     <string name="add_vehicle_error_not_authenticated">Vous devez être connecté pour ajouter un véhicule</string>
     <string name="add_vehicle_error_generic">Impossible de créer le véhicule. Veuillez réessayer</string>
     <string name="home_not_parked_yet">Pas encore garé</string>
+    <string name="delete_vehicle_action">Supprimer le véhicule</string>
+    <string name="remove_vehicle_action">Retirer de ma liste</string>
+    <string name="delete_vehicle_confirm_title">Supprimer %1$s ?</string>
+    <string name="delete_vehicle_confirm_message">Cette action supprime le véhicule entièrement et pour tous ses membres, et elle est irréversible. Si vous souhaitez que le véhicule subsiste, transférez d\'abord la propriété à un autre membre.</string>
+    <string name="delete_vehicle_confirm_action">Supprimer</string>
+    <string name="remove_vehicle_confirm_title">Retirer %1$s de votre liste ?</string>
+    <string name="remove_vehicle_confirm_message">Le véhicule n\'apparaîtra plus dans votre liste, mais il continuera d\'exister pour les autres membres.</string>
+    <string name="remove_vehicle_confirm_action">Retirer</string>
+    <string name="cancel">Annuler</string>
+    <string name="delete_vehicle_success_deleted">Véhicule supprimé</string>
+    <string name="delete_vehicle_success_removed">Véhicule retiré de votre liste</string>
+    <string name="delete_vehicle_error">Impossible de terminer l\'action. Veuillez réessayer</string>
+    <string name="delete_vehicle_error_not_authenticated">Vous devez être connecté pour faire cela</string>
 </resources>
