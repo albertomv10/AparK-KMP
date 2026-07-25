@@ -5,6 +5,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -185,6 +186,20 @@ fun HomeScreen(
 
                 }
             )
+
+            // While editing, a scrim locks the map: it swallows gestures that would otherwise
+            // pan it or drag a marker, dims it to signal the mode, and doubles as the way out.
+            if (state.isEditMode) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.25f))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { viewModel.onEvent(HomeEvent.EditModeExited) }
+                )
+            }
 
             FloatingActionButton(
                 onClick = {

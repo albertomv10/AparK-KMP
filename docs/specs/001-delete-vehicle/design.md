@@ -73,6 +73,20 @@ y solo a sí mismo:
 Las dos últimas condiciones impiden que alguien use esta vía para expulsar a otros miembros.
 Desplegada a `(default)` y `apark-at`.
 
+### Corrección durante la verificación: salir del modo edición no se encontraba
+
+La primera versión salía del modo solo con un botón de texto "Listo" sobre el carrusel. Al
+probarlo, resultó **invisible en la práctica**: texto azul sin contenedor sobre un mapa muy
+ruidoso. Además el mapa seguía activo, con el riesgo de arrastrar un marcador sin querer
+mientras se editaba.
+
+Solución: al entrar en modo edición se superpone un **velo sobre el mapa** (negro al 25%) que
+cumple tres funciones a la vez — bloquea los gestos del mapa (no se puede desplazar ni arrastrar
+marcadores), lo atenúa para señalar visualmente el modo, y **al tocarlo se sale**. Las tarjetas,
+los FAB y el botón "Listo" se dibujan por encima, así que siguen operativos y, de paso, el
+"Listo" gana contraste. El `clickable` del velo usa `indication = null` para no dibujar un
+ripple a pantalla completa.
+
 ## Decisiones y alternativas consideradas
 
 - **Modo edición por pulsación larga** en lugar de menú ⋮ por tarjeta o pantalla de detalle:

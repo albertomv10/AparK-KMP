@@ -15,6 +15,8 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   lista (el vehículo sobrevive). Ambas acciones piden confirmación, con un texto que avisa
   al dueño de que el borrado es total e irreversible y le sugiere transferir la propiedad.
 - Nuevo componente reutilizable `AparKConfirmDialog` (primer diálogo del proyecto).
+- En modo edición el mapa queda **bloqueado y atenuado**: no se puede desplazar ni arrastrar
+  marcadores por accidente, y basta con tocarlo para salir del modo.
 - **Crear vehículo**: nueva pantalla completa (destino Navigation 3) para añadir un
   vehículo con nombre (obligatorio) y matrícula (opcional). Incluye `CreateVehicleUseCase`,
   `AddVehicleViewModel` (MVI) y `AddVehicleScreen`. Los vehículos se crean sin ubicación.
