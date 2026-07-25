@@ -82,10 +82,26 @@ mientras se editaba.
 
 Solución: al entrar en modo edición se superpone un **velo sobre el mapa** (negro al 25%) que
 cumple tres funciones a la vez — bloquea los gestos del mapa (no se puede desplazar ni arrastrar
-marcadores), lo atenúa para señalar visualmente el modo, y **al tocarlo se sale**. Las tarjetas,
-los FAB y el botón "Listo" se dibujan por encima, así que siguen operativos y, de paso, el
-"Listo" gana contraste. El `clickable` del velo usa `indication = null` para no dibujar un
-ripple a pantalla completa.
+marcadores), lo atenúa para señalar visualmente el modo, y **al tocarlo se sale**. Las tarjetas
+y los FAB se dibujan por encima, así que siguen operativos. El `clickable` del velo usa
+`indication = null` para no dibujar un ripple a pantalla completa.
+
+Con el mapa bloqueado y atenuado, tocar fuera resultó suficientemente evidente, así que el
+botón "Listo" se eliminó por completo (y con él su string, ya huérfano).
+
+### Gesto atrás: `BackHandler` sí está disponible (duda pendiente resuelta)
+
+El diseño dejaba abierto si `BackHandler` existía en Compose Multiplatform 1.9.3. **Sí existe**
+(`androidx.compose.ui.backhandler.BackHandler`), pero con dos matices que costaron descubrir:
+
+1. **No lo arrastra `compose.ui`**: hay que declarar explícitamente el artefacto
+   `org.jetbrains.compose.ui:ui-backhandler`, o la referencia no resuelve.
+2. Es API experimental → requiere `@OptIn(ExperimentalComposeUiApi::class)`.
+
+Se usa con `enabled = state.isEditMode`, de modo que solo intercepta el gesto atrás mientras se
+edita y el comportamiento normal de navegación queda intacto. Verificado en el simulador de iOS
+lanzando el gesto desde una zona que el velo no cubre, para poder atribuir la salida al
+`BackHandler` y no al toque sobre el velo.
 
 ## Decisiones y alternativas consideradas
 

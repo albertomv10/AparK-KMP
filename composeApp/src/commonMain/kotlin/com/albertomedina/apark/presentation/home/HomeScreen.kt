@@ -23,11 +23,13 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -45,7 +47,7 @@ import com.albertomedina.apark.utils.SnackbarMessage
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
@@ -170,6 +172,12 @@ fun HomeScreen(
         }
     }
 
+    // While editing, back leaves the mode rather than the screen. Only enabled in edit mode,
+    // so normal back behaviour is untouched.
+    BackHandler(enabled = state.isEditMode) {
+        viewModel.onEvent(HomeEvent.EditModeExited)
+    }
+
     Scaffold(
         bottomBar = { AparkBottomNavigationBar() },
     ) { paddingValues ->
@@ -286,20 +294,6 @@ fun HomeScreen(
                     .padding(bottom = paddingValues.calculateBottomPadding() + 24.dp)
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    if (state.isEditMode) {
-                        TextButton(
-                            onClick = { viewModel.onEvent(HomeEvent.EditModeExited) },
-                            modifier = Modifier
-                                .align(Alignment.End)
-                                .padding(end = 48.dp)
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.edit_mode_done),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
 
                     HorizontalPager(
                         state = pagerState,

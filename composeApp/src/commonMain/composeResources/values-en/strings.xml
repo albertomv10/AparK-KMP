@@ -101,7 +101,6 @@
     <string name="remove_vehicle_confirm_message">The vehicle will no longer appear in your list, but it will still exist for the other members.</string>
     <string name="remove_vehicle_confirm_action">Remove</string>
     <string name="cancel">Cancel</string>
-    <string name="edit_mode_done">Done</string>
     <string name="delete_vehicle_success_deleted">Vehicle deleted</string>
     <string name="delete_vehicle_success_removed">Vehicle removed from your list</string>
     <string name="delete_vehicle_error">Could not complete the action. Please try again</string>
