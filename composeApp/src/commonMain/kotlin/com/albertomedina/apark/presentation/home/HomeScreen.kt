@@ -16,6 +16,8 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
@@ -91,6 +93,7 @@ fun HomeScreen(
         HomeViewModel.SUCCESS_REMOVED_KEY -> stringResource(Res.string.delete_vehicle_success_removed)
         HomeViewModel.ERROR_DELETE_KEY -> stringResource(Res.string.delete_vehicle_error)
         HomeViewModel.ERROR_NOT_AUTHENTICATED_KEY -> stringResource(Res.string.delete_vehicle_error_not_authenticated)
+        HomeViewModel.ERROR_REORDER_KEY -> stringResource(Res.string.reorder_error)
         else -> state.snackbarMessage?.message
     }
 
@@ -152,6 +155,14 @@ fun HomeScreen(
     LaunchedEffect(pagerState.currentPage) {
         if (pagerState.currentPage <= state.vehicles.size) {
             viewModel.onEvent(HomeEvent.OnVehicleSwiped(pagerState.currentPage))
+        }
+    }
+
+    // Follow a vehicle that was just moved, so its arrows stay under the user's finger.
+    LaunchedEffect(state.pendingScrollToIndex) {
+        state.pendingScrollToIndex?.let { target ->
+            pagerState.animateScrollToPage(target)
+            viewModel.onEvent(HomeEvent.ScrollHandled)
         }
     }
 
@@ -314,9 +325,13 @@ fun HomeScreen(
                                 vehicle = vehicle,
                                 isEditMode = state.isEditMode,
                                 isOwner = vehicle.ownerId == state.currentUserId,
+                                canMoveLeft = page > 0,
+                                canMoveRight = page < state.vehicles.lastIndex,
                                 onClick = { onNavigateToDetails(vehicle.id) },
                                 onLongClick = { viewModel.onEvent(HomeEvent.VehicleLongPressed) },
                                 onDelete = { viewModel.onEvent(HomeEvent.DeleteVehicleClicked(vehicle.id)) },
+                                onMoveLeft = { viewModel.onEvent(HomeEvent.MoveVehicleClicked(vehicle.id, -1)) },
+                                onMoveRight = { viewModel.onEvent(HomeEvent.MoveVehicleClicked(vehicle.id, 1)) },
                                 onUpdateLocation = {
                                     if (hasLocationPermission){
                                         viewModel.onEvent(HomeEvent.UpdateLocationClicked(vehicle.id))
@@ -365,9 +380,13 @@ fun VehicleCard(
     isSpecificLoading: Boolean,   // Estado local para mostrar el spinner    vehicle: Vehicle,
     isEditMode: Boolean,
     isOwner: Boolean,
+    canMoveLeft: Boolean,
+    canMoveRight: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onDelete: () -> Unit,
+    onMoveLeft: () -> Unit,
+    onMoveRight: () -> Unit,
     onUpdateLocation: () -> Unit
     ) {
     Box {
@@ -430,12 +449,32 @@ fun VehicleCard(
             }
             if (isLoading && isSpecificLoading){
                 CircularProgressIndicator()
-            }else{
+            } else if (isEditMode) {
+                // Editing reuses the parking button's slot for the reorder arrows: it is
+                // disabled here anyway, so nothing is covered and the height stays put.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onMoveLeft, enabled = canMoveLeft) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowLeft,
+                            contentDescription = stringResource(Res.string.reorder_move_left)
+                        )
+                    }
+                    IconButton(onClick = onMoveRight, enabled = canMoveRight) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowRight,
+                            contentDescription = stringResource(Res.string.reorder_move_right)
+                        )
+                    }
+                }
+            } else {
                 Button(
                     onClick = onUpdateLocation,
                     modifier = Modifier.fillMaxWidth(),
-                    // Disabled while editing so the card cannot be parked by accident.
-                    enabled = !isLoading && !isEditMode
+                    enabled = !isLoading
                 ) {
                     Text(stringResource(Res.string.home_park_here))
                 }

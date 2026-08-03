@@ -105,4 +105,7 @@
     <string name="delete_vehicle_success_removed">Vehicle removed from your list</string>
     <string name="delete_vehicle_error">Could not complete the action. Please try again</string>
     <string name="delete_vehicle_error_not_authenticated">You must be signed in to do this</string>
+    <string name="reorder_move_left">Move left</string>
+    <string name="reorder_move_right">Move right</string>
+    <string name="reorder_error">Could not change the order. Please try again</string>
 </resources>

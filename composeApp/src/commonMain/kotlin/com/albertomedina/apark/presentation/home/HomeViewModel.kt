@@ -7,6 +7,7 @@ import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.usecase.DeleteVehicleUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
+import com.albertomedina.apark.domain.usecase.MoveVehicleUseCase
 import com.albertomedina.apark.domain.usecase.RemoveUserFromVehicleUseCase
 import com.albertomedina.apark.domain.usecase.SignOutUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleLocationUseCase
@@ -27,7 +28,8 @@ class HomeViewModel(
     private val getVehicleListUseCase: GetVehicleListUseCase,
     private val signOutUseCase: SignOutUseCase,
     private val deleteVehicleUseCase: DeleteVehicleUseCase,
-    private val removeUserFromVehicleUseCase: RemoveUserFromVehicleUseCase
+    private val removeUserFromVehicleUseCase: RemoveUserFromVehicleUseCase,
+    private val moveVehicleUseCase: MoveVehicleUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -129,6 +131,14 @@ class HomeViewModel(
 
             is HomeEvent.DeleteDismissed -> {
                 _uiState.update { it.copy(pendingDeletion = null) }
+            }
+
+            is HomeEvent.MoveVehicleClicked -> {
+                moveVehicle(event.vehicleId, event.offset)
+            }
+
+            is HomeEvent.ScrollHandled -> {
+                _uiState.update { it.copy(pendingScrollToIndex = null) }
             }
         }
     }
@@ -281,6 +291,29 @@ class HomeViewModel(
         }
     }
 
+    private fun moveVehicle(vehicleId: String, offset: Int) {
+        val userId = _uiState.value.currentUserId ?: return
+        val vehicles = _uiState.value.vehicles
+        val from = vehicles.indexOfFirst { it.id == vehicleId }
+        val to = from + offset
+
+        // The arrows are disabled at the ends, but guard anyway: the list may have changed
+        // underneath between composition and the tap.
+        if (from == -1 || to !in vehicles.indices) return
+
+        viewModelScope.launch {
+            moveVehicleUseCase(userId, vehicleId, offset).fold(
+                onSuccess = {
+                    // Follow the moved card, so tapping the same arrow keeps moving it.
+                    _uiState.update { it.copy(pendingScrollToIndex = to) }
+                },
+                onFailure = {
+                    _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error(ERROR_REORDER_KEY)) }
+                }
+            )
+        }
+    }
+
     private fun performSignOut(){
         _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
@@ -296,6 +329,7 @@ class HomeViewModel(
         const val SUCCESS_REMOVED_KEY = "delete_vehicle_success_removed"
         const val ERROR_DELETE_KEY = "delete_vehicle_error"
         const val ERROR_NOT_AUTHENTICATED_KEY = "delete_vehicle_error_not_authenticated"
+        const val ERROR_REORDER_KEY = "reorder_error"
     }
 }
 
@@ -312,7 +346,9 @@ data class HomeUiState(
     val locationUpdateSuccessData: UndoLocationData? = null,
     val snackbarMessage: SnackbarMessage? = null,
     val isEditMode: Boolean = false,
-    val pendingDeletion: PendingDeletion? = null
+    val pendingDeletion: PendingDeletion? = null,
+    /** One-shot: page the carousel should scroll to so it follows a vehicle that just moved. */
+    val pendingScrollToIndex: Int? = null
 )
 
 /** A delete awaiting user confirmation. [isOwner] decides which action (and copy) applies. */
@@ -349,4 +385,6 @@ sealed class HomeEvent {
     data class DeleteVehicleClicked(val vehicleId: String) : HomeEvent()
     data object DeleteConfirmed : HomeEvent()
     data object DeleteDismissed : HomeEvent()
+    data class MoveVehicleClicked(val vehicleId: String, val offset: Int) : HomeEvent()
+    data object ScrollHandled : HomeEvent()
 }
