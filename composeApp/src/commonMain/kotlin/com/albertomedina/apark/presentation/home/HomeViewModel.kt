@@ -118,7 +118,7 @@ class HomeViewModel(
             }
 
             is HomeEvent.EditModeExited -> {
-                _uiState.update { it.copy(isEditMode = false) }
+                _uiState.update { it.copy(isEditMode = false, followedVehicleId = null) }
             }
 
             is HomeEvent.DeleteVehicleClicked -> {
@@ -137,9 +137,6 @@ class HomeViewModel(
                 moveVehicle(event.vehicleId, event.offset)
             }
 
-            is HomeEvent.ScrollHandled -> {
-                _uiState.update { it.copy(pendingScrollToIndex = null) }
-            }
         }
     }
 
@@ -304,8 +301,9 @@ class HomeViewModel(
         viewModelScope.launch {
             moveVehicleUseCase(userId, vehicleId, offset).fold(
                 onSuccess = {
-                    // Follow the moved card, so tapping the same arrow keeps moving it.
-                    _uiState.update { it.copy(pendingScrollToIndex = to) }
+                    // Follow the moved card, so tapping the same arrow keeps moving it. Only
+                    // the id is published: where it landed is whatever the reordered list says.
+                    _uiState.update { it.copy(followedVehicleId = vehicleId) }
                 },
                 onFailure = {
                     _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error(ERROR_REORDER_KEY)) }
@@ -347,8 +345,12 @@ data class HomeUiState(
     val snackbarMessage: SnackbarMessage? = null,
     val isEditMode: Boolean = false,
     val pendingDeletion: PendingDeletion? = null,
-    /** One-shot: page the carousel should scroll to so it follows a vehicle that just moved. */
-    val pendingScrollToIndex: Int? = null
+    /**
+     * Vehicle the carousel keeps centred while reordering, held until edit mode ends rather
+     * than consumed on the first scroll: the reordered list can arrive after the scroll would
+     * run, and a one-shot flag gets cleared against the old order, leaving the pager behind.
+     */
+    val followedVehicleId: String? = null
 )
 
 /** A delete awaiting user confirmation. [isOwner] decides which action (and copy) applies. */
@@ -386,5 +388,4 @@ sealed class HomeEvent {
     data object DeleteConfirmed : HomeEvent()
     data object DeleteDismissed : HomeEvent()
     data class MoveVehicleClicked(val vehicleId: String, val offset: Int) : HomeEvent()
-    data object ScrollHandled : HomeEvent()
 }
