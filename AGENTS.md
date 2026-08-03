@@ -16,7 +16,7 @@ Integrate to `main` via Pull Request, never direct pushes.
 
 ## OpenCode Setup
 
-- **Launch from project root**: `opencode` must be run from `/Users/albertomedina/AndroidStudioProjects/Apark` to load per-project `opencode.json` (which contains MCP server config and other settings).
+- **Launch from project root**: `opencode` must be run from the project root to load the per-project `opencode.json` (which contains MCP server config and other settings).
 - **MCP**: Firebase CLI MCP (`npx firebase-tools@latest mcp`) is configured in `opencode.json` for direct Firestore and Auth inspection.
 - **Context file**: `~/.config/opencode/AGENTS.md` contains general-purpose context7 instructions.
 
@@ -40,6 +40,33 @@ Integrate to `main` via Pull Request, never direct pushes.
 - **Auth flow**: Splash → Login/Register → EmailVerification → Home. Splash checks `isUserLoggedIn && isUserEmailVerified`
 - **Expect/actual** for: maps (`AparKMap`), location (`LocationSource`), auth buttons (`GoogleSignInButton`, `AppleSignInButton`), permissions (`LocationPermissionHandler`), settings deep-link (`OpenAppSettingsHandler`)
 
+### Packages (commonMain)
+
+| Package | Role |
+|---------|------|
+| `data.repository` | Firestore + Auth repository implementations |
+| `data.location` | Platform location source interfaces/impls |
+| `data.util` | Firestore constants |
+| `domain.model` | `User`, `Vehicle` (with nested `LocationModel`) |
+| `domain.repository` | `AuthRepository`, `VehicleRepository`, `UserRepository`, `LocationRepository` |
+| `domain.usecase` | Individual use cases (one `operator fun invoke()` each) |
+| `presentation.splash` | Splash — checks auth state, routes to Home or Login |
+| `presentation.auth.*` | Login, Register, EmailVerification, ResetPassword |
+| `presentation.home` | Main screen — map + vehicle carousel + edit mode |
+| `presentation.addvehicle` | Create-vehicle screen |
+| `presentation.components` | Shared composables: map, buttons, dialog, permission handlers |
+| `presentation.navigation` | Navigation 3 setup (`Destiny` sealed interface) |
+| `di` | Koin modules |
+| `ui.theme` | Theme, colors, typography |
+| `utils` | Time utils, validation, snackbar messages |
+
+### Firestore collections
+
+| Collection | Document ID | Key fields |
+|------------|-------------|------------|
+| `users` | `FirebaseAuth.uid` | `email`, `name`, `userVehicles: List<String>` (vehicle IDs — **its order is the carousel order**) |
+| `vehicles` | Auto-generated | `name`, `licensePlate`, `ownerId`, `sharedUsers: List<String>`, `inviteCode`, `lastLocation` |
+
 ## Tech Stack
 
 | Layer | Choice |
@@ -62,30 +89,21 @@ Integrate to `main` via Pull Request, never direct pushes.
 - **Bottom nav tabs are cosmetic**: 3 tabs (Map, My Cars, Profile) switch local state only — no actual navigation implemented.
 - **Kotlin 2.3.0** — Compose Compiler plugin is bundled (`org.jetbrains.kotlin.plugin.compose`), no separate version.
 - **`flatMapLatest` requires `@OptIn(ExperimentalCoroutinesApi::class)`** — used in `HomeViewModel.observeAuthState()`
+- **`BackHandler` is not part of `compose.ui`**: the `org.jetbrains.compose.ui:ui-backhandler` artifact must be declared explicitly or the reference will not resolve, and it needs `@OptIn(ExperimentalComposeUiApi::class)`
+- **Listening to a Firestore document that does not exist returns PERMISSION_DENIED, not "not found"**, because the rule dereferences a null `resource`. `getVehiclesForUser` therefore wraps each per-vehicle snapshot in `retryWhen` + `catch`; without it, a just-created or deleted vehicle can crash the app
 
 ## Known Incomplete / Buggy Areas
 
-- `SignOutUseCase` — use case for logout flow
-- No add-vehicle screen or vehicle-detail screen — navigation callbacks are no-ops
+- **No vehicle-detail screen**: `onNavigateToDetails` in `BasicNavigationWrapper.kt` is still a no-op
+- **No transfer-ownership UI**: `transferVehicleOwnership` exists in the repository but nothing calls it, even though the delete dialog points users at it
+- **Dangling vehicle IDs**: deleting a shared vehicle leaves its id in the other members' `userVehicles` (the stream discards them). Cleanup function pending — see `docs/specs/002-vehicle-cleanup-function/`
 - Only 1 placeholder test (`ComposeAppCommonTest.kt`)
 - Apple Sign-In on Android is a no-op
-- GPS permission denied message uses hardcoded Spanish string instead of resource key
+- Hardcoded Spanish strings instead of resources: the GPS-denied snackbar and the "Logout" menu item in `HomeScreen.kt`
+- `userEmail` in `HomeUiState` is never written — dead field
 
-## Recent Changes
-
-- Both fix branches merged to `main` (`fix/pre-features-foundation` + `fix/logout-data-leak`)
-- Auth data leak fixed via `flatMapLatest` on `authStateChanges` Flow
-- `ShareVehicleWithUserUseCase` bug fixed: `vehicleId` → `userId`
-- Monolithic `FirestoreRepository` split into `FirestoreVehicleRepository` + `FirestoreUserRepository`
-- Silent try-catch fallback in Firestore init removed (fail fast on DB misconfiguration)
-- Firebase MCP configured in `opencode.json` with `.firebaserc`
-- `SingOutUseCase` renamed to `SignOutUseCase` (typo fix)
-- Firestore Security Rules (`firestore.rules`) and indexes (`firestore.indexes.json`) version-controlled and deployed
-- Delete protection enabled on both `(default)` and `apark-at` databases
-
-## Git Branches
-
-- `main` — primary branch (all fixes merged)
+> For what has shipped, read [`CHANGELOG.md`](CHANGELOG.md) rather than a list here: it is
+> kept up to date on every change.
 
 ## Tests
 
