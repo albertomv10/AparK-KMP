@@ -85,6 +85,126 @@ Una feature está terminada cuando:
 
 ---
 
+## Flujo de trabajo con Git
+
+El ciclo completo, tal y como se aplicó en la feature `001-delete-vehicle`.
+
+### 1. Partir de `main` actualizado
+
+Siempre se ramifica desde la última versión integrada, nunca desde una rama vieja:
+
+```sh
+git checkout main
+git pull origin main
+```
+
+### 2. Crear la rama de trabajo
+
+```sh
+git checkout -b feature/delete-vehicle
+```
+
+### 3. Commitear en unidades lógicas
+
+No un commit gigante al final: **uno por idea**. La feature de borrado acabó con cuatro,
+y cada uno se entiende y se revierte por separado:
+
+```
+feat: delete vehicle from an edit mode on the home carousel
+fix: let a shared member leave a vehicle
+fix: lock and dim the map while editing, and tap it to exit
+feat: exit edit mode with the back gesture
+```
+
+El primero es la funcionalidad; los otros tres son correcciones que aparecieron **al
+verificar**. Que la verificación genere commits es normal y sano.
+
+### 4. Subir la rama
+
+La primera vez, con `-u` para enlazarla con su rama remota:
+
+```sh
+git push -u origin feature/delete-vehicle
+```
+
+### 5. Abrir el Pull Request
+
+```sh
+gh pr create --base main --head feature/delete-vehicle --title "..." --body "..."
+```
+
+### 6. Seguir puliendo sobre la misma rama
+
+Cada `git push` posterior **actualiza el PR automáticamente**. No se cierra ni se abre otro.
+
+### 7. Tras mergear, sincronizar y limpiar
+
+```sh
+git checkout main
+git pull origin main
+git branch -d feature/delete-vehicle
+git fetch --prune
+```
+
+`git branch -d` (minúscula) solo borra la rama si está realmente mergeada: es una red de
+seguridad. Si se niega, es señal de que algo no se integró como esperabas — investiga antes
+de forzar con `-D`.
+
+---
+
+### Comandos de diagnóstico
+
+En el día a día se consulta el estado mucho más de lo que se escribe:
+
+```sh
+git status --short                      # qué he tocado
+git log main..mi-rama --oneline         # qué llevo que main no tenga
+git diff main -- ruta/al/archivo.kt     # cambios de un archivo frente a main
+git log --oneline --graph               # forma del historial
+```
+
+La notación `A..B` significa "lo que tiene B y no tiene A". Es la forma fiable de saber
+**qué vas a mergear realmente**.
+
+---
+
+### Lecciones aprendidas (casos reales de este proyecto)
+
+**Diagnostica antes de forzar.** Al abrir el primer PR, `main` local y `origin/main` no
+coincidían y parecía una divergencia. El diagnóstico lo aclaró:
+
+```sh
+git merge-base main origin/main    # devolvió exactamente origin/main
+git log main..origin/main          # vacío
+```
+
+No había divergencia: `main` local simplemente llevaba 10 commits sin subir. Un
+`push --force` o un rebase "para arreglarlo" habría destruido historia sana. **Cuando algo
+no cuadra, `merge-base` y los rangos `A..B` dicen la verdad.**
+
+**Un archivo puede repartirse entre varios commits.** El commit de la feature de añadir
+vehículo y el de resiliencia tocaban ambos `FirestoreVehicleRepository.kt`. Se separaron
+dejando el archivo en el estado del primer commit, commiteando, y restaurando después la
+otra parte. Con `git add -p` (o el selector de cambios de Android Studio) puedes
+**commitear solo unas líneas concretas** de un archivo.
+
+**Las ramas abandonadas se dejan en paz.** Existía una `feature/add-vehicle` previa que no
+convenía continuar. En vez de borrarla o mezclarla, se revisó qué merecía rescatarse y se
+rehízo el trabajo limpio en una rama nueva:
+
+```sh
+git diff main..feature/add-vehicle --stat
+```
+
+**La forma del historial importa.** Los merges de PR crean un commit de merge que conserva
+la rama como una burbuja visible en el grafo. Así se ve de un vistazo qué commits entraron
+juntos, y se puede revertir un PR entero si hace falta.
+
+**Mantén los PR pequeños.** Si una rama empieza a acumular cambios de temas distintos, la
+señal es partirla, no seguir añadiendo.
+
+---
+
 ## Convenciones
 
 - **Ramas**: `feature/nombre`, `fix/nombre`, `docs/nombre`, `chore/nombre`.
