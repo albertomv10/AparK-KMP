@@ -158,11 +158,18 @@ fun HomeScreen(
         }
     }
 
-    // Follow a vehicle that was just moved, so its arrows stay under the user's finger.
-    LaunchedEffect(state.pendingScrollToIndex) {
-        state.pendingScrollToIndex?.let { target ->
-            pagerState.animateScrollToPage(target)
-            viewModel.onEvent(HomeEvent.ScrollHandled)
+    // Keep the vehicle being reordered centred, so its arrows stay under the user's finger.
+    // Re-runs on every list update rather than once: the reordered list may arrive after this
+    // would first run, and moving twice quickly would otherwise leave the pager one short.
+    LaunchedEffect(state.followedVehicleId, state.vehicles) {
+        val vehicleId = state.followedVehicleId ?: return@LaunchedEffect
+        val target = state.vehicles.indexOfFirst { it.id == vehicleId }
+
+        if (target != -1 && pagerState.currentPage != target) {
+            // Instant, not animated: a following tap would interrupt an animated scroll and
+            // strand the pager a position behind. It also reads better — the card being moved
+            // appears to stay put while its neighbours swap around it.
+            pagerState.scrollToPage(target)
         }
     }
 

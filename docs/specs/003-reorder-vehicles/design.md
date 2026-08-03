@@ -72,12 +72,32 @@ movimiento con éxito el ViewModel publica el índice destino en `pendingScrollT
 pantalla desplaza el pager, de modo que se puede pulsar ◀ repetidamente para seguir moviendo el
 mismo vehículo. Se usa el patrón de un solo disparo (`...Handled`) ya presente en el proyecto.
 
+## Corrección tras probarlo: pulsar dos veces rápido dejaba el carrusel atrás
+
+El riesgo de "ráfaga de pulsaciones" se materializó, y por dos motivos encadenados que solo
+salieron al usarlo de verdad:
+
+1. **El índice destino se precalculaba** en el ViewModel con la lista local, que en la segunda
+   pulsación aún no reflejaba la primera. Se corrige publicando el **id** del vehículo y
+   resolviendo su posición contra la lista que haya en ese momento.
+2. **La marca se consumía demasiado pronto.** Un disparo único podía ejecutarse con el id ya
+   puesto pero la lista sin actualizar: calculaba el índice viejo, concluía "ya estoy ahí" y
+   borraba la marca; cuando llegaba la lista buena no quedaba nada pendiente. Se corrige
+   **manteniendo el vehículo seguido mientras dure el modo edición** (`followedVehicleId`, que
+   se limpia al salir), de modo que cada actualización de la lista lo vuelve a centrar.
+3. **La animación de desplazamiento se interrumpía**: una pulsación nueva cancela un
+   `animateScrollToPage` en vuelo y el carrusel se quedaba a medias sin que nadie lo
+   reintentara. Se usa **`scrollToPage`** (instantáneo), que además queda mejor: la tarjeta que
+   mueves parece quedarse quieta mientras sus vecinas cambian de sitio.
+
+Efecto secundario útil de (2): si el carrusel no sigue al vehículo, la siguiente pulsación cae
+sobre **otra tarjeta** y mueve un coche distinto — lo que explicaba movimientos que parecían
+anularse entre sí.
+
 ## Riesgos
 
-- **Ráfaga de pulsaciones**: varias transacciones seguidas. Son atómicas, así que el resultado
-  es correcto; si aparece parpadeo, deshabilitar la flecha mientras haya una escritura en vuelo.
-- **Salto del pager**: el desplazamiento programático dispara `OnVehicleSwiped`. Es benigno,
-  pero hay que comprobar que no produce un tirón visual.
+- **Salto del pager**: el desplazamiento programático dispara `OnVehicleSwiped`. Es benigno
+  (solo actualiza el índice seleccionado).
 
 ## Resolución de las preguntas abiertas de la spec
 
