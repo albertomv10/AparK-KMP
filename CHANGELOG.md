@@ -9,6 +9,12 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **Reordenar vehículos** ([spec 003](docs/specs/003-reorder-vehicles/spec.md)): en modo
+  edición, cada tarjeta muestra flechas ◀ ▶ para moverla una posición. El carrusel sigue al
+  vehículo movido, de modo que se puede pulsar la misma flecha repetidamente. El orden es
+  **por usuario** (vive en su propio `userVehicles`), así que no afecta a los demás miembros
+  de un vehículo compartido, y se guarda dentro de una **transacción** para no perder
+  vehículos añadidos entre medias desde otro dispositivo.
 - **Eliminar vehículo** ([spec 001](docs/specs/001-delete-vehicle/spec.md)): manteniendo
   pulsada una tarjeta se activa un **modo edición** desde el que el **dueño puede eliminar**
   el vehículo (desaparece para todos) y un **miembro compartido puede quitárselo** de su

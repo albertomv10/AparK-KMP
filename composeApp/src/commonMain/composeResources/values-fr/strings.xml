@@ -105,4 +105,7 @@
     <string name="delete_vehicle_success_removed">Véhicule retiré de votre liste</string>
     <string name="delete_vehicle_error">Impossible de terminer l\'action. Veuillez réessayer</string>
     <string name="delete_vehicle_error_not_authenticated">Vous devez être connecté pour faire cela</string>
+    <string name="reorder_move_left">Déplacer vers la gauche</string>
+    <string name="reorder_move_right">Déplacer vers la droite</string>
+    <string name="reorder_error">Impossible de modifier l\'ordre. Veuillez réessayer</string>
 </resources>

@@ -20,10 +20,34 @@ class FirestoreUserRepository(
             }
     }
 
-    override suspend fun updateUserCars(userId: String, carIds: List<String>) {
-        firestore.collection(FirestoreConstants.USERS_COLLECTION)
-            .document(userId)
-            .update(FirestoreConstants.CARS_FIELD to carIds)
+    override suspend fun moveUserVehicle(userId: String, vehicleId: String, offset: Int): Result<Unit> {
+        return try {
+            val userRef = firestore.collection(FirestoreConstants.USERS_COLLECTION).document(userId)
+
+            // Reordering means rewriting the whole array, so it must read the freshest server
+            // state: a transaction retries on conflict, and a vehicle added meanwhile survives.
+            firestore.runTransaction {
+                val snapshot = get(userRef)
+                if (!snapshot.exists) return@runTransaction
+
+                val vehicleIds = snapshot.data<User>().userVehicles
+                // Locate by id, never by an index coming from the UI: a stale list would
+                // otherwise move the wrong vehicle.
+                val from = vehicleIds.indexOf(vehicleId)
+                val to = from + offset
+
+                if (from == -1 || to !in vehicleIds.indices) return@runTransaction
+
+                val reordered = vehicleIds.toMutableList().apply {
+                    add(to, removeAt(from))
+                }
+                update(userRef, FirestoreConstants.CARS_FIELD to reordered)
+            }
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override suspend fun createUser(user: User) {

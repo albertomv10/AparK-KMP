@@ -105,4 +105,7 @@
     <string name="delete_vehicle_success_removed">Vehículo quitado de tu lista</string>
     <string name="delete_vehicle_error">No se pudo completar la acción. Inténtalo de nuevo</string>
     <string name="delete_vehicle_error_not_authenticated">Debes iniciar sesión para hacer esto</string>
+    <string name="reorder_move_left">Mover a la izquierda</string>
+    <string name="reorder_move_right">Mover a la derecha</string>
+    <string name="reorder_error">No se pudo cambiar el orden. Inténtalo de nuevo</string>
 </resources>
