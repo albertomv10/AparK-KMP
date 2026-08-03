@@ -1,8 +1,8 @@
 # Spec: Limpieza de referencias al borrar un vehículo (Cloud Function)
 
 - **ID**: 002-vehicle-cleanup-function
-- **Estado**: Borrador (pospuesta)
-- **Fecha**: 2026-07-25
+- **Estado**: Aprobada
+- **Fecha**: 2026-07-25 (desbloqueada el 2026-08-03 al activarse el plan Blaze)
 
 ## Problema / Por qué
 
@@ -42,16 +42,15 @@ que la tarjeta desaparece igualmente. Pero deja dos costes:
 3. **Dado** un fallo de la función, **cuando** ocurre, **entonces** la app sigue comportándose
    correctamente (la resiliencia del cliente lo cubre).
 
-## Preguntas abiertas
+## Preguntas abiertas (resueltas)
 
-- **Requisito de facturación**: las Cloud Functions exigen el **plan Blaze**. Confirmar que el
-  proyecto lo tiene activado antes de implementar (lo debe activar el propietario del proyecto).
-- ¿`onDocumentDeleted` en Cloud Functions v2 con la opción `database` para registrar el trigger
-  en ambas bases de datos, o dos despliegues separados?
-- ¿Conviene limitar el fan-out (número máximo de miembros) o paginar si `sharedUsers` fuera muy
-  grande?
-- ¿Merece la pena una función de mantenimiento puntual que limpie los IDs colgantes ya
-  existentes?
+- **Requisito de facturación** → **plan Blaze activado**, confirmado por el propietario.
+- **¿Un trigger por base de datos o dos despliegues?** → **dos exports** del mismo manejador, cada
+  uno con su opción `database`; un único despliegue publica los dos.
+- **¿Limitar el fan-out o paginar?** → **no**: los miembros por vehículo están muy lejos del
+  límite de 500 escrituras de un batch. Queda documentado por si cambiara.
+- **¿Función de mantenimiento puntual?** → **no hace falta**: se comprobó que las listas actuales
+  no contienen ningún ID colgante.
 
 ## Fuera de alcance
 
