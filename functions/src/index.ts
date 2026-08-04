@@ -5,6 +5,8 @@ import { onDocumentDeleted, FirestoreEvent, QueryDocumentSnapshot } from "fireba
 // pulls in every provider, including Realtime Database, whose transitive @firebase/app peer
 // dependency npm does not install — which breaks the deploy-time analysis of this codebase.
 import * as logger from "firebase-functions/logger";
+import { onCall } from "firebase-functions/v2/https";
+import { createInviteHandler, joinWithCodeHandler } from "./invites";
 
 initializeApp();
 
@@ -91,3 +93,11 @@ export const cleanupVehicleReferencesDebug = onDocumentDeleted(
     { document: "vehicles/{vehicleId}", database: DEBUG_DATABASE, region: REGION },
     (event) => removeVehicleFromMembers(event, DEBUG_DATABASE)
 );
+
+// Callable functions cannot infer which database the caller is using the way a Firestore trigger
+// can, so each is exported once per database and the app picks by build type.
+export const createVehicleInvite = onCall({ region: REGION }, createInviteHandler(PROD_DATABASE));
+export const joinVehicleWithCode = onCall({ region: REGION }, joinWithCodeHandler(PROD_DATABASE));
+
+export const createVehicleInviteDebug = onCall({ region: REGION }, createInviteHandler(DEBUG_DATABASE));
+export const joinVehicleWithCodeDebug = onCall({ region: REGION }, joinWithCodeHandler(DEBUG_DATABASE));

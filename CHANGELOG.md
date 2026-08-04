@@ -9,6 +9,11 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **Compartir vehículo** ([spec 005](docs/specs/005-share-vehicle/spec.md)): el dueño genera una
+  invitación de **un solo uso que caduca en 24 h**, y puede copiarla o enviarla con la hoja de
+  compartir del sistema; otra persona se une desde la nueva pestaña *Unirme* de añadir vehículo.
+  Volver a compartir **revoca** el código anterior. Incluye una pantalla de detalle provisional
+  (solo con compartir) que además estrena la navegación a detalle, hasta ahora sin cablear.
 - **Limpieza automática de referencias** ([spec 002](docs/specs/002-vehicle-cleanup-function/spec.md)):
   primera Cloud Function del proyecto. Al borrarse un vehículo, quita su id del `userVehicles` de
   **todos** sus miembros —algo que el cliente no puede hacer, porque las reglas le impiden

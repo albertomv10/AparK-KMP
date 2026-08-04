@@ -47,6 +47,11 @@ npx firebase-tools@latest functions:log
 
 - **Region is not a free choice**: both Firestore databases live in `eur3`, so the triggers must
   be deployed to `europe-west4`. The default `us-central1` is rejected.
+- **Adding a Firebase module to KMP has a second step on iOS**: the iOS app resolves Firebase
+  through Swift Package Manager, so the matching product (e.g. `FirebaseFunctions`) must also be
+  added to the `iosApp` target or the build fails at link time, not at compile time.
+- **Callable functions cannot infer the caller's database** the way a Firestore trigger can, so
+  each one is exported per database and the app picks by `AppConfig.isDebug`.
 - **Import narrowly**: `firebase-functions/logger`, *not* the `firebase-functions/v2` barrel — the
   barrel loads every provider, including Realtime Database, whose `@firebase/app` peer dependency
   npm does not install, which breaks the deploy-time analysis.

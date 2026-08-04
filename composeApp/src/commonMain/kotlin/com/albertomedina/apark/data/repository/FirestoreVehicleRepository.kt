@@ -117,7 +117,6 @@ class FirestoreVehicleRepository(
     override suspend fun createVehicle(userId: String, name: String, licensePlate: String): Result<Unit> {
         return try {
             val carRef = firestore.collection(FirestoreConstants.CARS_COLLECTION).document
-            val inviteCode = generateInviteCode()
 
             val newVehicle = Vehicle(
                 id = carRef.id,
@@ -125,7 +124,6 @@ class FirestoreVehicleRepository(
                 licensePlate = licensePlate,
                 ownerId = userId,
                 sharedUsers = emptyList(),
-                inviteCode = inviteCode,
                 lastLocation = null
             )
 
@@ -176,42 +174,6 @@ class FirestoreVehicleRepository(
         }
     }
 
-    override suspend fun joinVehicleByCodeOrId(identifier: String, userId: String): Result<Unit> {
-        return try {
-            val carCollection = firestore.collection(FirestoreConstants.CARS_COLLECTION)
-
-            val vehicleSnapshot = if (identifier.length < 15) {
-                val querySnapshot = carCollection.where(FirestoreConstants.INVITE_CODE_FIELD, equalTo = identifier).get()
-                querySnapshot.documents.firstOrNull()
-            } else {
-                val snap = carCollection.document(identifier).get()
-                if (snap.exists) snap else null
-            }
-
-            if (vehicleSnapshot == null || !vehicleSnapshot.exists) {
-                return Result.failure(Exception("Vehículo no encontrado"))
-            }
-
-            val vehicle = vehicleSnapshot.data<Vehicle>()
-
-            if (!vehicle.sharedUsers.contains(userId)) {
-                val batch = firestore.batch()
-                batch.update(
-                    vehicleSnapshot.reference,
-                    FirestoreConstants.SHARED_USERS_FIELD to FieldValue.arrayUnion(userId)
-                )
-                batch.update(
-                    firestore.collection(FirestoreConstants.USERS_COLLECTION).document(userId),
-                    FirestoreConstants.CARS_FIELD to FieldValue.arrayUnion(vehicle.id)
-                )
-                batch.commit()
-            }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
     override suspend fun removeUserFromVehicle(vehicleId: String, userId: String): Result<Unit> {
         return try {
             val carRef = firestore.collection(FirestoreConstants.CARS_COLLECTION).document(vehicleId)
@@ -237,11 +199,6 @@ class FirestoreVehicleRepository(
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
-
-    private fun generateInviteCode(): String {
-        val chars = ('A'..'Z') + ('0'..'9')
-        return (1..6).map { chars.random() }.joinToString("")
     }
 
     private companion object {

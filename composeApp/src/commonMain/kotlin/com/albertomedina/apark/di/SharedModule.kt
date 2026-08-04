@@ -1,13 +1,16 @@
 package com.albertomedina.apark.di
 
 import com.albertomedina.apark.data.repository.FirebaseAuthRepository
+import com.albertomedina.apark.data.repository.FirebaseInviteRepository
 import com.albertomedina.apark.data.repository.FirestoreUserRepository
 import com.albertomedina.apark.data.repository.FirestoreVehicleRepository
 import com.albertomedina.apark.data.repository.LocationRepositoryImpl
 import com.albertomedina.apark.domain.repository.AuthRepository
+import com.albertomedina.apark.domain.repository.InviteRepository
 import com.albertomedina.apark.domain.repository.LocationRepository
 import com.albertomedina.apark.domain.repository.UserRepository
 import com.albertomedina.apark.domain.repository.VehicleRepository
+import com.albertomedina.apark.domain.usecase.CreateVehicleInviteUseCase
 import com.albertomedina.apark.domain.usecase.CreateVehicleUseCase
 import com.albertomedina.apark.domain.usecase.DeleteVehicleUseCase
 import com.albertomedina.apark.domain.usecase.GetCurrentLocationUseCase
@@ -17,6 +20,7 @@ import com.albertomedina.apark.domain.usecase.GetVehicleByIdUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
 import com.albertomedina.apark.domain.usecase.LoginAppleUseCase
 import com.albertomedina.apark.domain.usecase.LoginGoogleUseCase
+import com.albertomedina.apark.domain.usecase.JoinVehicleWithCodeUseCase
 import com.albertomedina.apark.domain.usecase.LoginUseCase
 import com.albertomedina.apark.domain.usecase.MoveVehicleUseCase
 import com.albertomedina.apark.domain.usecase.RegisterUseCase
@@ -31,12 +35,15 @@ import com.albertomedina.apark.presentation.auth.verification.EmailVerificationV
 import com.albertomedina.apark.presentation.addvehicle.AddVehicleViewModel
 import com.albertomedina.apark.presentation.home.HomeViewModel
 import com.albertomedina.apark.presentation.splash.SplashViewModel
+import com.albertomedina.apark.presentation.vehicledetail.VehicleDetailViewModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.app
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.firestore
+import dev.gitlive.firebase.functions.FirebaseFunctions
+import dev.gitlive.firebase.functions.functions
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.KoinAppDeclaration
@@ -61,10 +68,15 @@ val sharedModule = module {
     }
     single<FirebaseAuth>{ Firebase.auth }
 
+    // The region is not optional: the callables are deployed in europe-west4, and without this
+    // the SDK would call us-central1 and fail.
+    single<FirebaseFunctions> { Firebase.functions(region = "europe-west4") }
+
     single<VehicleRepository> { FirestoreVehicleRepository(firestore = get()) }
     single<UserRepository> { FirestoreUserRepository(firestore = get()) }
 
     single<AuthRepository> { FirebaseAuthRepository(firebaseAuth = get()) }
+    single<InviteRepository> { FirebaseInviteRepository(functions = get(), config = get()) }
 
     single<LocationRepository> {
         LocationRepositoryImpl(
@@ -79,6 +91,8 @@ val sharedModule = module {
     factory { CreateVehicleUseCase(repository = get()) }
     factory { DeleteVehicleUseCase(repository = get()) }
     factory { MoveVehicleUseCase(repository = get()) }
+    factory { CreateVehicleInviteUseCase(repository = get()) }
+    factory { JoinVehicleWithCodeUseCase(repository = get()) }
     factory { GetVehicleByIdUseCase(repository = get()) }
     factory { UpdateVehicleUseCase(repository = get()) }
     factory { RemoveUserFromVehicleUseCase(repository = get()) }
@@ -149,6 +163,15 @@ val sharedModule = module {
     viewModel {
         AddVehicleViewModel(
             createVehicleUseCase = get(),
+            joinVehicleWithCodeUseCase = get(),
+            authRepository = get()
+        )
+    }
+
+    viewModel {
+        VehicleDetailViewModel(
+            getVehicleByIdUseCase = get(),
+            createVehicleInviteUseCase = get(),
             authRepository = get()
         )
     }

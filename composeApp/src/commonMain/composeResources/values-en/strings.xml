@@ -108,4 +108,23 @@
     <string name="reorder_move_left">Move left</string>
     <string name="reorder_move_right">Move right</string>
     <string name="reorder_error">Could not change the order. Please try again</string>
+    <string name="add_vehicle_tab_create">Create</string>
+    <string name="add_vehicle_tab_join">Join</string>
+    <string name="join_vehicle_code_label">Invitation code</string>
+    <string name="join_vehicle_code_error">Enter a code</string>
+    <string name="join_vehicle_action">Join vehicle</string>
+    <string name="join_vehicle_error">That code could not be used</string>
+    <string name="share_vehicle_action">Share vehicle</string>
+    <string name="share_vehicle_dialog_title">Invitation code</string>
+    <string name="share_vehicle_expiry">Expires in 24 hours and can only be used once</string>
+    <string name="share_vehicle_copy">Copy</string>
+    <string name="share_vehicle_send">Share</string>
+    <string name="share_vehicle_copied">Code copied</string>
+    <string name="share_vehicle_error">Could not create the invitation</string>
+    <string name="share_vehicle_message">I am sharing my vehicle %1$s with you on AparK. Join with this code:\n\n%2$s</string>
+    <string name="join_vehicle_error_invalid">That code is not valid</string>
+    <string name="join_vehicle_error_used">That invitation has already been used</string>
+    <string name="join_vehicle_error_expired">That invitation has expired</string>
+    <string name="join_vehicle_error_already_member">You already have this vehicle</string>
+    <string name="join_vehicle_success">You joined %1$s</string>
 </resources>
