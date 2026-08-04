@@ -49,8 +49,13 @@ que la tarjeta desaparece igualmente. Pero deja dos costes:
   uno con su opción `database`; un único despliegue publica los dos.
 - **¿Limitar el fan-out o paginar?** → **no**: los miembros por vehículo están muy lejos del
   límite de 500 escrituras de un batch. Queda documentado por si cambiara.
-- **¿Función de mantenimiento puntual?** → **no hace falta**: se comprobó que las listas actuales
-  no contienen ningún ID colgante.
+- **¿Función de mantenimiento puntual?** → **no se implementó**, pero la razón que se dio era
+  incorrecta. Se comprobó que no había IDs colgantes **solo en la base de datos de debug** y se
+  generalizó a las dos. La de release **sí los tenía**, y salieron a la luz al aparecer una
+  tarjeta fantasma en un iPhone real (ver [spec 004](../004-stale-cache-cards/spec.md)). Se
+  limpiaron **a mano** el 2026-08-04, con precondición de `updateTime` para no repetir la
+  sobrescritura ciega. Conclusión correcta: la función evita los IDs colgantes **nuevos**, pero
+  los antiguos requerían una limpieza puntual.
 
 ## Fuera de alcance
 
