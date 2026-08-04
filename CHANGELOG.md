@@ -9,6 +9,12 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **Limpieza automática de referencias** ([spec 002](docs/specs/002-vehicle-cleanup-function/spec.md)):
+  primera Cloud Function del proyecto. Al borrarse un vehículo, quita su id del `userVehicles` de
+  **todos** sus miembros —algo que el cliente no puede hacer, porque las reglas le impiden
+  escribir en el documento de otro usuario—, evitando así los ids colgantes que penalizaban el
+  arranque de los demás. Desplegada para las dos bases de datos. Con esto el proyecto estrena
+  backend: `functions/` en TypeScript.
 - **Reordenar vehículos** ([spec 003](docs/specs/003-reorder-vehicles/spec.md)): en modo
   edición, cada tarjeta muestra flechas ◀ ▶ para moverla una posición. El carrusel sigue al
   vehículo movido, de modo que se puede pulsar la misma flecha repetidamente. El orden es

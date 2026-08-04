@@ -32,6 +32,25 @@ Integrate to `main` via Pull Request, never direct pushes.
 # Run iOS: open iosApp/iosApp.xcodeproj in Xcode, build from there
 ```
 
+## Backend — Cloud Functions
+
+`functions/` holds the project's only server-side code (TypeScript, Node 22): a Firestore
+`onDocumentDeleted` trigger that strips a deleted vehicle's id from every member's
+`userVehicles`, which the client cannot do because rules forbid writing to another user's
+document. Exported twice, once per database.
+
+```sh
+npm --prefix functions run build     # compile (the deploy predeploy hook runs this too)
+npx firebase-tools@latest deploy --only functions
+npx firebase-tools@latest functions:log
+```
+
+- **Region is not a free choice**: both Firestore databases live in `eur3`, so the triggers must
+  be deployed to `europe-west4`. The default `us-central1` is rejected.
+- **Import narrowly**: `firebase-functions/logger`, *not* the `firebase-functions/v2` barrel — the
+  barrel loads every provider, including Realtime Database, whose `@firebase/app` peer dependency
+  npm does not install, which breaks the deploy-time analysis.
+
 ## Architecture
 
 - **Clean Architecture + MVI**: UI (Compose) → ViewModel → UseCase → Repository (interface) → DataSource (impl)
