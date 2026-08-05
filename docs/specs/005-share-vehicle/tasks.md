@@ -45,12 +45,22 @@
 - [x] Compila Android e iOS-Kotlin; enlaza y arranca en el simulador
 - [x] **Criterio 1**: el dueño genera código (`PG5CWYQ9`); el documento tiene `expiresAt` a
       exactamente 24 h y `usedBy` nulo
-- [x] **Criterio 7**: usar un código propio → avisa "Ya tienes este vehículo" y la invitación
-      sigue con `usedBy` nulo (comprobado con MCP)
+- [x] **Criterio 2**: otra cuenta se unió con el código. Verificado en datos: la invitación quedó
+      con `usedBy` y `usedAt`, el vehículo sumó al usuario en `sharedUsers`, y su `userVehicles`
+      incluye el vehículo — los tres con el **mismo `updateTime`**, o sea, en una sola transacción
+- [x] **Criterio 5**: código inexistente → "Ese código no es válido"
+- [x] **Criterio 7**: código propio → "Ya tienes este vehículo" y la invitación **no** se consume
+      (`usedBy` seguía nulo)
 - [x] Los estados del servidor se traducen: al usuario ya no le llega el volcado de la excepción
-- [ ] **Criterio 6**: en un vehículo compartido no aparece el botón — *no probado: la cuenta de
-      pruebas ya no tiene ningún vehículo compartido con ella*
-- [ ] **Criterio 5**: código inventado → error
-- [ ] **Criterio 3**: reutilizar un código ya usado → error
-- [ ] **Criterio 4**: forzar caducidad y reintentar
-- [ ] **Criterio 2**: *(requiere segunda cuenta — la inicia el usuario)* unirse de verdad
+- [ ] **Criterio 3** (código ya usado → error): no confirmado en la interfaz. La propiedad de un
+      solo uso **sí** está respaldada por los datos (la invitación quedó marcada y la función
+      comprueba `usedBy` antes que nada), pero falta ver el mensaje
+- [ ] **Criterio 4** (caducada): sin probar
+- [ ] **Criterio 6** (sin botón si no eres dueño): **sin verificar**. Un intento resultó inválido:
+      la sesión del simulador era la del **dueño**, así que ver el botón era lo correcto. Requiere
+      abrir un vehículo compartido desde la cuenta que no lo posee
+
+### Cómo cerrar lo que falta
+Con la sesión de `albertomedinavaquero@gmail.com` (que ahora tiene Tesla compartido):
+abrir el detalle de **Tesla** → no debe aparecer "Compartir vehículo" (criterio 6), y meter
+`PG5CWYQ9` en *Unirme* → debe decir que ya se ha usado (criterio 3).
