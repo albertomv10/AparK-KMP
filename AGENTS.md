@@ -114,6 +114,11 @@ npx firebase-tools@latest functions:log
 - **Kotlin 2.3.0** — Compose Compiler plugin is bundled (`org.jetbrains.kotlin.plugin.compose`), no separate version.
 - **`flatMapLatest` requires `@OptIn(ExperimentalCoroutinesApi::class)`** — used in `HomeViewModel.observeAuthState()`
 - **`BackHandler` is not part of `compose.ui`**: the `org.jetbrains.compose.ui:ui-backhandler` artifact must be declared explicitly or the reference will not resolve, and it needs `@OptIn(ExperimentalComposeUiApi::class)`
+- **No ViewModel is ever cleared**: `NavDisplay`'s only default decorator is the `SaveableStateHolder`
+  one, so `koinViewModel()` resolves against the root `ViewModelStoreOwner` and every ViewModel lives
+  as long as the process. A screen that must start clean has to wipe its own state on entry (see
+  `AddVehicleEvent.ScreenOpened`). The proper fix is `lifecycle-viewmodel-navigation3`, which the
+  Compose Multiplatform side only publishes from lifecycle 2.10.0 onwards — the project is on 2.9.6
 - **Listening to a Firestore document that does not exist returns PERMISSION_DENIED, not "not found"**, because the rule dereferences a null `resource`. `getVehiclesForUser` therefore wraps each per-vehicle snapshot in `retryWhen` + `catch`; without it, a just-created or deleted vehicle can crash the app
 
 ## Known Incomplete / Buggy Areas

@@ -49,6 +49,11 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   a las bases de datos `(default)` y `apark-at`.
 
 ### Fixed
+- Los formularios de *Añadir vehículo* conservaban lo escrito en la visita anterior, y la
+  pantalla de detalle podía reabrir el diálogo con el **código de invitación del vehículo
+  anterior** bajo el nombre del nuevo. La causa es común: `NavDisplay` no trae el decorador de
+  `ViewModelStore`, así que **ningún ViewModel se destruye** al navegar hacia atrás. Cada una de
+  las dos pantallas parte ahora de un estado limpio al entrar.
 - Un usuario con el que se comparte un vehículo no podía quitárselo de su lista: las reglas
   solo le permitían modificar `lastLocation`, así que la operación se rechazaba con
   `PERMISSION_DENIED`. Se añadió una rama a la regla `allow update` que permite a un miembro

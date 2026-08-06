@@ -36,7 +36,10 @@ class VehicleDetailViewModel(
     }
 
     private fun load(vehicleId: String) {
-        _uiState.update { it.copy(isLoading = true, vehicleId = vehicleId) }
+        // This ViewModel outlives the screen (NavDisplay does not scope ViewModels to the entry),
+        // so an invite left over from the previous vehicle would reopen its dialog here — showing
+        // the old code under the new vehicle's name.
+        _uiState.value = VehicleDetailUiState(isLoading = true, vehicleId = vehicleId)
 
         viewModelScope.launch {
             val vehicle = getVehicleByIdUseCase(vehicleId)

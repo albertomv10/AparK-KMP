@@ -52,15 +52,30 @@
 - [x] **Criterio 7**: código propio → "Ya tienes este vehículo" y la invitación **no** se consume
       (`usedBy` seguía nulo)
 - [x] Los estados del servidor se traducen: al usuario ya no le llega el volcado de la excepción
-- [ ] **Criterio 3** (código ya usado → error): no confirmado en la interfaz. La propiedad de un
-      solo uso **sí** está respaldada por los datos (la invitación quedó marcada y la función
-      comprueba `usedBy` antes que nada), pero falta ver el mensaje
-- [ ] **Criterio 4** (caducada): sin probar
-- [ ] **Criterio 6** (sin botón si no eres dueño): **sin verificar**. Un intento resultó inválido:
-      la sesión del simulador era la del **dueño**, así que ver el botón era lo correcto. Requiere
-      abrir un vehículo compartido desde la cuenta que no lo posee
+- [x] **Criterio 3** (código ya usado → error): comprobado por Alberto desde la cuenta que ya se
+      había unido. Concuerda con los datos: la invitación quedó marcada y la función comprueba
+      `usedBy` antes que nada
+- [x] **Criterio 6** (sin botón si no eres dueño): comprobado por Alberto abriendo el detalle de
+      un vehículo compartido desde la cuenta que **no** lo posee. Un intento anterior mío no
+      valía: la sesión del simulador era la del **dueño**, así que ver el botón era lo correcto
+- [ ] **Criterio 4** (caducada): sin probar. Es el único que queda, y para probarlo hay que
+      adelantar `expiresAt` a mano desde Firestore
 
-### Cómo cerrar lo que falta
-Con la sesión de `albertomedinavaquero@gmail.com` (que ahora tiene Tesla compartido):
-abrir el detalle de **Tesla** → no debe aparecer "Compartir vehículo" (criterio 6), y meter
-`PG5CWYQ9` en *Unirme* → debe decir que ya se ha usado (criterio 3).
+## Corrección posterior — los formularios no se vaciaban
+Al salir de *Añadir vehículo* y volver a entrar seguía el texto de la visita anterior.
+
+**Causa**: `NavDisplay` solo trae por defecto el decorador de `SaveableStateHolder`; **no** el de
+`ViewModelStore`. Sin él, `koinViewModel()` resuelve contra el `ViewModelStoreOwner` raíz, así que
+**ningún ViewModel de la app se destruye nunca** al navegar hacia atrás.
+
+El arreglo de raíz sería añadir `lifecycle-viewmodel-navigation3`, pero ese artefacto de Compose
+Multiplatform **no existe para la 2.9.6** que usa el proyecto (aparece en 2.10.0-alpha03), así que
+implicaría subir toda la pila de lifecycle. Queda anotado, no hecho.
+
+- [x] `AddVehicleEvent.ScreenOpened` vacía el estado al entrar, con una bandera `rememberSaveable`
+      para hacerlo **una vez por visita** y no perder lo escrito al rotar
+- [x] Mismo fallo, más grave, en el detalle: `load` no limpiaba `invite`, así que tras compartir un
+      vehículo y abrir otro se reabría el diálogo con el **código del anterior** bajo el nombre del
+      nuevo. Ahora `load` parte de un estado limpio
+- [ ] Los formularios de login y registro tienen el mismo comportamiento (conservan el correo y la
+      contraseña escritos). Fuera del alcance de esta spec
