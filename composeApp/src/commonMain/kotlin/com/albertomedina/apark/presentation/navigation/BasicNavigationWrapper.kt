@@ -2,10 +2,12 @@ package com.albertomedina.apark.presentation.navigation
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.savedstate.serialization.SavedStateConfiguration
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.albertomedina.apark.presentation.auth.login.LoginScreen
 import com.albertomedina.apark.presentation.auth.register.RegisterScreen
@@ -67,6 +69,15 @@ fun BasicNavigationWrapper(){
     NavDisplay(
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
+        // NavDisplay only brings the SaveableStateHolder decorator by default. Without the
+        // ViewModelStore one, every ViewModel would resolve against the root owner and outlive
+        // its screen: each visit would find the previous visit's state. Passing the list replaces
+        // the default, so the SaveableStateHolder decorator has to stay — the ViewModelStore one
+        // depends on it to hand out SavedStateHandles.
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator()
+        ),
         entryProvider = { key ->
             when(key){
                 is Splash -> NavEntry(key) {

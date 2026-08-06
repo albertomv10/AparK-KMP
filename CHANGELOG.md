@@ -43,6 +43,12 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   `docs/specs/_template/` y este `CHANGELOG.md`.
 
 ### Changed
+- **ViewModels con ámbito de pantalla** ([spec 006](docs/specs/006-scoped-viewmodels/spec.md)):
+  `NavDisplay` no traía el decorador de `ViewModelStore`, así que **ningún ViewModel se destruía
+  nunca** y cada pantalla arrastraba el estado de su visita anterior. Añadirlo exigía subir
+  `lifecycle` a **2.10.0**, la primera versión que publica el artefacto para Compose Multiplatform
+  y que sigue apuntando a Compose 1.9.3. Con eso desaparecen los parches que cada pantalla tenía
+  que ponerse, y los formularios de login y registro dejan de conservar lo escrito sin tocarlos.
 - Rediseño de la `AddVehicleCard` acorde a Material 3.
 - Regla `create` de la colección `vehicles` endurecida (dueño, longitud de nombre,
   `sharedUsers` vacío, `lastLocation` nulo), con accesos defensivos `get()`. Desplegada
