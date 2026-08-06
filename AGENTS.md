@@ -47,6 +47,11 @@ npx firebase-tools@latest functions:log
 
 - **Region is not a free choice**: both Firestore databases live in `eur3`, so the triggers must
   be deployed to `europe-west4`. The default `us-central1` is rejected.
+- **Adding a Firebase module to KMP has a second step on iOS**: the iOS app resolves Firebase
+  through Swift Package Manager, so the matching product (e.g. `FirebaseFunctions`) must also be
+  added to the `iosApp` target or the build fails at link time, not at compile time.
+- **Callable functions cannot infer the caller's database** the way a Firestore trigger can, so
+  each one is exported per database and the app picks by `AppConfig.isDebug`.
 - **Import narrowly**: `firebase-functions/logger`, *not* the `firebase-functions/v2` barrel — the
   barrel loads every provider, including Realtime Database, whose `@firebase/app` peer dependency
   npm does not install, which breaks the deploy-time analysis.
@@ -109,6 +114,11 @@ npx firebase-tools@latest functions:log
 - **Kotlin 2.3.0** — Compose Compiler plugin is bundled (`org.jetbrains.kotlin.plugin.compose`), no separate version.
 - **`flatMapLatest` requires `@OptIn(ExperimentalCoroutinesApi::class)`** — used in `HomeViewModel.observeAuthState()`
 - **`BackHandler` is not part of `compose.ui`**: the `org.jetbrains.compose.ui:ui-backhandler` artifact must be declared explicitly or the reference will not resolve, and it needs `@OptIn(ExperimentalComposeUiApi::class)`
+- **No ViewModel is ever cleared**: `NavDisplay`'s only default decorator is the `SaveableStateHolder`
+  one, so `koinViewModel()` resolves against the root `ViewModelStoreOwner` and every ViewModel lives
+  as long as the process. A screen that must start clean has to wipe its own state on entry (see
+  `AddVehicleEvent.ScreenOpened`). The proper fix is `lifecycle-viewmodel-navigation3`, which the
+  Compose Multiplatform side only publishes from lifecycle 2.10.0 onwards — the project is on 2.9.6
 - **Listening to a Firestore document that does not exist returns PERMISSION_DENIED, not "not found"**, because the rule dereferences a null `resource`. `getVehiclesForUser` therefore wraps each per-vehicle snapshot in `retryWhen` + `catch`; without it, a just-created or deleted vehicle can crash the app
 
 ## Known Incomplete / Buggy Areas

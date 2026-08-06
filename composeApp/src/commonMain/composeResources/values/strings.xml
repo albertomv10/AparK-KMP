@@ -108,4 +108,23 @@
     <string name="reorder_move_left">Mover a la izquierda</string>
     <string name="reorder_move_right">Mover a la derecha</string>
     <string name="reorder_error">No se pudo cambiar el orden. Inténtalo de nuevo</string>
+    <string name="add_vehicle_tab_create">Crear</string>
+    <string name="add_vehicle_tab_join">Unirme</string>
+    <string name="join_vehicle_code_label">Código de invitación</string>
+    <string name="join_vehicle_code_error">Introduce un código</string>
+    <string name="join_vehicle_action">Unirme al vehículo</string>
+    <string name="join_vehicle_error">No se pudo usar ese código</string>
+    <string name="share_vehicle_action">Compartir vehículo</string>
+    <string name="share_vehicle_dialog_title">Código de invitación</string>
+    <string name="share_vehicle_expiry">Caduca en 24 horas y solo puede usarse una vez</string>
+    <string name="share_vehicle_copy">Copiar</string>
+    <string name="share_vehicle_send">Compartir</string>
+    <string name="share_vehicle_copied">Código copiado</string>
+    <string name="share_vehicle_error">No se pudo crear la invitación</string>
+    <string name="share_vehicle_message">Te comparto mi vehículo %1$s en AparK. Únete con este código:\n\n%2$s</string>
+    <string name="join_vehicle_error_invalid">Ese código no es válido</string>
+    <string name="join_vehicle_error_used">Esa invitación ya se ha usado</string>
+    <string name="join_vehicle_error_expired">Esa invitación ha caducado</string>
+    <string name="join_vehicle_error_already_member">Ya tienes este vehículo</string>
+    <string name="join_vehicle_success">Te has unido a %1$s</string>
 </resources>

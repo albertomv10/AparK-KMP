@@ -8,6 +8,13 @@ service cloud.firestore {
                           && request.auth.uid == userId;
     }
 
+    // Invitations are handled entirely by Cloud Functions, which use the Admin SDK and bypass
+    // these rules. Denying every client access is the point: it stops invite codes being
+    // enumerated, and stops a tampered client minting itself an invitation that never expires.
+    match /invites/{code} {
+      allow read, write: if false;
+    }
+
     // Vehicles collection
     match /vehicles/{vehicleId} {
 

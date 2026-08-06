@@ -13,7 +13,6 @@ interface VehicleRepository {
     suspend fun createVehicle(userId: String, name: String, licensePlate: String = ""): Result<Unit>
     suspend fun deleteVehicle(vehicleId: String, userId: String): Result<Unit>
     suspend fun updateVehicle(vehicle: Vehicle): Result<Unit>
-    suspend fun joinVehicleByCodeOrId(identifier: String, userId: String): Result<Unit>
     suspend fun removeUserFromVehicle(vehicleId: String, userId: String): Result<Unit>
     suspend fun transferVehicleOwnership(vehicleId: String, newOwnerId: String): Result<Unit>
 }

@@ -14,6 +14,7 @@ import com.albertomedina.apark.presentation.addvehicle.AddVehicleScreen
 import com.albertomedina.apark.presentation.auth.verification.EmailVerificationScreen
 import com.albertomedina.apark.presentation.home.HomeScreen
 import com.albertomedina.apark.presentation.splash.SplashScreen
+import com.albertomedina.apark.presentation.vehicledetail.VehicleDetailScreen
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
@@ -35,6 +36,9 @@ data object VerifyEmail: Destiny
 data object Home: Destiny
 @Serializable
 data object AddVehicle: Destiny
+// First destination carrying a parameter: the rest are data objects.
+@Serializable
+data class VehicleDetail(val vehicleId: String): Destiny
 
 // Creates the required serialization configuration for open polymorphism
 private val config = SavedStateConfiguration {
@@ -47,6 +51,7 @@ private val config = SavedStateConfiguration {
             subclass(VerifyEmail::class, VerifyEmail.serializer())
             subclass(Home::class, Home.serializer())
             subclass(AddVehicle::class, AddVehicle.serializer())
+            subclass(VehicleDetail::class, VehicleDetail.serializer())
         }
     }
 }
@@ -109,10 +114,18 @@ fun BasicNavigationWrapper(){
                             backStack.clear()
                             backStack.add(Login)
                         },
-                        onNavigateToDetails = {},
+                        onNavigateToDetails = { vehicleId ->
+                            backStack.add(VehicleDetail(vehicleId))
+                        },
                         onNavigateToAddVehicle = {
                             backStack.add(AddVehicle)
                         }
+                    )
+                }
+                is VehicleDetail -> NavEntry(key) {
+                    VehicleDetailScreen(
+                        vehicleId = key.vehicleId,
+                        onBack = { backStack.removeLastOrNull() }
                     )
                 }
                 is AddVehicle -> NavEntry(key) {
