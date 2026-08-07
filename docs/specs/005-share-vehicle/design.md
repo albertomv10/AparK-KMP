@@ -106,6 +106,12 @@ el modelo** para no romper la lectura de los documentos que ya lo tienen.
    comparte se crea una nueva y **se revoca la anterior sin usar**.
 4. **Limpieza de caducadas** → las sin usar se borran al generar otra para el mismo vehículo. No
    se añade TTL: el volumen es mínimo.
+   > **Corregido después** ([spec 007](../007-invite-cleanup/spec.md)). El volumen sí es mínimo,
+   > eso era correcto, pero esta limpieza deja tres huecos: una invitación de un vehículo que no se
+   > vuelve a compartir no se borra nunca, **las usadas no se borran jamás** —cada compartición
+   > exitosa deja un documento permanente— y al eliminar un vehículo las suyas quedan huérfanas.
+   > Lo que hacía falta arreglar no era el almacenamiento sino el mensaje: mientras el documento
+   > existe se dice *"ha caducado"*; cuando desaparece se dice *"no es válido"*, que confunde.
 5. **Qué se devuelve** → el **nombre del vehículo**, para confirmar a qué te has unido.
 6. **`inviteCode` heredado** → se deja de generar; el campo permanece por compatibilidad.
 7. **Fuerza bruta** → caducidad de 24 h, un solo uso, 8 caracteres y la función como único punto

@@ -52,6 +52,11 @@ npx firebase-tools@latest functions:log
   added to the `iosApp` target or the build fails at link time, not at compile time.
 - **Callable functions cannot infer the caller's database** the way a Firestore trigger can, so
   each one is exported per database and the app picks by `AppConfig.isDebug`.
+- **A TTL policy on `invites` is part of how this works, and it is not in the repo**: both databases
+  delete an invitation seven days after its `expiresAt`. There is no file that versions this and no
+  deploy that reproduces it — `firebase-tools` has no TTL command, so it is set by hand in the
+  console per database. A new database needs it set up again, or invitations pile up forever. See
+  `docs/specs/007-invite-cleanup/`
 - **Import narrowly**: `firebase-functions/logger`, *not* the `firebase-functions/v2` barrel — the
   barrel loads every provider, including Realtime Database, whose `@firebase/app` peer dependency
   npm does not install, which breaks the deploy-time analysis.
