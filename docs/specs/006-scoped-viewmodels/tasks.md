@@ -37,8 +37,11 @@
       entrar da un Home limpio): comprobados por Alberto **compilando esta rama** en su iPhone.
       Era el camino que más cambia, porque `backStack.clear()` ahora destruye el `HomeViewModel`
       en lugar de dejarlo vivo entre cuentas
-- [ ] **Criterio 7** (rotar no pierde lo escrito): sin probar. Solo aplica a Android; el decorador
-      consulta `isChangingConfigurations` antes de limpiar
+- [x] **Criterio 7** (rotar no pierde lo escrito): comprobado por Alberto en Android. Es lo
+      esperado: el decorador consulta `isChangingConfigurations`, así que una rotación no cuenta
+      como salir de la pantalla y el ViewModel no se limpia
+
+**Los siete criterios quedan verificados.**
 
 ## Relación con la fuga de datos entre cuentas
 El proyecto ya arregló ese fallo en julio (`f229131` y `74d61b9`) sustituyendo un
