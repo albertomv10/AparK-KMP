@@ -32,6 +32,33 @@ Integrate to `main` via Pull Request, never direct pushes.
 # Run iOS: open iosApp/iosApp.xcodeproj in Xcode, build from there
 ```
 
+## Code graph — graphify
+
+[graphify](https://github.com/Graphify-Labs/graphify) indexes this repo into a queryable graph.
+Use it to *locate* things instead of grepping; it will not save you from reading the code you are
+about to change, because it stores signatures and line numbers, not bodies.
+
+```sh
+graphify update .                 # rebuild: ~3s, 0 tokens, tree-sitter only
+graphify explain "HomeViewModel"  # declarations, methods, what it implements — with file:line
+graphify path "A" "B" --undirected
+```
+
+- **Prefer the CLI over the `/graphify` skill when cost matters.** `graphify update .` parses code
+  with tree-sitter and spends **no tokens**. The skill's full run also does semantic extraction of
+  docs and images, and that phase needs an LLM — which is you.
+- **Rebuild before trusting it.** A stale graph is worse than none: it is confidently wrong about
+  code that has since been deleted.
+- **It cannot see the DI wiring.** Koin resolves at runtime, so there is no edge from a ViewModel to
+  its UseCase or Repository — `path HomeScreen FirestoreVehicleRepository` detours through the
+  `Vehicle` model instead of following the real chain. **A missing edge is not evidence that
+  nothing uses something.**
+- **Treat the report's "Surprising Connections" as noise.** It has presented an `inherits NSObject`
+  edge between a Swift class and an unrelated Kotlin file that merely imports `NSObject`, labelled
+  EXTRACTED.
+- `graphify-out/` is gitignored (3+ MB, regenerated in seconds). The binary lives in `~/.local/bin`,
+  which is not on `PATH` by default — `uv tool update-shell` fixes that.
+
 ## Backend — Cloud Functions
 
 `functions/` holds the project's only server-side code (TypeScript, Node 22):
