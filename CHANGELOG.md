@@ -49,6 +49,14 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   a las bases de datos `(default)` y `apark-at`.
 
 ### Fixed
+- **Las invitaciones ya no se acumulan para siempre**
+  ([spec 007](docs/specs/007-invite-cleanup/spec.md)). La limpieza que había solo actuaba al volver
+  a compartir el mismo vehículo, así que una invitación de un vehículo que no se comparte dos veces
+  no se borraba nunca, **las usadas no se borraban jamás** —una por cada compartición con éxito— y
+  al eliminar un vehículo las suyas quedaban huérfanas. Ahora una **política TTL** las retira siete
+  días después de caducar, y el trigger de borrado de vehículo se lleva las suyas en el acto. La
+  semana de gracia es deliberada: mientras el documento existe se dice *"ha caducado"*, que invita
+  a pedir otra; cuando desaparece se dice *"no es válido"*, que hace pensar en un error al teclear.
 - Los formularios de *Añadir vehículo* conservaban lo escrito en la visita anterior, y la
   pantalla de detalle podía reabrir el diálogo con el **código de invitación del vehículo
   anterior** bajo el nombre del nuevo. La causa es común: `NavDisplay` no trae el decorador de

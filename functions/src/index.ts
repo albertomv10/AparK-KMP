@@ -21,6 +21,8 @@ const DEBUG_DATABASE = "apark-at";
 
 const USERS_COLLECTION = "users";
 const USER_VEHICLES_FIELD = "userVehicles";
+const INVITES_COLLECTION = "invites";
+const VEHICLE_ID_FIELD = "vehicleId";
 
 /**
  * Drops a deleted vehicle's id from the `userVehicles` array of every member.
@@ -84,14 +86,61 @@ async function removeVehicleFromMembers(
     });
 }
 
+/**
+ * Deletes the invitations pointing at a vehicle that no longer exists.
+ *
+ * The TTL policy on `expiresAt` would sweep them up eventually, but until then they are live codes
+ * for something that is gone. This needs nothing but the id from the event parameters, which is why
+ * it does not read the deleted document.
+ *
+ * Safe to run more than once: deleting an already-deleted document is a no-op.
+ */
+async function deleteVehicleInvites(vehicleId: string, databaseId: string): Promise<void> {
+    const firestore = getFirestore(databaseId);
+    const invites = await firestore
+        .collection(INVITES_COLLECTION)
+        .where(VEHICLE_ID_FIELD, "==", vehicleId)
+        .get();
+
+    if (invites.empty) {
+        return;
+    }
+
+    // One batch is enough: a vehicle holds at most one live invitation plus whatever used ones the
+    // TTL policy has not swept yet, which is nowhere near the 500-write limit.
+    const batch = firestore.batch();
+    invites.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+
+    logger.info("Deleted invitations for a removed vehicle", {
+        vehicleId,
+        databaseId,
+        deleted: invites.size,
+    });
+}
+
+/**
+ * Both cleanups are attempted even if one fails, and neither depends on the other: the member
+ * cleanup needs the deleted document's data, while the invitation cleanup only needs its id.
+ */
+async function cleanupAfterVehicleDeleted(
+    event: FirestoreEvent<QueryDocumentSnapshot | undefined, { vehicleId: string }>,
+    databaseId: string
+): Promise<void> {
+    await Promise.all([
+        removeVehicleFromMembers(event, databaseId),
+        deleteVehicleInvites(event.params.vehicleId, databaseId),
+    ]);
+}
+
 export const cleanupVehicleReferences = onDocumentDeleted(
     { document: "vehicles/{vehicleId}", database: PROD_DATABASE, region: REGION },
-    (event) => removeVehicleFromMembers(event, PROD_DATABASE)
+    (event) => cleanupAfterVehicleDeleted(event, PROD_DATABASE)
 );
 
 export const cleanupVehicleReferencesDebug = onDocumentDeleted(
     { document: "vehicles/{vehicleId}", database: DEBUG_DATABASE, region: REGION },
-    (event) => removeVehicleFromMembers(event, DEBUG_DATABASE)
+    (event) => cleanupAfterVehicleDeleted(event, DEBUG_DATABASE)
 );
 
 // Callable functions cannot infer which database the caller is using the way a Firestore trigger

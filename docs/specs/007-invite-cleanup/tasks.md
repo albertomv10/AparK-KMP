@@ -3,32 +3,40 @@
 - **Spec**: [spec.md](spec.md) · **Design**: [design.md](design.md)
 
 ## Infraestructura — lo hace Alberto en la consola
-- [ ] Política TTL en **`apark-at`**: grupo `invites`, campo `expiresAt`, desfase **7 días**
-- [ ] Política TTL en **`(default)`**: los mismos valores
-- [ ] Comprobar que la política queda en estado activo en ambas
+- [x] Política TTL en **`apark-at`** y en **`(default)`**: grupo `invites`, campo `expiresAt`.
+      Aplicadas por Alberto. **El asistente no puede verificarlas**: `firebase-tools` no expone
+      configuración de TTL y `gcloud` no está instalado
 
 ## Código
-- [ ] `cleanupVehicleReferences`: borrar también las invitaciones cuyo `vehicleId` sea el del
-      vehículo eliminado, en lote y dentro del mismo trigger
-- [ ] Desplegar (el trigger está exportado dos veces, una por base de datos)
+- [x] `cleanupVehicleReferences`: borra también las invitaciones cuyo `vehicleId` sea el del
+      vehículo eliminado, en lote
+- [x] El borrado de invitaciones **no queda detrás del `return` temprano** de la limpieza de
+      miembros: solo necesita el id de los parámetros del evento, no los datos del documento. Los
+      dos van en `Promise.all`, de modo que un fallo en uno no cancela el otro
+- [x] Desplegado en las dos bases (el trigger está exportado una vez por base de datos)
 
 ## Documentación
-- [ ] Corregir la **decisión 4** del diseño de la [spec 005](../005-share-vehicle/design.md), que
-      dice que no hace falta TTL
-- [ ] Nota en `AGENTS.md`: la política TTL no vive en el repositorio y hay que recrearla a mano en
-      cualquier base de datos nueva
-- [ ] Entrada en `CHANGELOG.md`
+- [x] Corregida la **decisión 4** del diseño de la [spec 005](../005-share-vehicle/design.md)
+- [x] Nota en `AGENTS.md`: la política TTL no vive en el repositorio
+- [x] Entrada en `CHANGELOG.md`
 
 ## Verificación
-- [ ] **Criterio 4**: borrar un vehículo que tenga invitación viva → desaparece de `invites` en el
-      acto, sin esperar a la caducidad
-- [ ] **Criterio 3**: con una invitación caducada hace menos de 7 días, meter el código → sigue
-      diciendo *"esa invitación ha caducado"*, no *"no es válido"*
-- [ ] **Criterios 1 y 2**: pasada la ventana, comprobar que `QRAGPSM7` (release, caducada el
-      2026-08-05) y las muertas de `apark-at` han desaparecido. Requiere esperar: Firestore borra
-      dentro de las 24 h siguientes al vencimiento, y aquí el vencimiento lleva 7 días de desfase
-- [ ] **Criterio 6**: `invites` sigue cerrada al cliente; el diff de `firestore.rules` debe estar
-      vacío
+- [x] `npm --prefix functions run build` limpio
+- [x] **Criterio 4**: probado con documentos sintéticos en `apark-at` — un vehículo
+      `ZZTEST-cleanup-vehicle` con una invitación `ZZTEST999` apuntándole. Al borrar el vehículo, la
+      invitación desapareció y el log lo confirma:
+      `{"message":"Deleted invitations for a removed vehicle","deleted":1}`. Las otras 6
+      invitaciones quedaron intactas
+- [x] La misma ejecución demuestra que **el orden importaba**: el log emitió
+      `"No member documents left to clean"` —la limpieza de miembros salió por su `return`
+      temprano— y aun así borró la invitación. Detrás de ese `return` no se habría ejecutado
+- [x] **Criterio 6**: `firestore.rules` sin tocar; `invites` sigue cerrada al cliente y el Admin
+      SDK se salta las reglas
+- [ ] **Criterios 1 y 2**: requieren esperar al TTL. Con desfase de 7 días, `PG5CWYQ9` (caducada el
+      2026-08-05) debería desaparecer hacia el **2026-08-12**, y `QRAGPSM7` de `(default)` con ella.
+      Si desaparecen antes de 24 h, el desfase quedó en 0 y conviene revisarlo
+- [ ] **Criterio 3**: meter el código de una invitación caducada hace menos de 7 días y comprobar
+      que sigue diciendo *"esa invitación ha caducado"*, no *"no es válido"*
 
 ## Estado de los datos antes de aplicar nada
 Tomado el 2026-08-07, para poder comprobar después qué se ha ido:
