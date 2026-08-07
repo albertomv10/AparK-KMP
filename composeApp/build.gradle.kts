@@ -70,6 +70,7 @@ kotlin {
 
             // Navigation 3 (KMP)
             implementation(libs.jetbrains.navigation3.ui)
+            implementation(libs.androidx.lifecycle.viewmodelNavigation3)
 
             implementation(libs.firebase.auth)
             implementation(libs.firebase.firestore)

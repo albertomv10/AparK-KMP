@@ -68,9 +68,9 @@ Al salir de *Añadir vehículo* y volver a entrar seguía el texto de la visita 
 `ViewModelStore`. Sin él, `koinViewModel()` resuelve contra el `ViewModelStoreOwner` raíz, así que
 **ningún ViewModel de la app se destruye nunca** al navegar hacia atrás.
 
-El arreglo de raíz sería añadir `lifecycle-viewmodel-navigation3`, pero ese artefacto de Compose
-Multiplatform **no existe para la 2.9.6** que usa el proyecto (aparece en 2.10.0-alpha03), así que
-implicaría subir toda la pila de lifecycle. Queda anotado, no hecho.
+El arreglo de raíz era añadir `lifecycle-viewmodel-navigation3`, que no existía para la 2.9.6 que
+usaba el proyecto. Se hizo justo después, subiendo lifecycle a 2.10.0:
+[spec 006](../006-scoped-viewmodels/spec.md). Los parches de aquí quedaron retirados allí.
 
 - [x] `AddVehicleEvent.ScreenOpened` vacía el estado al entrar, con una bandera `rememberSaveable`
       para hacerlo **una vez por visita** y no perder lo escrito al rotar

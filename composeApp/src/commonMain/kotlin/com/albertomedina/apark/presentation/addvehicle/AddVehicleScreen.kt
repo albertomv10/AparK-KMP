@@ -34,7 +34,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -84,17 +83,6 @@ fun AddVehicleScreen(
     val joinExpiredMessage = stringResource(Res.string.join_vehicle_error_expired)
     val joinAlreadyMemberMessage = stringResource(Res.string.join_vehicle_error_already_member)
     val joinGenericMessage = stringResource(Res.string.join_vehicle_error)
-
-    // One clean form per visit. The flag is saveable, so it rides out a rotation (the entry keeps
-    // its saved state) but is dropped when the entry is popped — which is exactly when the next
-    // visit should start empty.
-    var formCleared by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        if (!formCleared) {
-            viewModel.onEvent(AddVehicleEvent.ScreenOpened)
-            formCleared = true
-        }
-    }
 
     LaunchedEffect(state.shouldNavigateBack) {
         if (state.shouldNavigateBack) {

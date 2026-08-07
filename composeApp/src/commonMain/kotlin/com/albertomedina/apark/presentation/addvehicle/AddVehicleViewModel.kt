@@ -44,12 +44,6 @@ class AddVehicleViewModel(
             AddVehicleEvent.NavigationHandled -> {
                 _uiState.update { it.copy(shouldNavigateBack = false) }
             }
-            AddVehicleEvent.ScreenOpened -> {
-                // NavDisplay does not scope ViewModels to the navigation entry, so this one
-                // survives leaving the screen. Without wiping the state, a new visit would find
-                // the previous visit's text still typed in.
-                _uiState.value = AddVehicleUiState()
-            }
         }
     }
 
@@ -159,7 +153,6 @@ sealed class AddVehicleEvent {
     data class NameChanged(val name: String) : AddVehicleEvent()
     data class LicensePlateChanged(val licensePlate: String) : AddVehicleEvent()
     data object SaveClicked : AddVehicleEvent()
-    data object ScreenOpened : AddVehicleEvent()
     data object SnackBarDismissed : AddVehicleEvent()
     data object NavigationHandled : AddVehicleEvent()
     data class TabSelected(val index: Int) : AddVehicleEvent()
