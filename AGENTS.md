@@ -34,10 +34,17 @@ Integrate to `main` via Pull Request, never direct pushes.
 
 ## Backend — Cloud Functions
 
-`functions/` holds the project's only server-side code (TypeScript, Node 22): a Firestore
-`onDocumentDeleted` trigger that strips a deleted vehicle's id from every member's
-`userVehicles`, which the client cannot do because rules forbid writing to another user's
-document. Exported twice, once per database.
+`functions/` holds the project's only server-side code (TypeScript, Node 22):
+
+- An `onDocumentDeleted` trigger on `vehicles`, doing two independent cleanups. It strips the
+  deleted id from every member's `userVehicles` — which the client cannot do, because rules forbid
+  writing to another user's document — and deletes the vehicle's invitations. The two run under
+  `Promise.all` and neither sits behind the other's early returns: the member cleanup needs the
+  deleted document's data, the invitation cleanup only needs the id from the event parameters.
+- Two callables for sharing, `createVehicleInvite` and `joinVehicleWithCode`, which exist because
+  rules deny the client any access to `invites` at all.
+
+Everything is exported once per database.
 
 ```sh
 npm --prefix functions run build     # compile (the deploy predeploy hook runs this too)

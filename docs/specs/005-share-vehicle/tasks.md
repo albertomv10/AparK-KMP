@@ -58,8 +58,12 @@
 - [x] **Criterio 6** (sin botón si no eres dueño): comprobado por Alberto abriendo el detalle de
       un vehículo compartido desde la cuenta que **no** lo posee. Un intento anterior mío no
       valía: la sesión del simulador era la del **dueño**, así que ver el botón era lo correcto
-- [ ] **Criterio 4** (caducada): sin probar. Es el único que queda, y para probarlo hay que
-      adelantar `expiresAt` a mano desde Firestore
+- [x] **Criterio 4** (caducada): comprobado por Alberto adelantando el `expiresAt` de una
+      invitación a mano desde Firestore. Sale el mensaje de caducada
+
+**Los ocho criterios quedan verificados.** De esa última prueba salió además el hallazgo que
+originó la [spec 007](../007-invite-cleanup/spec.md): la invitación caducada se quedaba en
+`invites` para siempre.
 
 ## Corrección posterior — los formularios no se vaciaban
 Al salir de *Añadir vehículo* y volver a entrar seguía el texto de la visita anterior.
