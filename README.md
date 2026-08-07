@@ -106,6 +106,8 @@ docs/               # proceso, specs y decisiones
 
 - **[docs/PROCESS.md](docs/PROCESS.md)** — cómo se trabaja en este proyecto:
   Spec-Driven Development y el flujo de trabajo con Git.
+- **[docs/ROADMAP.md](docs/ROADMAP.md)** — revisión de la arquitectura y plan por fases hasta
+  publicar en las tiendas.
 - **[docs/specs/](docs/specs/)** — una carpeta por funcionalidad, con su spec, su diseño y
   sus tareas.
 - **[CHANGELOG.md](CHANGELOG.md)** — qué ha ido entrando en cada versión.
