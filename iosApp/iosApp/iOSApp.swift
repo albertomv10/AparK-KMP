@@ -13,17 +13,11 @@ struct iOSApp: App {
     init() {
         
         //Firebase
+        // Qué proyecto (dev o prod) se usa lo decide el GoogleService-Info.plist que la fase de
+        // build copia según la configuración, no nada en tiempo de ejecución.
         FirebaseApp.configure()
-        
-        // 1. Detectamos el modo usando el compilador de Swift
-        #if DEBUG
-        let isDebug = true
-        #else
-        let isDebug = false
-        #endif
-        
-        
-        HelperKt.doInitKoinIos(isDebug: isDebug)
+
+        HelperKt.doInitKoinIos()
         
         //Google SignIn
         GoogleAuthBridgeKt.iosGoogleSignInProvider = { onSuccess, onError in
