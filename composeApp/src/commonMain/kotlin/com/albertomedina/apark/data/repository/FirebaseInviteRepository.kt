@@ -1,6 +1,5 @@
 package com.albertomedina.apark.data.repository
 
-import com.albertomedina.apark.di.AppConfig
 import com.albertomedina.apark.domain.model.JoinResult
 import com.albertomedina.apark.domain.model.JoinStatus
 import com.albertomedina.apark.domain.model.VehicleInvite
@@ -9,14 +8,13 @@ import dev.gitlive.firebase.functions.FirebaseFunctions
 import kotlinx.serialization.Serializable
 
 class FirebaseInviteRepository(
-    private val functions: FirebaseFunctions,
-    private val config: AppConfig
+    private val functions: FirebaseFunctions
 ) : InviteRepository {
 
     override suspend fun createInvite(vehicleId: String): Result<VehicleInvite> {
         return try {
             val response = functions
-                .httpsCallable(named("createVehicleInvite"))
+                .httpsCallable("createVehicleInvite")
                 .invoke(CreateInviteRequest(vehicleId))
                 .data<CreateInviteResponse>()
 
@@ -29,7 +27,7 @@ class FirebaseInviteRepository(
     override suspend fun joinWithCode(code: String): Result<JoinResult> {
         return try {
             val response = functions
-                .httpsCallable(named("joinVehicleWithCode"))
+                .httpsCallable("joinVehicleWithCode")
                 .invoke(JoinRequest(code))
                 .data<JoinResponse>()
 
@@ -38,12 +36,6 @@ class FirebaseInviteRepository(
             Result.failure(e)
         }
     }
-
-    /**
-     * A callable cannot tell which Firestore database the caller uses, the way a trigger can, so
-     * each one is deployed twice and the build picks its own.
-     */
-    private fun named(base: String): String = if (config.isDebug) "${base}Debug" else base
 
     @Serializable
     private data class CreateInviteRequest(val vehicleId: String)

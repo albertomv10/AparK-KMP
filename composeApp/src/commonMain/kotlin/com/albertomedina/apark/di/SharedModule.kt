@@ -51,21 +51,10 @@ import org.koin.dsl.module
 
 val sharedModule = module {
 
-    // 1. La fuente de la verdad (El booleano que viene de Android/iOS)
-    //single { AppConfig(isDebug = get()) }
-
-    // 2. Koin decide qué Base de Datos fabricar
-    single<FirebaseFirestore> {
-        val config = get<AppConfig>()
-
-        val dbName = if (config.isDebug) {
-            "apark-at"
-        } else {
-            "(default)"
-        }
-
-        Firebase.firestore(Firebase.app, dbName)
-    }
+    // Development and production are separate Firebase projects, each with a single `(default)`
+    // database, so which one the app talks to is decided by the `google-services.json` /
+    // `GoogleService-Info.plist` of the build variant — not by anything at runtime.
+    single<FirebaseFirestore> { Firebase.firestore }
     single<FirebaseAuth>{ Firebase.auth }
 
     // The region is not optional: the callables are deployed in europe-west4, and without this
@@ -76,7 +65,7 @@ val sharedModule = module {
     single<UserRepository> { FirestoreUserRepository(firestore = get()) }
 
     single<AuthRepository> { FirebaseAuthRepository(firebaseAuth = get()) }
-    single<InviteRepository> { FirebaseInviteRepository(functions = get(), config = get()) }
+    single<InviteRepository> { FirebaseInviteRepository(functions = get()) }
 
     single<LocationRepository> {
         LocationRepositoryImpl(

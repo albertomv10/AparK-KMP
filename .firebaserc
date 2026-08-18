@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "apark-617fd"
+    "default": "apark-dev",
+    "dev": "apark-dev",
+    "prod": "apark-617fd"
   }
 }

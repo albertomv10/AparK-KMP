@@ -228,7 +228,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n# Detectamos si es Debug o Release\nCONFIGURATION_LOWERCASE=$(echo $CONFIGURATION | tr '[:upper:]' '[:lower:]')\n\n# Buscamos el archivo correcto\nPLIST_FILE=\"${PROJECT_DIR}/FirebaseConfig/${CONFIGURATION}/GoogleService-Info.plist\"\n\n# Destino final dentro de la app compilada\nDESTINATION=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/GoogleService-Info.plist\"\n\necho \"Copiando Firebase desde ${PLIST_FILE} a ${DESTINATION}\"\ncp \"${PLIST_FILE}\" \"${DESTINATION}\"\n";
+			shellScript = "set -e\n\n# Elige el proyecto de Firebase: Debug -> apark-dev, Release -> apark-617fd.\n# Los directorios en disco estan en minusculas y $CONFIGURATION viene capitalizado, asi que hay\n# que bajarlo. En el APFS por defecto de macOS, que no distingue mayusculas, olvidarlo funciona\n# igual y el fallo solo aparece en un disco o un runner de CI sensible a mayusculas.\nCONFIGURATION_LOWERCASE=$(echo \"$CONFIGURATION\" | tr '[:upper:]' '[:lower:]')\n\nPLIST_FILE=\"${PROJECT_DIR}/FirebaseConfig/${CONFIGURATION_LOWERCASE}/GoogleService-Info.plist\"\nDESTINATION=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/GoogleService-Info.plist\"\n\nif [ ! -f \"${PLIST_FILE}\" ]; then\n  echo \"error: falta ${PLIST_FILE}. Genéralo con: firebase apps:sdkconfig IOS <appId> --project <dev|prod> --out ${PLIST_FILE}\" >&2\n  exit 1\nfi\n\necho \"Copiando Firebase desde ${PLIST_FILE} a ${DESTINATION}\"\ncp \"${PLIST_FILE}\" \"${DESTINATION}\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
