@@ -16,6 +16,15 @@ configuración que entra en el binario:
 - **iOS**: la fase de build *Setup Firebase* copia
   `iosApp/FirebaseConfig/<configuración en minúsculas>/GoogleService-Info.plist` dentro del `.app`.
 
+> **El client ID de Google en iOS no se declara en `Info.plist`.** Estuvo incrustado, y como
+> apuntaba siempre al mismo valor, **la build de release usaba el client de debug**. Pasaba
+> desapercibido porque los dos vivían en el mismo proyecto y Firebase Auth aceptaba el token igual;
+> con proyectos separados deja de funcionar. Ahora se configura en `iOSApp.swift` desde
+> `FirebaseApp.options.clientID`, que sigue al entorno solo. Lo que **sí** sigue en `Info.plist` es
+> el `CFBundleURLSchemes` por el que Google devuelve el control a la app: iOS lo lee del binario
+> antes de que exista Firebase, así que están registrados **los dos** entornos y cada build usa el
+> que le toca.
+
 > Antes existía un solo proyecto con dos bases de datos (`(default)` y `apark-at`), y la app elegía
 > en caliente con un `AppConfig.isDebug` que venía de `BuildConfig.DEBUG` en Android y de un
 > `#if DEBUG` en Swift. Toda esa cadena se ha eliminado: existía únicamente por compartir proyecto.
@@ -74,11 +83,34 @@ keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -sto
 
 **Pendiente, y todo de consola:**
 
-- [ ] Paso 2 — habilitar Firestore y crear `(default)` en `eur3`
-- [ ] Paso 3 — Blaze
-- [ ] Paso 6 — proveedores de Auth
+- [x] Paso 2 — Firestore `(default)` en `eur3`, edición **Standard** (la edición es inmutable;
+      Enterprise añade pipelines y joins, pero `dev.gitlive` no los expone a `commonMain`)
+- [x] Paso 3 — Blaze
+- [x] Paso 6 — proveedores de Auth: email, Google y Apple
 - [ ] Paso 9 — política TTL de `invites`
 - [ ] Y después: desplegar reglas y funciones, y verificar
 
-**Decisión aparte**: la base `apark-at` del proyecto de producción queda huérfana. Conviene
-borrarla para que nadie la use por error, pero es destructiva y no se ha tocado.
+## Limpieza pendiente en el proyecto de producción
+
+Nada de esto es urgente, y todo es destructivo, así que está sin tocar:
+
+1. **La huella SHA-1 duplicada.** La app *Android AparK DEBUG* de producción todavía lleva
+   `60de2513…`, el keystore de debug de este equipo, que ahora también está en `apark-dev`. Mismo
+   paquete + misma huella en dos proyectos es lo que dispara el aviso *"otro proyecto contiene un
+   cliente de OAuth 2.0 que usa esta misma combinación"*. Se quita con:
+
+   ```sh
+   firebase apps:android:sha:delete 1:251452774471:android:e0689490ed7407c3147962 4ecfd20f96dcc3a0 --project apark-617fd
+   ```
+
+   Las huellas de la app de *release* son otras distintas y no están implicadas.
+
+2. **Las apps de debug** (`com.albertomedina.apark.debug`, Android e iOS) de producción ya no
+   sirven para nada. Conviene borrarlas, pero **las dos apps Android de producción comparten la
+   misma clave de API**, así que merece comprobarse que borrar una no toca la de release antes de
+   hacerlo a lo bruto.
+
+3. **La base `apark-at`** queda huérfana.
+
+4. **Los usuarios de prueba siguen en el pool de Auth de producción.** La separación no los mueve
+   retroactivamente: las cuentas con las que se probaba antes conviven con las reales.

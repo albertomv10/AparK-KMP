@@ -17,6 +17,16 @@ struct iOSApp: App {
         // build copia según la configuración, no nada en tiempo de ejecución.
         FirebaseApp.configure()
 
+        // El client ID de Google sale del GoogleService-Info.plist que ha copiado la fase de
+        // build, no de Info.plist. Incrustarlo alli hacia que release usase el client de debug:
+        // pasaba desapercibido porque los dos vivian en el mismo proyecto y Firebase Auth
+        // aceptaba el token igual. Con proyectos separados, eso ya no se sostiene.
+        if let clientID = FirebaseApp.app()?.options.clientID {
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        } else {
+            assertionFailure("Firebase no trae clientID: revisa el GoogleService-Info.plist copiado")
+        }
+
         HelperKt.doInitKoinIos()
         
         //Google SignIn

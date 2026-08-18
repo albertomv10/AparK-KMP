@@ -6,6 +6,13 @@
 	<string>$(GOOGLE_MAPS_API_KEY)</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- Google Sign-In devuelve el control a la app por este esquema, y iOS lo lee del binario
+	     antes de que exista Firebase, asi que no puede salir del GoogleService-Info.plist en
+	     tiempo de ejecucion. Se registran los dos entornos: cada build solo usa el que casa con
+	     su configuracion de Firebase, y tener el otro registrado es inofensivo.
+	     El client ID en si NO se declara aqui: GIDClientID incrustado apuntaba siempre al mismo
+	     proyecto, de modo que la build de release venia usando el client de debug. Ahora se
+	     configura en iOSApp.swift desde FirebaseApp.options.clientID, que sigue al entorno. -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -13,12 +20,12 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.251452774471-nc8sdoae5mosqlleun9bm5u1o92jgbbs</string>
+				<!-- apark-dev (debug) -->
+				<string>com.googleusercontent.apps.655637166597-l5s7mi1fcc3koht57h2bnk2o5nt0cas6</string>
+				<!-- apark-617fd (release) -->
+				<string>com.googleusercontent.apps.251452774471-bat844vm4tef1sglqlq0d3vm00ip0vqj</string>
 			</array>
 		</dict>
-		<dict/>
 	</array>
-	<key>GIDClientID</key>
-	<string>251452774471-nc8sdoae5mosqlleun9bm5u1o92jgbbs.apps.googleusercontent.com</string>
 </dict>
 </plist>
