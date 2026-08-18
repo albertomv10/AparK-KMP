@@ -111,7 +111,22 @@ minutos**. El error dice exactamente cuántos segundos faltan.
 - [x] Paso 6 — proveedores de Auth: email, Google y Apple
 - [ ] Paso 9 — política TTL de `invites` (se creó, pero se perdió al rehacer la base: hay que
       volver a crearla sobre la `(default)` definitiva)
-- [ ] Y después: desplegar reglas y funciones, y verificar
+- [x] Reglas desplegadas a `apark-dev` y verificadas contra el proyecto activo
+- [x] Funciones desplegadas en `europe-west4`: `cleanupVehicleReferences` (trigger),
+      `createVehicleInvite` y `joinVehicleWithCode` (callables)
+- [ ] Probar la app debug de punta a punta contra `apark-dev`
+
+> **El primer despliegue de funciones de 2ª generación falla, y es normal.** Firebase habilita
+> Cloud Build, Artifact Registry, Eventarc, Run y Pub/Sub en la misma ejecución, y acto seguido
+> intenta dar roles IAM a unas cuentas de servicio que Google todavía está creando. Sale
+> `We failed to modify the IAM policy` o `Permission denied while using the Eventarc Service
+> Agent`. **Se arregla esperando un par de minutos y reintentando**, no tocando permisos. Aquí
+> hicieron falta tres pasadas.
+>
+> Y conviene desplegar con `--force` la primera vez para que configure la **política de limpieza
+> de Artifact Registry**: sin ella, la imagen de contenedor de cada despliegue se queda ahí y
+> factura. Ojo con esa bandera contra producción: además borra las funciones desplegadas que no
+> estén en el código.
 
 ## Limpieza pendiente en el proyecto de producción
 
