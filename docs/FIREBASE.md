@@ -109,8 +109,8 @@ minutos**. El error dice exactamente cuántos segundos faltan.
       Enterprise añade pipelines y joins, pero `dev.gitlive` no los expone a `commonMain`)
 - [x] Paso 3 — Blaze
 - [x] Paso 6 — proveedores de Auth: email, Google y Apple
-- [ ] Paso 9 — política TTL de `invites` (se creó, pero se perdió al rehacer la base: hay que
-      volver a crearla sobre la `(default)` definitiva)
+- [x] Paso 9 — política TTL de `invites` sobre `expiresAt` (hubo que rehacerla: la primera se fue
+      con la base que se borró). Tarda en pasar de «creando» a activa; Google admite hasta 24 h
 - [x] Reglas desplegadas a `apark-dev` y verificadas contra el proyecto activo
 - [x] Funciones desplegadas en `europe-west4`: `cleanupVehicleReferences` (trigger),
       `createVehicleInvite` y `joinVehicleWithCode` (callables)
