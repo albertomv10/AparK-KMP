@@ -162,13 +162,31 @@ npx firebase-tools@latest functions:log
 - **The lifecycle version is pinned by Compose**: `lifecycle-viewmodel-navigation3` 2.10.0 targets
   `compose.runtime` 1.9.3, the project's version. 2.11.0 targets 1.10.2 and would drag a Compose
   Multiplatform bump with it
+- **A missing R8 keep-rules file is a warning, not an error.** `proguardFiles(..., "proguard-rules.pro")`
+  resolves against the *module* directory, so the file has to be `composeApp/proguard-rules.pro`.
+  It once lived in `composeApp/src/`, and R8 printed `Supplied proguard configuration does not
+  exist:` and **built a release APK anyway**, minified with none of the project's keeps. Nothing
+  fails loudly, and iOS has no R8 at all, so testing releases on a real iPhone cannot catch it.
+  To check the rules are live, look for the domain models in
+  `composeApp/build/outputs/mapping/release/mapping.txt`: they must map to themselves
 - **Listening to a Firestore document that does not exist returns PERMISSION_DENIED, not "not found"**, because the rule dereferences a null `resource`. `getVehiclesForUser` therefore wraps each per-vehicle snapshot in `retryWhen` + `catch`; without it, a just-created or deleted vehicle can crash the app
 
 ## Known Incomplete / Buggy Areas
 
-- **No vehicle-detail screen**: `onNavigateToDetails` in `BasicNavigationWrapper.kt` is still a no-op
+> The full picture — architecture review and the phased plan to publication — is in
+> [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+- **`assembleRelease` produces an unsigned APK**: there is no `signingConfig`, and Play needs a
+  signed AAB (`bundleRelease`)
+- **The vehicle-detail screen is a placeholder**: it renders the name and, for the owner, a share
+  button. Nothing else — no vehicle data, no members, no editing
 - **No transfer-ownership UI**: `transferVehicleOwnership` exists in the repository but nothing calls it, even though the delete dialog points users at it
-- **Dangling vehicle IDs**: deleting a shared vehicle leaves its id in the other members' `userVehicles` (the stream discards them). Cleanup function pending — see `docs/specs/002-vehicle-cleanup-function/`
+- **`UpdateVehicleUseCase` is wired into Koin but nothing calls it**, so `Vehicle.model` and
+  `Vehicle.color` are never written. `Vehicle.inviteCode` is dead too — invitations moved to the
+  `invites` collection in spec 005
+- **`lastLocation.user` stores a whole `User`**, `userVehicles` array included
+  (`UpdateVehicleLocationUseCase.kt:34`), so every member of a shared vehicle can read the vehicle
+  ids of whoever parked it last. The rule only validates the email on that object
 - Only 1 placeholder test (`ComposeAppCommonTest.kt`)
 - Apple Sign-In on Android is a no-op
 - Hardcoded Spanish strings instead of resources: the GPS-denied snackbar and the "Logout" menu item in `HomeScreen.kt`
