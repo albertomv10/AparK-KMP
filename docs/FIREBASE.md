@@ -53,7 +53,7 @@ política TTL (ver [spec 007](specs/007-invite-cleanup/spec.md)).
 | # | Paso | Cómo |
 |---|------|------|
 | 1 | Crear el proyecto | `firebase projects:create <id>` |
-| 2 | Habilitar la API de Firestore y crear la base `(default)` en **`eur3`** | **Consola** — la API no está habilitada en un proyecto nuevo, y `firestore:databases:create` falla con 403 hasta que lo esté |
+| 2 | Habilitar la API de Firestore y crear la base **`(default)`** (con paréntesis) en **`eur3`** | **Consola** — la API no está habilitada en un proyecto nuevo, y `firestore:databases:create` falla con 403 hasta que lo esté. **Ojo al nombre y a la región**: ver las trampas de abajo |
 | 3 | Subir a plan **Blaze** | **Consola** — Cloud Functions v2 lo exige. Requiere método de pago |
 | 4 | Registrar las apps Android e iOS | `firebase apps:create ANDROID/IOS --package-name/--bundle-id <id>` |
 | 5 | Añadir las huellas SHA-1 y SHA-256 | `firebase apps:android:sha:create <appId> <hash>` |
@@ -67,6 +67,28 @@ La huella SHA del paso 5 se saca del keystore de debug:
 ```sh
 keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android
 ```
+
+### Tres trampas del paso 2, aprendidas a base de pisarlas
+
+**`default` no es `(default)`.** Si en la consola escribes `default` como nombre, obtienes una base
+**con nombre** que se llama así, no la base por defecto del proyecto. Se parecen tanto que no se ve
+hasta que algo falla.
+
+**`firebase deploy` crea la base que le falta, y la crea en Estados Unidos.** Si `firebase.json` no
+nombra base, el deploy apunta a `(default)`; si no existe, **no falla: la crea**, y en la región por
+defecto, que es `nam5`. Eso rompe la regla de que las funciones vayan a `europe-west4`, y deja los
+datos fuera de la UE. **Antes de cualquier deploy contra un proyecto nuevo, comprueba qué bases hay
+y dónde**:
+
+```sh
+firebase firestore:databases:list --project <id>
+```
+
+**El free tier es de una sola base por proyecto.** La segunda factura desde el primer byte, así que
+una base creada por accidente no solo estorba: cuesta.
+
+Y un detalle operativo: al borrar una base, **su ID no se puede reutilizar durante unos cinco
+minutos**. El error dice exactamente cuántos segundos faltan.
 
 ## Estado de la migración a `apark-dev`
 
@@ -87,7 +109,8 @@ keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -sto
       Enterprise añade pipelines y joins, pero `dev.gitlive` no los expone a `commonMain`)
 - [x] Paso 3 — Blaze
 - [x] Paso 6 — proveedores de Auth: email, Google y Apple
-- [ ] Paso 9 — política TTL de `invites`
+- [ ] Paso 9 — política TTL de `invites` (se creó, pero se perdió al rehacer la base: hay que
+      volver a crearla sobre la `(default)` definitiva)
 - [ ] Y después: desplegar reglas y funciones, y verificar
 
 ## Limpieza pendiente en el proyecto de producción
