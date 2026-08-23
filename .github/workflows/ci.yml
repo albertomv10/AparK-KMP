@@ -105,3 +105,27 @@ jobs:
 
       - run: npm ci --prefix functions
       - run: npm run build --prefix functions
+
+  rules:
+    name: Reglas y migracion
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/package-lock.json
+
+      # El emulador de Firestore corre sobre la JVM.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - run: npm ci --prefix tools
+
+      # Arranca el emulador, pasa los tests contra el y lo apaga. No toca ningun proyecto real
+      # ni necesita secretos: es el unico job que valida las REGLAS, y no solo que todo compile.
+      - run: npm run test:rules --prefix tools
