@@ -1,5 +1,35 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+// Las credenciales de firma se leen de fuera del repositorio: primero de `local.properties`, que
+// esta gitignorado, y si no de variables de entorno, que es como las recibe CI. Nunca se commitean.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun signingSecret(name: String): String? =
+    (localProperties.getProperty(name) ?: System.getenv(name))?.takeIf { it.isNotBlank() }
+
+val releaseStoreFile = signingSecret("RELEASE_STORE_FILE")?.let(::file)?.takeIf { it.exists() }
+val releaseStorePassword = signingSecret("RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = signingSecret("RELEASE_KEY_ALIAS")
+val releaseKeyPassword = signingSecret("RELEASE_KEY_PASSWORD")
+
+// Si no hay credenciales, la build de release no se firma en lugar de fallar: compilar el proyecto
+// tiene que seguir funcionando en cualquier maquina, incluida la de alguien que solo quiere ver si
+// arranca. Pero una configuracion *a medias* casi siempre es un descuido, y ahi si conviene gritar.
+val releaseSigningReady = releaseStoreFile != null && releaseStorePassword != null &&
+        releaseKeyAlias != null && releaseKeyPassword != null
+
+if (!releaseSigningReady && signingSecret("RELEASE_STORE_FILE") != null) {
+    logger.warn(
+        "AVISO: hay credenciales de firma a medias, asi que la build de release saldra SIN FIRMAR. " +
+            "Revisa RELEASE_STORE_FILE (y que el fichero exista), RELEASE_STORE_PASSWORD, " +
+            "RELEASE_KEY_ALIAS y RELEASE_KEY_PASSWORD."
+    )
+}
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -99,6 +129,17 @@ android {
         versionCode = libs.versions.app.version.code.get().toInt()
         versionName = libs.versions.app.version.name.get()
     }
+    signingConfigs {
+        if (releaseSigningReady) {
+            create("release") {
+                storeFile = releaseStoreFile
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -106,6 +147,9 @@ android {
     }
     buildTypes {
         release {
+            // Nulo cuando no hay credenciales: AGP marca la salida como `-unsigned`, que es una
+            // senal mucho mas clara que un artefacto firmado con la clave de depuracion.
+            signingConfig = if (releaseSigningReady) signingConfigs.getByName("release") else null
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
