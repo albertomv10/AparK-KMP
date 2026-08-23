@@ -71,7 +71,8 @@ graphify path "A" "B" --undirected
 - Two callables for sharing, `createVehicleInvite` and `joinVehicleWithCode`, which exist because
   rules deny the client any access to `invites` at all.
 
-Everything is exported once per database.
+Each is exported once. Development and production are **separate Firebase projects** with one
+`(default)` database each, so nothing needs doubling — see [`docs/FIREBASE.md`](docs/FIREBASE.md).
 
 ```sh
 npm --prefix functions run build     # compile (the deploy predeploy hook runs this too)
@@ -79,18 +80,22 @@ npx firebase-tools@latest deploy --only functions
 npx firebase-tools@latest functions:log
 ```
 
-- **Region is not a free choice**: both Firestore databases live in `eur3`, so the triggers must
-  be deployed to `europe-west4`. The default `us-central1` is rejected.
+- **Region is not a free choice**: Firestore lives in `eur3` in both projects, so the triggers must
+  be deployed to `europe-west4`. The default `us-central1` is rejected. The Eventarc trigger itself
+  is created in `eur3`, next to the database — the function only has to sit in a compatible region.
 - **Adding a Firebase module to KMP has a second step on iOS**: the iOS app resolves Firebase
   through Swift Package Manager, so the matching product (e.g. `FirebaseFunctions`) must also be
   added to the `iosApp` target or the build fails at link time, not at compile time.
-- **Callable functions cannot infer the caller's database** the way a Firestore trigger can, so
-  each one is exported per database and the app picks by `AppConfig.isDebug`.
-- **A TTL policy on `invites` is part of how this works, and it is not in the repo**: both databases
-  delete an invitation seven days after its `expiresAt`. There is no file that versions this and no
+- **The first 2nd-gen deploy to a new project fails, and that is expected**: Firebase enables Cloud
+  Build, Artifact Registry, Eventarc, Run and Pub/Sub in the same run, then tries to grant IAM roles
+  to service agents Google is still creating. Wait a couple of minutes and retry rather than
+  touching permissions. Pass `--force` the first time so Artifact Registry gets a cleanup policy,
+  or every deploy's container image is kept and billed.
+- **A TTL policy on `invites` is part of how this works, and it is not in the repo**: each project
+  deletes an invitation seven days after its `expiresAt`. There is no file that versions this and no
   deploy that reproduces it — `firebase-tools` has no TTL command, so it is set by hand in the
-  console per database. A new database needs it set up again, or invitations pile up forever. See
-  `docs/specs/007-invite-cleanup/`
+  console per database. A new project needs it set up again, or invitations pile up forever. See
+  `docs/specs/007-invite-cleanup/` and the checklist in [`docs/FIREBASE.md`](docs/FIREBASE.md)
 - **Import narrowly**: `firebase-functions/logger`, *not* the `firebase-functions/v2` barrel — the
   barrel loads every provider, including Realtime Database, whose `@firebase/app` peer dependency
   npm does not install, which breaks the deploy-time analysis.
@@ -130,6 +135,10 @@ npx firebase-tools@latest functions:log
 | `users` | `FirebaseAuth.uid` | `email`, `name`, `userVehicles: List<String>` (vehicle IDs — **its order is the carousel order**) |
 | `vehicles` | Auto-generated | `name`, `licensePlate`, `ownerId`, `sharedUsers: List<String>`, `inviteCode`, `lastLocation` |
 
+> This is what exists today. Where it is going — and why — is
+> [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md); the next step is
+> [spec 008](docs/specs/008-vehicle-membership-model/spec.md).
+
 ## Tech Stack
 
 | Layer | Choice |
@@ -146,7 +155,11 @@ npx firebase-tools@latest functions:log
 ## Key Gotchas
 
 - **Auth data leak bug (fixed)**: `HomeViewModel` uses `authStateChanged` + `flatMapLatest` to reactively switch vehicle data when the user changes. Never call `loadVehicles()` once in `init` — observe the auth flow instead. See `observeAuthState()` in `HomeViewModel.kt`.
-- **Firestore DB name differs by build**: Debug uses `"apark-at"`, release uses `"(default)"`. Controlled by `AppConfig.isDebug` in `SharedModule.kt`.
+- **Which Firebase project a build talks to is decided by its config file, not by any code**: debug
+  builds carry `composeApp/src/debug/google-services.json` (→ `apark-dev`) and release falls back to
+  `composeApp/google-services.json` (→ `apark-617fd`). There is no runtime switch any more. To check
+  what a variant actually embeds, read
+  `composeApp/build/generated/res/process<Variant>GoogleServices/values/values.xml`
 - **Secrets are gitignored**: `**/Secrets.xcconfig`, `**/GoogleService-Info.plist`, `**/google-services.json`, `*.jks`, `local.properties`. Must be provided manually for local builds.
 - **iOS map padding**: `-30.0` magic number in `AparKMap.ios.kt:114` for bottom sheet offset. Can break with layout changes.
 - **Bottom nav tabs are cosmetic**: 3 tabs (Map, My Cars, Profile) switch local state only — no actual navigation implemented.

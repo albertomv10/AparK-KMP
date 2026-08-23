@@ -58,7 +58,7 @@ política TTL (ver [spec 007](specs/007-invite-cleanup/spec.md)).
 | 4 | Registrar las apps Android e iOS | `firebase apps:create ANDROID/IOS --package-name/--bundle-id <id>` |
 | 5 | Añadir las huellas SHA-1 y SHA-256 | `firebase apps:android:sha:create <appId> <hash>` |
 | 6 | Habilitar los proveedores de Auth: email/contraseña, Google, Apple | **Consola** — y hasta que Google esté habilitado, el `google-services.json` sale **sin `oauth_client`** y el login con Google no funciona |
-| 7 | Descargar las configuraciones | `firebase apps:sdkconfig ANDROID/IOS <appId> --out <ruta>` |
+| 7 | Descargar las configuraciones | `firebase apps:sdkconfig ANDROID/IOS <appId> --out <ruta>` — **crea antes el directorio**: `--out` no lo hace, y si no existe el comando falla sin dejar fichero |
 | 8 | Desplegar reglas y funciones | `firebase deploy --only firestore:rules,functions` |
 | 9 | Crear la **política TTL** de `invites` sobre `expiresAt` | **Consola** — `firebase-tools` no tiene comando de TTL. Sin ella, las invitaciones se acumulan para siempre |
 
@@ -66,6 +66,14 @@ La huella SHA del paso 5 se saca del keystore de debug:
 
 ```sh
 keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android
+```
+
+Y los ficheros del paso 7 se generan **en cada copia del repositorio**, porque están gitignorados y
+no viajan con los commits. Para la variante debug de Android hay que crear el directorio primero:
+
+```sh
+mkdir -p composeApp/src/debug
+firebase apps:sdkconfig ANDROID <appId> --project dev --out composeApp/src/debug/google-services.json
 ```
 
 ### Tres trampas del paso 2, aprendidas a base de pisarlas
@@ -114,7 +122,11 @@ minutos**. El error dice exactamente cuántos segundos faltan.
 - [x] Reglas desplegadas a `apark-dev` y verificadas contra el proyecto activo
 - [x] Funciones desplegadas en `europe-west4`: `cleanupVehicleReferences` (trigger),
       `createVehicleInvite` y `joinVehicleWithCode` (callables)
-- [ ] Probar la app debug de punta a punta contra `apark-dev`
+- [x] Verificado que cada variante embebe su proyecto, mirando lo que el plugin inyecta en
+      `composeApp/build/generated/res/process<Variante>GoogleServices/values/values.xml`:
+      debug → `apark-dev`, release → `apark-617fd`, con `default_web_client_id` distinto en cada una
+- [ ] Probar la app debug en ejecución contra `apark-dev` (registro, crear vehículo, aparcar,
+      compartir)
 
 > **El primer despliegue de funciones de 2ª generación falla, y es normal.** Firebase habilita
 > Cloud Build, Artifact Registry, Eventarc, Run y Pub/Sub en la misma ejecución, y acto seguido
