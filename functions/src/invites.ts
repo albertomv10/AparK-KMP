@@ -6,7 +6,7 @@ const INVITES_COLLECTION = "invites";
 const VEHICLES_COLLECTION = "vehicles";
 const USERS_COLLECTION = "users";
 const USER_VEHICLES_FIELD = "userVehicles";
-const SHARED_USERS_FIELD = "sharedUsers";
+const MEMBER_IDS_FIELD = "memberIds";
 
 /** No I, L, O, 0 or 1: the code is typed by hand and those are read wrong. */
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -103,7 +103,7 @@ export async function createInviteHandler(request: CallableRequest<{ vehicleId?:
  * Joins the caller to the vehicle an invitation points at.
  *
  * This has to run server-side: rules stop a client from finding a vehicle it is not a member of,
- * and equally from adding itself to that vehicle's `sharedUsers`.
+ * and equally from adding itself to that vehicle's `memberIds`.
  */
 export async function joinWithCodeHandler(request: CallableRequest<{ code?: string }>) {
     const uid = requireUid(request);
@@ -141,7 +141,7 @@ export async function joinWithCodeHandler(request: CallableRequest<{ code?: stri
     }
 
     const vehicle = vehicleSnapshot.data()!;
-    const alreadyMember = vehicle.ownerId === uid || (vehicle.sharedUsers ?? []).includes(uid);
+    const alreadyMember = (vehicle.memberIds ?? []).includes(uid);
 
     // Deliberately does not consume the invitation: telling someone they already have the
     // vehicle should not burn the code they may still need to pass on.
@@ -159,7 +159,7 @@ export async function joinWithCodeHandler(request: CallableRequest<{ code?: stri
             throw new HttpsError("aborted", "used");
         }
 
-        transaction.update(vehicleRef, { [SHARED_USERS_FIELD]: FieldValue.arrayUnion(uid) });
+        transaction.update(vehicleRef, { [MEMBER_IDS_FIELD]: FieldValue.arrayUnion(uid) });
         // `set` with merge rather than `update`: the user document is created on sign-up, but
         // this must not fail if it is somehow missing.
         transaction.set(
