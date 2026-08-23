@@ -1,7 +1,7 @@
 # Spec: La pertenencia como consulta, no como lista de ids
 
 - **ID**: 008-vehicle-membership-model
-- **Estado**: Borrador
+- **Estado**: Aprobada
 - **Fecha**: 2026-08-07
 
 ## Problema / Por qué
@@ -122,9 +122,7 @@ migrar dos veces:
 9. **Dado** el `retryWhen` de `getVehiclesForUser`, **cuando** termine esta spec, **entonces** ya
    no existe (o queda justificado por escrito por qué sigue).
 
-## Preguntas abiertas
-
-Todas deben quedar cerradas en `design.md`.
+## Preguntas abiertas — **todas resueltas en [design.md](design.md)**
 
 1. **¿Sobrevive `sharedUsers`, o se deriva de `memberIds`?** Mantener los dos es duplicar estado y
    arriesgarse a que se desincronicen; quitarlo obliga a reescribir la regla de "salirse" y la
