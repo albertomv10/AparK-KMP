@@ -1,0 +1,21 @@
+{
+  "name": "apark-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Scripts de migracion y tests de reglas. No se despliega: por eso vive aparte de functions/.",
+  "type": "module",
+  "scripts": {
+    "migrate": "tsx migrate-member-ids.ts",
+    "test:rules": "firebase emulators:exec --only firestore --project apark-rules-test --config ../firebase.json 'vitest run'",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.0",
+    "firebase": "^12.18.0",
+    "firebase-admin": "^13.0.0",
+    "firebase-tools": "^15.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

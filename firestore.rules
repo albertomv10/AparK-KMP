@@ -18,45 +18,58 @@ service cloud.firestore {
     // Vehicles collection
     match /vehicles/{vehicleId} {
 
-      // Read: owner or any shared user
+      // Membership lives in one array, owner included, because that is what makes it queryable:
+      // `where("memberIds", "array-contains", uid)` is a query Firestore can prove is safe from
+      // its filters alone, so it never returns a document the caller may not read. Deriving the
+      // list from an array of ids held elsewhere could not offer that guarantee, and reading a
+      // vehicle that had since been deleted came back as PERMISSION_DENIED — see spec 008.
       allow read: if request.auth != null
-                  && (request.auth.uid == resource.data.ownerId
-                      || request.auth.uid in resource.data.sharedUsers);
+                  && request.auth.uid in resource.data.memberIds;
 
-      // Create: caller must claim ownership and provide a valid, "empty" vehicle
-      // (no shared users and no location yet). Optional fields are read defensively
-      // because empty defaults (licensePlate, sharedUsers) may be omitted on write.
+      // Create: the caller must claim ownership and be the only member. Optional fields are read
+      // defensively because empty defaults may be omitted on write.
       allow create: if request.auth != null
                     && request.auth.uid == request.resource.data.ownerId
+                    && request.resource.data.memberIds == [request.auth.uid]
                     && request.resource.data.name is string
                     && request.resource.data.name.size() > 0
                     && request.resource.data.name.size() <= 60
                     && request.resource.data.get('licensePlate', '') is string
                     && request.resource.data.get('licensePlate', '').size() <= 15
-                    && request.resource.data.get('sharedUsers', []).size() == 0
                     && request.resource.data.get('lastLocation', null) == null;
 
       // Delete: owner only
       allow delete: if request.auth != null
                     && request.auth.uid == resource.data.ownerId;
 
-      // Update: owner may change anything; shared users may only update lastLocation
-      // (setting their own email), or leave the vehicle by removing themselves.
+      // Update: the owner may change anything; a member may only park the vehicle, or leave it.
       allow update: if request.auth != null && (
-        request.auth.uid == resource.data.ownerId
+        (
+          // The owner may change anything except their own membership. Without that second
+          // condition the owner can drop themselves from memberIds, and the vehicle becomes
+          // unreadable to the very person who still owns and can delete it.
+          request.auth.uid == resource.data.ownerId
+          && request.auth.uid in request.resource.data.memberIds
+        )
         ||
         (
-          request.auth.uid in resource.data.sharedUsers
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLocation'])
+          // Parking: only the location changes, and only with the caller's own email on it.
+          request.auth.uid in resource.data.memberIds
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['lastLocation', 'updatedAt'])
           && request.resource.data.lastLocation.user.email == request.auth.token.email
         )
         ||
         (
-          // Leaving: the caller may drop themselves, and only themselves, from sharedUsers.
-          request.auth.uid in resource.data.sharedUsers
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sharedUsers'])
-          && !(request.auth.uid in request.resource.data.sharedUsers)
-          && resource.data.sharedUsers.removeAll([request.auth.uid]) == request.resource.data.sharedUsers
+          // Leaving: the caller may drop themselves, and only themselves, from memberIds.
+          // The owner is barred from this branch: they are inside the array now, and letting
+          // them out would leave a vehicle whose owner cannot read it.
+          request.auth.uid in resource.data.memberIds
+          && request.auth.uid != resource.data.ownerId
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['memberIds', 'updatedAt'])
+          && !(request.auth.uid in request.resource.data.memberIds)
+          && resource.data.memberIds.removeAll([request.auth.uid]) == request.resource.data.memberIds
         )
       );
     }

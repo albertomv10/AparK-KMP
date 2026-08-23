@@ -42,3 +42,13 @@ local.properties
 # --- Graphify ---
 # Grafo generado; se reconstruye con `graphify update .` en segundos
 graphify-out/
+
+# Cuentas de servicio de Firebase. Se saltan TODAS las reglas de seguridad, así que una filtrada
+# es acceso total a la base de datos. La consola las descarga como `<proyecto>-firebase-adminsdk-*.json`.
+*serviceAccount*.json
+*service-account*.json
+*-firebase-adminsdk-*.json
+
+# Logs que dejan los emuladores al ejecutarse
+*-debug.log
+firebase-debug.*.log

@@ -140,6 +140,36 @@ minutos**. El error dice exactamente cuántos segundos faltan.
 > factura. Ojo con esa bandera contra producción: además borra las funciones desplegadas que no
 > estén en el código.
 
+## Migrar la pertenencia de los vehículos (spec 008)
+
+El orden importa, y saltárselo rompe cosas distintas en cada paso. Se hace **entero contra
+`apark-dev` primero**, y solo después contra producción.
+
+| # | Paso | Comando | Por qué en este orden |
+|---|------|---------|------------------------|
+| 1 | **Backfill** de `memberIds` | `npm run migrate --prefix tools -- --project <id> --dry-run` y luego sin `--dry-run` | Aditivo: no toca `sharedUsers` y ningún cliente se entera |
+| 2 | **Desplegar las reglas** | `firebase deploy --only firestore:rules -P <alias>` | Leer sigue funcionando incluso para una app sin actualizar, porque lee documento a documento y ya pasa `uid in memberIds` |
+| 3 | **Actualizar las apps** | — | Entre el 2 y el 3 una app vieja **lee pero no puede crear ni salirse** |
+| 4 | **Limpieza** de `sharedUsers` | `npm run migrate --prefix tools -- --project <id> --drop-shared-users` | **Después** del 3: mientras queden reglas viejas desplegadas, ese campo aún da acceso de lectura |
+
+El script es **idempotente** y exige `--project` siempre, para que ningún valor por defecto del
+entorno decida por su cuenta contra qué base escribe.
+
+> **Credenciales**: contra el emulador no hace falta ninguna, que es lo que permite probarlo de
+> verdad. Contra un proyecto real usa las credenciales por defecto de aplicación, o sea una **cuenta
+> de servicio** — la credencial más peligrosa del proyecto, porque se salta todas las reglas. Nunca
+> debe entrar en el repositorio, y conviene borrarla cuando la migración termine.
+
+## Tests de reglas
+
+```sh
+npm run test:rules --prefix tools
+```
+
+Arranca el emulador, pasa los tests y lo apaga. No toca ningún proyecto real. Prueban tanto lo que
+**debe permitirse** como lo que **debe denegarse**, que es lo que de verdad demuestra algo: una regla
+probada solo por el lado bueno pasaría igual siendo `allow read: if true`.
+
 ## Limpieza pendiente en el proyecto de producción
 
 Nada de esto es urgente, y todo es destructivo, así que está sin tocar:
