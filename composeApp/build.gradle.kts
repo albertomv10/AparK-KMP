@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.gms.google.services)
+    alias(libs.plugins.firebaseCrashlytics)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.secretsGradlePlugin)
 }
@@ -75,6 +76,7 @@ kotlin {
             implementation(libs.firebase.auth)
             implementation(libs.firebase.firestore)
             implementation(libs.firebase.functions)
+            implementation(libs.firebase.crashlytics)
 
             implementation(libs.kotlinx.serialization.json)
 

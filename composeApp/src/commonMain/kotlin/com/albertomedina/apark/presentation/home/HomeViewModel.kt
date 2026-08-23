@@ -4,6 +4,7 @@ import androidx.compose.animation.core.copy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.model.Vehicle
+import com.albertomedina.apark.domain.logging.CrashReporter
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.usecase.DeleteVehicleUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
@@ -29,7 +30,8 @@ class HomeViewModel(
     private val signOutUseCase: SignOutUseCase,
     private val deleteVehicleUseCase: DeleteVehicleUseCase,
     private val removeUserFromVehicleUseCase: RemoveUserFromVehicleUseCase,
-    private val moveVehicleUseCase: MoveVehicleUseCase
+    private val moveVehicleUseCase: MoveVehicleUseCase,
+    private val crashReporter: CrashReporter
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -47,6 +49,9 @@ class HomeViewModel(
                 .flatMapLatest { userId ->
                     // Keep the uid around: the UI needs it to tell owner from shared member.
                     _uiState.update { it.copy(currentUserId = userId) }
+                    // Ata los informes de fallo a un usuario — el uid, nunca el email — y los
+                    // desata al cerrar sesión. Va aquí porque es donde el estado de auth ya fluye.
+                    crashReporter.setUserId(userId)
                     if (!userId.isNullOrBlank()) {
                         getVehicleListUseCase(userId)
                     } else {
