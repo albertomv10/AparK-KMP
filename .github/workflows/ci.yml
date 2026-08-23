@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Una serie por rama: un push nuevo cancela la validación anterior en vez de encolarla.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Los ficheros de configuración de Firebase están gitignorados, así que CI los reconstruye desde
+  # secretos. Son los del proyecto de DESARROLLO: aquí solo se compila debug.
+  GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+  GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+  MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+
+jobs:
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Restaurar configuración local
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+            echo "::error::Falta el secreto GOOGLE_SERVICES_JSON. Ver docs/FIREBASE.md."
+            exit 1
+          fi
+          # El plugin busca primero en la variante y luego en la raíz del módulo; se escriben las
+          # dos para que cualquier variante encuentre configuración.
+          mkdir -p composeApp/src/debug
+          echo "$GOOGLE_SERVICES_JSON" | base64 --decode > composeApp/src/debug/google-services.json
+          cp composeApp/src/debug/google-services.json composeApp/google-services.json
+          echo "MAPS_API_KEY=${MAPS_API_KEY:-PLACEHOLDER_NOT_A_REAL_KEY}" >> local.properties
+
+      - name: Compilar debug
+        run: ./gradlew :composeApp:assembleDebug --no-daemon
+
+      - name: Tests
+        run: ./gradlew :composeApp:testDebugUnitTest --no-daemon
+
+  ios:
+    name: iOS
+    # macOS es gratis en repositorios públicos, así que no hay razón para no validar iOS en cada PR.
+    # Compilar Kotlin para iOS NO compila el Swift: los puentes y las fases de build solo fallan
+    # aquí, y de eso ya nos hemos comido un caso.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Restaurar configuración local
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ] || [ -z "$GOOGLE_SERVICE_INFO_PLIST" ]; then
+            echo "::error::Faltan GOOGLE_SERVICES_JSON o GOOGLE_SERVICE_INFO_PLIST. Ver docs/FIREBASE.md."
+            exit 1
+          fi
+          mkdir -p composeApp/src/debug iosApp/FirebaseConfig/debug
+          echo "$GOOGLE_SERVICES_JSON" | base64 --decode > composeApp/src/debug/google-services.json
+          cp composeApp/src/debug/google-services.json composeApp/google-services.json
+          echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > iosApp/FirebaseConfig/debug/GoogleService-Info.plist
+          echo "MAPS_API_KEY=${MAPS_API_KEY:-PLACEHOLDER_NOT_A_REAL_KEY}" >> local.properties
+          echo "GOOGLE_MAPS_API_KEY=${MAPS_API_KEY:-PLACEHOLDER_NOT_A_REAL_KEY}" > iosApp/iosApp/Secrets.xcconfig
+
+      - name: Compilar la app de iOS
+        # Sin firma: no hace falta certificado ni equipo para comprobar que compila.
+        run: |
+          xcodebuild -project iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            build CODE_SIGNING_ALLOWED=NO
+
+  functions:
+    name: Cloud Functions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - run: npm ci --prefix functions
+      - run: npm run build --prefix functions
