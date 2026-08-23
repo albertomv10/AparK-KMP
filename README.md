@@ -39,6 +39,25 @@ compilar en local necesitas colocarlos tú:
 
 Además: JDK 17+, Android Studio y —para iOS— Xcode.
 
+### Firmar la versión de release (Android)
+
+Para generar un artefacto **firmado** hay que añadir cuatro propiedades a `local.properties`. Están
+fuera del repositorio a propósito, y el fichero ya está en `.gitignore`:
+
+```properties
+RELEASE_STORE_FILE=/ruta/absoluta/a/tu/keystore.jks
+RELEASE_STORE_PASSWORD=…
+RELEASE_KEY_ALIAS=…
+RELEASE_KEY_PASSWORD=…
+```
+
+También se aceptan como **variables de entorno** con esos mismos nombres, que es como las recibe CI.
+
+Si faltan, la build de release **no se firma en vez de fallar**: compilar el proyecto sigue
+funcionando en cualquier máquina, y la salida se llama `composeApp-release-unsigned.apk`, que avisa
+sola. Lo que sí produce un aviso ruidoso es dejarlas **a medias**, porque eso casi siempre es un
+descuido.
+
 ---
 
 ## Compilar y ejecutar
@@ -48,7 +67,13 @@ Además: JDK 17+, Android Studio y —para iOS— Xcode.
 ```sh
 ./gradlew :composeApp:assembleDebug     # generar APK de debug
 ./gradlew :composeApp:installDebug      # instalar en el dispositivo/emulador conectado
+./gradlew :composeApp:bundleRelease     # generar el AAB firmado que pide Google Play
 ```
+
+Google Play **solo acepta AAB**, no APK. Con ese formato la clave de firma de la app la custodia
+Google y tu keystore pasa a ser la *clave de subida*: si la pierdes, Google puede reemplazarla y
+sigues publicando. Para repartir builds por Firebase App Distribution el APK de
+`assembleRelease` sigue valiendo.
 
 **iOS**
 
