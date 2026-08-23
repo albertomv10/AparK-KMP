@@ -81,8 +81,9 @@
     <string name="error_location_save">Erreur lors de l'enregistrement de votre position</string>
     <string name="error_gps_permissions">Erreur GPS. Vérifiez les autorisations</string>
     <string name="error_undo_failed">L'action n'a pas pu être annulée</string>
-    <string name="error_google_login" formatted="false">Erreur Google : %s</string>
-    <string name="error_apple_login" formatted="false">Erreur Apple : %s</string>
+    <string name="error_google_login">Impossible de se connecter avec Google. Réessaie.</string>
+    <string name="error_apple_login">Impossible de se connecter avec Apple. Réessaie.</string>
+    <string name="error_social_no_accounts">Aucun compte Google sur cet appareil. Ajoutes-en un dans les réglages.</string>
     <string name="add_vehicle_title">Nouveau véhicule</string>
     <string name="add_vehicle_name_label">Nom du véhicule</string>
     <string name="add_vehicle_name_error">Saisissez un nom</string>

@@ -8,5 +8,5 @@ expect fun GoogleSignInButton(
     modifier: Modifier = Modifier,
     buttonText: String,
     onTokenReceived: (String, String?) -> Unit,
-    onError: (String) -> Unit
+    onError: (SocialLoginFailure) -> Unit
 )

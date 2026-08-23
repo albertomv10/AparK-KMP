@@ -13,9 +13,11 @@ class AppleAuthCoordinator: NSObject, ASAuthorizationControllerDelegate, ASAutho
     
     private var currentNonce: String?
     private var onSuccess: ((String, String) -> Void)?
-    private var onError: ((String) -> Void)?
+    private var onError: ((String, Bool) -> Void)?
     
-    func startSignIn(onSuccess: @escaping (String, String) -> Void, onError: @escaping (String) -> Void) {
+    /// `onError` recibe además si el usuario canceló: cerrar la hoja de Apple no es un fallo y no
+    /// debe generar ningún mensaje. Kotlin no puede distinguirlo, así que se decide aquí.
+    func startSignIn(onSuccess: @escaping (String, String) -> Void, onError: @escaping (String, Bool) -> Void) {
         self.onSuccess = onSuccess
         self.onError = onError
         
@@ -36,15 +38,15 @@ class AppleAuthCoordinator: NSObject, ASAuthorizationControllerDelegate, ASAutho
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
             guard let nonce = currentNonce else {
-                onError?("Estado inválido: No se encontró el nonce.")
+                onError?("Estado inválido: No se encontró el nonce.", false)
                 return
             }
             guard let appleIDToken = appleIDCredential.identityToken else {
-                onError?("No se pudo obtener el identity token.")
+                onError?("No se pudo obtener el identity token.", false)
                 return
             }
             guard let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
-                onError?("No se pudo serializar el token string.")
+                onError?("No se pudo serializar el token string.", false)
                 return
             }
             
@@ -54,7 +56,9 @@ class AppleAuthCoordinator: NSObject, ASAuthorizationControllerDelegate, ASAutho
     }
     
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-        onError?("Error al iniciar sesión con Apple: \(error.localizedDescription)")
+        // 1001 = ASAuthorizationError.canceled
+        let cancelled = (error as? ASAuthorizationError)?.code == .canceled
+        onError?("Error al iniciar sesión con Apple: \(error.localizedDescription)", cancelled)
     }
     
     // MARK: - Presentation Context
