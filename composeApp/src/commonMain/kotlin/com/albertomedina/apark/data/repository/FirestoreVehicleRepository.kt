@@ -7,60 +7,52 @@ import com.albertomedina.apark.domain.model.Vehicle.LocationModel
 import com.albertomedina.apark.domain.repository.VehicleRepository
 import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
-import dev.gitlive.firebase.firestore.where
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.retryWhen
-import kotlin.random.Random
+import kotlin.time.Clock
 
 class FirestoreVehicleRepository(
     private val firestore: FirebaseFirestore
 ) : VehicleRepository {
 
-    @OptIn(ExperimentalCoroutinesApi::class)
+    /**
+     * Los vehículos salen de **una consulta**, no de recorrer una lista de ids.
+     *
+     * Firestore acepta esta consulta porque puede demostrar, solo con su filtro, que nunca devolverá
+     * un documento que la regla prohíba. De ahí que aquí ya no haga falta el `retryWhen` que hubo
+     * durante un tiempo: escuchar un vehículo inexistente devolvía `PERMISSION_DENIED` —la regla
+     * desreferenciaba un `resource` nulo— y sin reintentos la app llegó a crashear. Ese caso ya no
+     * puede darse: lo que no está en el resultado, sencillamente no se pide.
+     *
+     * Son **dos** listeners y no N+1: la consulta, y el documento propio del usuario, que solo
+     * aporta el orden.
+     */
     override fun getVehiclesForUser(userId: String): Flow<List<Vehicle>> {
-        return firestore.collection(FirestoreConstants.USERS_COLLECTION)
+        val vehicles = firestore.collection(FirestoreConstants.CARS_COLLECTION)
+            .where { FirestoreConstants.MEMBER_IDS_FIELD contains userId }
+            .snapshots
+            .map { snapshot ->
+                // El id autoritativo es el del documento, no el campo `id` que se copia dentro.
+                snapshot.documents.map { it.data<Vehicle>().copy(id = it.id) }
+            }
+
+        val order = firestore.collection(FirestoreConstants.USERS_COLLECTION)
             .document(userId)
             .snapshots
-            .flatMapLatest { userSnapshot ->
-                if (!userSnapshot.exists) return@flatMapLatest flowOf(emptyList<Vehicle>())
+            .map { if (it.exists) it.data<User>().userVehicles else emptyList() }
 
-                val user = userSnapshot.data<User>()
-                val vehicleIds = user.userVehicles
+        return combine(vehicles, order, ::sortByHint)
+    }
 
-                if (vehicleIds.isEmpty()) return@flatMapLatest flowOf(emptyList<Vehicle>())
-
-                val vehicleFlows = vehicleIds.map { id ->
-                    firestore.collection(FirestoreConstants.CARS_COLLECTION)
-                        .document(id)
-                        .snapshots
-                        .map { if (it.exists) it.data<Vehicle>() else null }
-                        // A listen can fail transiently (watch-stream races right after a batch
-                        // write), so retry before giving up: dropping a just-created vehicle
-                        // would hide it until the app restarts.
-                        .retryWhen { _, attempt ->
-                            if (attempt < MAX_SNAPSHOT_RETRIES) {
-                                delay(SNAPSHOT_RETRY_DELAY_MS)
-                                true
-                            } else {
-                                false
-                            }
-                        }
-                        // Still failing: the document was deleted (dangling id) or the user lost
-                        // access. Drop that vehicle instead of letting the error kill the stream.
-                        .catch { emit(null) }
-                }
-
-                combine(vehicleFlows) { vehicles ->
-                    vehicles.filterNotNull()
-                }
-            }
+    /**
+     * Ordena por la pista del usuario. Los vehículos que no aparezcan en ella van al final
+     * conservando el orden de la consulta, porque `sortedBy` es estable — así, un vehículo recién
+     * compartido aparece aunque su id todavía no esté en la lista de nadie.
+     */
+    private fun sortByHint(vehicles: List<Vehicle>, hint: List<String>): List<Vehicle> {
+        val position = hint.withIndex().associate { (index, id) -> id to index }
+        return vehicles.sortedBy { position[it.id] ?: Int.MAX_VALUE }
     }
 
     override suspend fun getVehicleById(vehicleId: String): Vehicle? {
@@ -107,8 +99,8 @@ class FirestoreVehicleRepository(
             val vehicle = carSnapshot.data<Vehicle>()
             val user = userSnapshot.data<User>()
 
-            if (!vehicle.sharedUsers.contains(userId) && !user.userVehicles.contains(vehicleId)) {
-                update(carRef, FirestoreConstants.SHARED_USERS_FIELD to FieldValue.arrayUnion(userId))
+            if (!vehicle.memberIds.contains(userId) && !user.userVehicles.contains(vehicleId)) {
+                update(carRef, FirestoreConstants.MEMBER_IDS_FIELD to FieldValue.arrayUnion(userId))
                 update(userRef, FirestoreConstants.CARS_FIELD to FieldValue.arrayUnion(vehicleId))
             }
         }
@@ -118,13 +110,18 @@ class FirestoreVehicleRepository(
         return try {
             val carRef = firestore.collection(FirestoreConstants.CARS_COLLECTION).document
 
+            val now = Clock.System.now().toEpochMilliseconds()
             val newVehicle = Vehicle(
                 id = carRef.id,
                 name = name,
                 licensePlate = licensePlate,
                 ownerId = userId,
-                sharedUsers = emptyList(),
-                lastLocation = null
+                // El dueño va dentro desde el principio: la regla `create` exige exactamente esto,
+                // porque un vehículo cuyo dueño no es miembro sería ilegible para él mismo.
+                memberIds = listOf(userId),
+                lastLocation = null,
+                createdAt = now,
+                updatedAt = now
             )
 
             val batch = firestore.batch()
@@ -166,7 +163,8 @@ class FirestoreVehicleRepository(
                     "name" to vehicle.name,
                     "licensePlate" to vehicle.licensePlate,
                     "model" to vehicle.model,
-                    "color" to vehicle.color
+                    "color" to vehicle.color,
+                    FirestoreConstants.UPDATED_AT_FIELD to Clock.System.now().toEpochMilliseconds()
                 )
             Result.success(Unit)
         } catch (e: Exception) {
@@ -180,7 +178,7 @@ class FirestoreVehicleRepository(
             val userRef = firestore.collection(FirestoreConstants.USERS_COLLECTION).document(userId)
 
             val batch = firestore.batch()
-            batch.update(carRef, FirestoreConstants.SHARED_USERS_FIELD to FieldValue.arrayRemove(userId))
+            batch.update(carRef, FirestoreConstants.MEMBER_IDS_FIELD to FieldValue.arrayRemove(userId))
             batch.update(userRef, FirestoreConstants.CARS_FIELD to FieldValue.arrayRemove(vehicleId))
             batch.commit()
 
@@ -201,8 +199,4 @@ class FirestoreVehicleRepository(
         }
     }
 
-    private companion object {
-        const val MAX_SNAPSHOT_RETRIES = 3L
-        const val SNAPSHOT_RETRY_DELAY_MS = 1000L
-    }
 }

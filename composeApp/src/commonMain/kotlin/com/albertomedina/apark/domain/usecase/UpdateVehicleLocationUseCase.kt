@@ -32,7 +32,13 @@ class UpdateVehicleLocationUseCase(
                 val userProfile = userRepository.getUser(userId).first()
 
                 location.copy(
-                    user = userProfile,
+                    // Solo lo que la tarjeta pinta. Guardar el `User` entero metía su `userVehicles`
+                    // dentro del vehículo, y con él los ids de los demás coches de quien aparcó.
+                    user = Vehicle.ParkedBy(
+                        uid = userId,
+                        name = userProfile.name,
+                        email = userProfile.email
+                    ),
                     timestamp = if (location.timestamp == 0L) Clock.System.now().toEpochMilliseconds() else location.timestamp
                 )
             }
