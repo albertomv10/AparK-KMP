@@ -22,7 +22,7 @@ actual fun GoogleSignInButton(
     modifier: Modifier,
     buttonText: String,
     onTokenReceived: (String, String?) -> Unit,
-    onError: (String) -> Unit
+    onError: (SocialLoginFailure) -> Unit
 ) {
     StandardAparKButton(
         onClick = {
@@ -30,10 +30,17 @@ actual fun GoogleSignInButton(
             if (iosGoogleSignInProvider != null) {
                 iosGoogleSignInProvider?.invoke(
                     { token, accessToken -> onTokenReceived(token, accessToken) },
-                    { errorMsg -> onError(errorMsg) }
+                    { errorMsg, cancelled ->
+                        onError(
+                            SocialLoginFailure(
+                                if (cancelled) SocialLoginReason.CANCELLED else SocialLoginReason.UNKNOWN,
+                                errorMsg
+                            )
+                        )
+                    }
                 )
             } else {
-                onError("El proveedor de Google Sign-In no está inicializado en Swift")
+                onError(SocialLoginFailure(SocialLoginReason.UNKNOWN, "Proveedor de Google no inicializado en Swift"))
             }
         },
         modifier = modifier,

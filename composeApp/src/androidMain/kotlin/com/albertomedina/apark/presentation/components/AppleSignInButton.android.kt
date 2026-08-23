@@ -7,6 +7,6 @@ import androidx.compose.ui.Modifier
 actual fun AppleSignInButton(
     modifier: Modifier,
     onTokenReceived: (String, String) -> Unit,
-    onError: (String) -> Unit
+    onError: (SocialLoginFailure) -> Unit
 ) {
 }

@@ -292,11 +292,18 @@ Ninguna se ve en la pantalla, y todas hacen que lo siguiente cueste menos.*
 | 0.2 | **Modelo de pertenencia `memberIds` + query única** (§2.1) | M | [spec 008](specs/008-vehicle-membership-model/spec.md) | Retira 3 parches, desbloquea todas las subcolecciones |
 | 0.3 | **`createdAt`/`updatedAt`, quitar `inviteCode`, arreglar la fuga de `lastLocation.user`** (§2.3) | S | va en la spec 008 | Misma migración que 0.2 |
 | 0.4 | **Persistencia local (DataStore)** (§2.5) | S | | Bloquea tema, idioma, widget y notificaciones |
-| 0.5 | **Crashlytics** | S | | Lo que más devuelve por lo que cuesta |
+| 0.5 | **Crashlytics** + un log mínimo compartido | S | | Lo que más devuelve por lo que cuesta. **Subido de prioridad**: ver abajo |
 | 0.6 | **CI en GitHub Actions**: Android + iOS-Kotlin + tests | S | | A partir de aquí cada PR se valida solo |
 | 0.7 | **Firma y `bundleRelease`** | S | | Sin esto no hay subida posible |
 | 0.8 | **App Check** (§2.6) | M | | Antes de tener usuarios, no después |
 | 0.9 | **Separar proyectos Firebase dev/prod** (§2.4) | M | acordado | Hoy media tarde; después, una migración |
+
+> **Por qué 0.5 subió de prioridad.** Diagnosticar por qué fallaba el login con Google en Android
+> costó una tarde, y no por lo difícil del fallo —era una configuración de OAuth— sino porque **la
+> app no lo contaba**: el `onError` del botón social solo hacía un `println`, y el dispositivo de
+> pruebas es un Xiaomi, que se traga los logs de las apps de terceros. El error real (`28444`)
+> apareció en la primera prueba en cuanto la app lo mostró en pantalla. Sin un sitio donde mandar
+> los fallos, cada incidencia así cuesta lo mismo.
 
 > **Orden dentro de la fase 0**: 0.9 (separar proyectos) conviene **antes** que 0.2, y la razón no
 > es el coste sino el riesgo. La spec 008 incluye un cambio de reglas y un backfill sobre datos

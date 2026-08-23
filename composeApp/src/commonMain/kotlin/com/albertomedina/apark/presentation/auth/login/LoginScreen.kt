@@ -46,6 +46,7 @@ import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.presentation.components.AppleSignInButton
 import com.albertomedina.apark.presentation.components.GoogleSignInButton
+import com.albertomedina.apark.presentation.components.SocialLoginFailure
 import com.albertomedina.apark.presentation.components.StandardAparKButton
 import com.albertomedina.apark.presentation.components.StandardAparKTextButton
 import com.albertomedina.apark.utils.SnackbarMessage
@@ -101,6 +102,7 @@ fun LoginScreen(
         "error_verify_email" -> stringResource(Res.string.error_verify_email)
         "error_invalid_credentials" -> stringResource(Res.string.error_invalid_credentials)
         "error_google_login" -> stringResource(Res.string.error_google_login)
+        "error_social_no_accounts" -> stringResource(Res.string.error_social_no_accounts)
         "error_apple_login" -> stringResource(Res.string.error_apple_login)
         // Si no coincide con ninguna llave, asumimos que es un texto normal (ej. un error directo de Firebase)
         else -> state.snackbarMessage?.message
@@ -226,8 +228,8 @@ fun LoginScreen(
                     onTokenReceived = { idToken, accessToken ->
                         viewModel.onEvent(LoginEvent.GoogleLoginClicked(idToken, accessToken))
                     },
-                    onError = { errorMessage ->
-                        println("Error en GoogleSignInButton: $errorMessage")
+                    onError = { failure ->
+                        viewModel.onEvent(LoginEvent.SocialLoginFailed(failure))
                     }
                 )
                 AppleSignInButton(
@@ -235,8 +237,8 @@ fun LoginScreen(
                     onTokenReceived = { idToken, nonce ->
                         viewModel.onEvent(LoginEvent.AppleLoginClicked(idToken, nonce))
                     },
-                    onError = { errorMessage ->
-                        println("Error en AppleSignInButton: $errorMessage")
+                    onError = { failure ->
+                        viewModel.onEvent(LoginEvent.SocialLoginFailed(failure))
                     }
                 )
 

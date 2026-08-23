@@ -35,8 +35,8 @@ struct iOSApp: App {
                 onSuccess: { token, accessToken in
                     _ = onSuccess(token, accessToken) // El "_ =" ignora el KotlinUnit que devuelve Kotlin
                 },
-                onError: { errorMsg in
-                    _ = onError(errorMsg)
+                onError: { errorMsg, cancelled in
+                    _ = onError(errorMsg, KotlinBoolean(bool: cancelled))
                 }
             )
         }
@@ -47,8 +47,8 @@ struct iOSApp: App {
                 onSuccess: { idToken, nonce in
                     _ = onSuccess(idToken, nonce)
                 },
-                onError: { errorMsg in
-                    _ = onError(errorMsg)
+                onError: { errorMsg, cancelled in
+                    _ = onError(errorMsg, KotlinBoolean(bool: cancelled))
                 }
             )
         }
@@ -166,25 +166,29 @@ struct iOSApp: App {
 }
 
 // Lógica nativa de iOS para abrir la ventana de Google
-func signInWithGoogle(onSuccess: @escaping (String, String) -> Void, onError: @escaping (String) -> Void) {
+// `onError` informa además de si el usuario canceló: cerrar el diálogo no es un fallo y no debe
+// producir ningún mensaje. Desde Kotlin no se puede distinguir —solo llegaría el texto localizado
+// del error—, así que la decisión se toma aquí, donde sí existe el código.
+func signInWithGoogle(onSuccess: @escaping (String, String) -> Void, onError: @escaping (String, Bool) -> Void) {
     // 1. Buscamos el ViewController principal para poder mostrar la alerta encima
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
           let rootViewController = windowScene.windows.first?.rootViewController else {
-        onError("No se pudo encontrar la ventana principal de iOS")
+        onError("No se pudo encontrar la ventana principal de iOS", false)
         return
     }
     
     // 2. Llamamos al SDK de Google
     GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController) { signInResult, error in
         if let error = error {
-            onError(error.localizedDescription)
+            let cancelled = (error as NSError).code == GIDSignInError.canceled.rawValue
+            onError(error.localizedDescription, cancelled)
             return
         }
         
         // 3. Extraemos el JWT (Token)
         guard let idToken = signInResult?.user.idToken?.tokenString,
               let accessToken = signInResult?.user.accessToken.tokenString else {
-            onError("No se pudo obtener el token de Google")
+            onError("No se pudo obtener el token de Google", false)
             return
         }
         

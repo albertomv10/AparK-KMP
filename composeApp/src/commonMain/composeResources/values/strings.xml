@@ -81,8 +81,9 @@
     <string name="error_location_save">Error al guardar tu ubicación</string>
     <string name="error_gps_permissions">Error de GPS. Comprueba los permisos</string>
     <string name="error_undo_failed">No se pudo deshacer la acción</string>
-    <string name="error_google_login" formatted="false">Error Google: %s</string>
-    <string name="error_apple_login" formatted="false">Error Apple: %s</string>
+    <string name="error_google_login">No se pudo iniciar sesión con Google. Inténtalo de nuevo.</string>
+    <string name="error_apple_login">No se pudo iniciar sesión con Apple. Inténtalo de nuevo.</string>
+    <string name="error_social_no_accounts">No hay ninguna cuenta de Google en este dispositivo. Añade una en los ajustes del sistema.</string>
     <string name="add_vehicle_title">Nuevo vehículo</string>
     <string name="add_vehicle_name_label">Nombre del vehículo</string>
     <string name="add_vehicle_name_error">Introduce un nombre</string>

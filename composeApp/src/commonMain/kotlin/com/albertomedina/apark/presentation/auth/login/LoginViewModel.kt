@@ -7,6 +7,8 @@ import com.albertomedina.apark.domain.repository.UserRepository
 import com.albertomedina.apark.domain.usecase.LoginAppleUseCase
 import com.albertomedina.apark.domain.usecase.LoginGoogleUseCase
 import com.albertomedina.apark.domain.usecase.LoginUseCase
+import com.albertomedina.apark.presentation.components.SocialLoginFailure
+import com.albertomedina.apark.presentation.components.SocialLoginReason
 import com.albertomedina.apark.utils.SnackbarMessage
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +45,10 @@ class LoginViewModel(
 
             is LoginEvent.GoogleLoginClicked -> {
                 performGoogleLogin(event.idToken, event.accessToken)
+            }
+
+            is LoginEvent.SocialLoginFailed -> {
+                onSocialLoginFailed(event.failure)
             }
 
             is LoginEvent.AppleLoginClicked -> {
@@ -111,6 +117,25 @@ class LoginViewModel(
         }
     }
 
+    /**
+     * Cancelar es una decisión del usuario, no un fallo: no se avisa de nada. El resto se traduce
+     * a un mensaje que se pueda leer; el detalle técnico no se enseña — irá a Crashlytics.
+     */
+    private fun onSocialLoginFailed(failure: SocialLoginFailure) {
+        if (failure.reason == SocialLoginReason.CANCELLED) {
+            _uiState.update { it.copy(isLoading = false) }
+            return
+        }
+
+        val key = when (failure.reason) {
+            SocialLoginReason.NO_ACCOUNTS -> ERROR_NO_ACCOUNTS_KEY
+            else -> ERROR_GOOGLE_KEY
+        }
+        _uiState.update {
+            it.copy(isLoading = false, snackbarMessage = SnackbarMessage.Error(key))
+        }
+    }
+
     private fun performGoogleLogin(idToken: String, accessToken: String?) {
         _uiState.update { it.copy(isLoading = true) }
 
@@ -126,7 +151,7 @@ class LoginViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            snackbarMessage = SnackbarMessage.Error("error_google_login")
+                            snackbarMessage = SnackbarMessage.Error(ERROR_GOOGLE_KEY)
                         )
                     }
                 }
@@ -174,6 +199,11 @@ class LoginViewModel(
     private fun isValidEmail(email: String): Boolean {
         return email.matches(emailRegex)
     }
+
+    companion object {
+        const val ERROR_GOOGLE_KEY = "error_google_login"
+        const val ERROR_NO_ACCOUNTS_KEY = "error_social_no_accounts"
+    }
 }
 
 data class LoginUiState(
@@ -195,6 +225,8 @@ sealed class LoginEvent {
     data object RegisterClicked : LoginEvent()
     data class GoogleLoginClicked(val idToken: String, val accessToken: String? = null) : LoginEvent()
     data class AppleLoginClicked(val idToken: String, val nonce: String) : LoginEvent()
+    /** Un botón de login social falló antes de llegar a Firebase (Credential Manager, Apple ID…). */
+    data class SocialLoginFailed(val failure: SocialLoginFailure) : LoginEvent()
     data object ErrorDismissed : LoginEvent()
     data object OnNavigated : LoginEvent()
 }

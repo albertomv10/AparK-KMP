@@ -7,5 +7,5 @@ import androidx.compose.ui.Modifier
 expect fun AppleSignInButton(
     modifier: Modifier = Modifier,
     onTokenReceived: (String, String) -> Unit, // (idToken, nonce)
-    onError: (String) -> Unit
+    onError: (SocialLoginFailure) -> Unit
 )

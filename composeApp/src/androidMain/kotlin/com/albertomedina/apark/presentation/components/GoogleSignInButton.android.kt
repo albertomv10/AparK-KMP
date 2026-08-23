@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
 import apark.composeapp.generated.resources.Res
@@ -29,7 +30,7 @@ actual fun GoogleSignInButton(
     modifier: Modifier,
     buttonText: String,
     onTokenReceived: (String, String?) -> Unit,
-    onError: (String) -> Unit
+    onError: (SocialLoginFailure) -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -64,7 +65,7 @@ private suspend fun launchCredManBottomSheet(
     context: Context,
     hasFilter: Boolean = true,
     onTokenReceived: (String, String?) -> Unit,
-    onError: (String) -> Unit
+    onError: (SocialLoginFailure) -> Unit
 ) {
     try {
         val googleIdOption = GetGoogleIdOption.Builder()
@@ -86,17 +87,33 @@ private suspend fun launchCredManBottomSheet(
             val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
             onTokenReceived(googleIdTokenCredential.idToken, null)
         } else {
-            onError("Tipo de credencial no soportado")
+            onError(SocialLoginFailure(SocialLoginReason.UNKNOWN, "Tipo de credencial no soportado: ${credential.type}"))
         }
 
+    } catch (e: GetCredentialCancellationException) {
+        // Cerrar el selector es una decisión del usuario, no un fallo: no se avisa de nada.
+        onError(SocialLoginFailure(SocialLoginReason.CANCELLED, describe(e)))
     } catch (e: NoCredentialException) {
         if (hasFilter) {
-            // Reintentar sin filtro
+            // El primer intento solo ofrece cuentas ya autorizadas para esta app. Que no haya
+            // ninguna es lo normal la primera vez, así que se reintenta mostrándolas todas.
             launchCredManBottomSheet(context, false, onTokenReceived, onError)
         } else {
-            onError(e.message ?: "Cancelado por el usuario")
+            // Sin filtro y sigue sin haber cuentas: el dispositivo no tiene ninguna de Google.
+            onError(SocialLoginFailure(SocialLoginReason.NO_ACCOUNTS, describe(e)))
         }
     } catch (e: GetCredentialException) {
-        onError(e.message ?: "Error al obtener credencial")
+        onError(SocialLoginFailure(SocialLoginReason.UNKNOWN, describe(e)))
+    } catch (e: Throwable) {
+        // Sin esta rama, cualquier fallo que no sea de las familias anteriores se escapa de la
+        // corrutina y no lo ve nadie: la hoja de credenciales se cierra y la pantalla no reacciona.
+        onError(SocialLoginFailure(SocialLoginReason.UNKNOWN, describe(e)))
     }
 }
+
+/**
+ * El tipo de excepción es la mitad útil del diagnóstico —el `[28444]` de una configuración de
+ * OAuth incompleta llega como `GetCredentialCustomException`— y `message` a menudo viene vacío.
+ */
+private fun describe(e: Throwable): String =
+    "${e::class.simpleName}: ${e.message ?: "sin detalle"}"

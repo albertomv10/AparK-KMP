@@ -81,8 +81,9 @@
     <string name="error_location_save">Error saving your location</string>
     <string name="error_gps_permissions">GPS error. Check permissions</string>
     <string name="error_undo_failed">Action could not be undone</string>
-    <string name="error_google_login" formatted="false">Google Error: %s</string>
-    <string name="error_apple_login" formatted="false">Apple Error: %s</string>
+    <string name="error_google_login">Could not sign in with Google. Please try again.</string>
+    <string name="error_apple_login">Could not sign in with Apple. Please try again.</string>
+    <string name="error_social_no_accounts">There is no Google account on this device. Add one in system settings.</string>
     <string name="add_vehicle_title">New vehicle</string>
     <string name="add_vehicle_name_label">Vehicle name</string>
     <string name="add_vehicle_name_error">Enter a name</string>

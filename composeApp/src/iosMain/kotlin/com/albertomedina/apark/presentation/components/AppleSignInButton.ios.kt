@@ -18,13 +18,17 @@ import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.ic_apple_white
 import org.jetbrains.compose.resources.painterResource
 
-var iosAppleSignInProvider: ((onSuccess: (String, String) -> Unit, onError: (String) -> Unit) -> Unit)? = null
+/** `onError` recibe `(mensaje, cancelledByUser)`; ver [iosGoogleSignInProvider]. */
+var iosAppleSignInProvider: ((
+    onSuccess: (String, String) -> Unit,
+    onError: (String, Boolean) -> Unit
+) -> Unit)? = null
 
 @Composable
 actual fun AppleSignInButton(
     modifier: Modifier,
     onTokenReceived: (String, String) -> Unit,
-    onError: (String) -> Unit
+    onError: (SocialLoginFailure) -> Unit
 ) {
     val isDarkTheme = isSystemInDarkTheme()
 
@@ -36,10 +40,17 @@ actual fun AppleSignInButton(
             if (iosAppleSignInProvider != null) {
                 iosAppleSignInProvider?.invoke(
                     { idToken, nonce -> onTokenReceived(idToken, nonce) },
-                    { errorMsg -> onError(errorMsg) }
+                    { errorMsg, cancelled ->
+                        onError(
+                            SocialLoginFailure(
+                                if (cancelled) SocialLoginReason.CANCELLED else SocialLoginReason.UNKNOWN,
+                                errorMsg
+                            )
+                        )
+                    }
                 )
             } else {
-                onError("El proveedor de Apple no está inicializado en iOS")
+                onError(SocialLoginFailure(SocialLoginReason.UNKNOWN, "Proveedor de Apple no inicializado en iOS"))
             }
         },
         modifier = modifier,
