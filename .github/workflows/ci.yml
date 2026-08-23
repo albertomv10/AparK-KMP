@@ -118,11 +118,12 @@ jobs:
           cache: npm
           cache-dependency-path: tools/package-lock.json
 
-      # El emulador de Firestore corre sobre la JVM.
+      # El emulador de Firestore corre sobre la JVM, y firebase-tools exige JDK 21 o superior.
+      # No es el 17 que usa el job de Android: aquí no se compila nada de Kotlin.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - run: npm ci --prefix tools
 
