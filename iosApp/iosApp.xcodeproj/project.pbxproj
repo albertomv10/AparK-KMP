@@ -131,6 +131,7 @@
 				DE2F64A5DCA46D872A533EED /* Frameworks */,
 				03D3E1E22C700A48E6D6059B /* Resources */,
 				715C0EF12F240B0F002376B5 /* Setup Firebase */,
+				715C0EF32F240B0F002376B5 /* Upload Crashlytics dSYMs */,
 			);
 			buildRules = (
 			);
@@ -222,6 +223,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "cd \"$SRCROOT/..\"\n\n# FORZAMOS LA RUTA EXACTA (Hardcoded path)\n# Esta es la ruta al Java interno (JBR) de tu Android Studio según tus logs:\n# Xcode no hereda el entorno de la shell, asi que hay que localizar el JDK aqui. Esto estuvo\n# fijado a la ruta absoluta del Mac de un desarrollador concreto, de modo que la build de iOS\n# solo funcionaba en esa maquina y no habia forma de validarla en CI.\n#\n# El orden importa: \"java_home -v 17\" significa \"17 o superior\", no \"exactamente 17\", y en un Mac\n# con JDK 25 devuelve el 25, con el que Gradle no compila. Por eso el JBR de Android Studio va\n# primero y java_home queda de ultimo recurso.\nif [ -z \"$JAVA_HOME\" ] || [ ! -x \"$JAVA_HOME/bin/java\" ]; then\n  JH=\"$HOME/Applications/Android Studio.app/Contents/jbr/Contents/Home\"\n  if [ ! -x \"$JH/bin/java\" ]; then JH=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\"; fi\n  if [ ! -x \"$JH/bin/java\" ]; then JH=\"$(/usr/libexec/java_home -v 17 2>/dev/null)\"; fi\n  export JAVA_HOME=\"$JH\"\nfi\n\nif [ ! -x \"$JAVA_HOME/bin/java\" ]; then\n  echo \"error: no se encontro ningun JDK. Instala Android Studio o un JDK 17, o exporta JAVA_HOME.\" >&2\n  exit 1\nfi\n\n# Lanzamos Gradle\n./gradlew :composeApp:embedAndSignAppleFrameworkForXcode\n";
+		};
+		715C0EF32F240B0F002376B5 /* Upload Crashlytics dSYMs */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "Upload Crashlytics dSYMs";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Sube los dSYM a Crashlytics. Sin esto, una traza de release llega como direcciones\n# hexadecimales en vez de nombres de funcion, que es tanto como no tenerla.\n#\n# Solo Release genera dSYM (Debug usa DEBUG_INFORMATION_FORMAT = dwarf), asi que en Debug no\n# hay nada que subir y la fase se sale enseguida.\nif [ \"$CONFIGURATION\" != \"Release\" ]; then\n  exit 0\nfi\n\nRUN_SCRIPT=\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n\n# Un aviso y no un error: que no se suban los simbolos no justifica tumbar la compilacion.\nif [ ! -x \"$RUN_SCRIPT\" ]; then\n  echo \"warning: no se encontro $RUN_SCRIPT; los dSYM no se subiran a Crashlytics\" >&2\n  exit 0\nfi\n\n\"$RUN_SCRIPT\"\n";
 		};
 		715C0EF12F240B0F002376B5 /* Setup Firebase */ = {
 			isa = PBXShellScriptBuildPhase;
