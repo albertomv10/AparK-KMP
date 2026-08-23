@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.model.User
 import com.albertomedina.apark.domain.repository.UserRepository
 import com.albertomedina.apark.domain.usecase.LoginAppleUseCase
+import com.albertomedina.apark.domain.logging.CrashReporter
 import com.albertomedina.apark.domain.usecase.LoginGoogleUseCase
 import com.albertomedina.apark.domain.usecase.LoginUseCase
 import com.albertomedina.apark.presentation.components.SocialLoginFailure
@@ -21,7 +22,8 @@ class LoginViewModel(
     private val loginUseCase: LoginUseCase,
     private val loginGoogleUseCase: LoginGoogleUseCase,
     private val loginAppleUseCase: LoginAppleUseCase,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val crashReporter: CrashReporter
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -127,6 +129,10 @@ class LoginViewModel(
             return
         }
 
+        // El detalle técnico se deja de enseñar al usuario, pero no se pierde: este es el sitio
+        // que no existía cuando un `[28444]` de OAuth costó media tarde de adb.
+        crashReporter.recordFailure(SOCIAL_LOGIN_CONTEXT, failure.detail)
+
         val key = when (failure.reason) {
             SocialLoginReason.NO_ACCOUNTS -> ERROR_NO_ACCOUNTS_KEY
             else -> ERROR_GOOGLE_KEY
@@ -201,6 +207,7 @@ class LoginViewModel(
     }
 
     companion object {
+        const val SOCIAL_LOGIN_CONTEXT = "social_login_failed"
         const val ERROR_GOOGLE_KEY = "error_google_login"
         const val ERROR_NO_ACCOUNTS_KEY = "error_social_no_accounts"
     }
