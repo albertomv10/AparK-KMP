@@ -1,10 +1,12 @@
 package com.albertomedina.apark.di
 
+import com.albertomedina.apark.data.logging.FirebaseCrashReporter
 import com.albertomedina.apark.data.repository.FirebaseAuthRepository
 import com.albertomedina.apark.data.repository.FirebaseInviteRepository
 import com.albertomedina.apark.data.repository.FirestoreUserRepository
 import com.albertomedina.apark.data.repository.FirestoreVehicleRepository
 import com.albertomedina.apark.data.repository.LocationRepositoryImpl
+import com.albertomedina.apark.domain.logging.CrashReporter
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.repository.InviteRepository
 import com.albertomedina.apark.domain.repository.LocationRepository
@@ -61,6 +63,8 @@ val sharedModule = module {
     // the SDK would call us-central1 and fail.
     single<FirebaseFunctions> { Firebase.functions(region = "europe-west4") }
 
+    single<CrashReporter> { FirebaseCrashReporter() }
+
     single<VehicleRepository> { FirestoreVehicleRepository(firestore = get()) }
     single<UserRepository> { FirestoreUserRepository(firestore = get()) }
 
@@ -114,7 +118,8 @@ val sharedModule = module {
             loginUseCase = get(),
             loginGoogleUseCase = get(),
             loginAppleUseCase = get(),
-            userRepository = get()
+            userRepository = get(),
+            crashReporter = get()
         )
     }
 
@@ -145,7 +150,8 @@ val sharedModule = module {
             signOutUseCase = get(),
             deleteVehicleUseCase = get(),
             removeUserFromVehicleUseCase = get(),
-            moveVehicleUseCase = get()
+            moveVehicleUseCase = get(),
+            crashReporter = get()
         )
     }
 
