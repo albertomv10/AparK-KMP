@@ -109,11 +109,13 @@ kotlin {
             implementation(libs.firebase.crashlytics)
 
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.androidx.datastore.preferences.core)
 
             implementation(libs.compottie)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

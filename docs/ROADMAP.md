@@ -291,7 +291,7 @@ Ninguna se ve en la pantalla, y todas hacen que lo siguiente cueste menos.*
 | 0.1 | **Mover `proguard-rules.pro` a `composeApp/`** | S | ✅ hecho | Verificado roto. La build de la tienda es la única que lo sufre |
 | 0.2 | **Modelo de pertenencia `memberIds` + query única** (§2.1) | M | [spec 008](specs/008-vehicle-membership-model/spec.md) | Retira 3 parches, desbloquea todas las subcolecciones |
 | 0.3 | **`createdAt`/`updatedAt`, quitar `inviteCode`, arreglar la fuga de `lastLocation.user`** (§2.3) | S | va en la spec 008 | Misma migración que 0.2 |
-| 0.4 | **Persistencia local (DataStore)** (§2.5) | S | | Bloquea tema, idioma, widget y notificaciones |
+| 0.4 | **Persistencia local (DataStore)** (§2.5) | S | ✅ hecho | Bloquea tema, idioma, widget y notificaciones |
 | 0.5 | **Crashlytics** + un log mínimo compartido | S | | Lo que más devuelve por lo que cuesta. **Subido de prioridad**: ver abajo |
 | 0.6 | **CI en GitHub Actions**: Android + iOS (Xcode) + functions | S | ✅ hecho | A partir de aquí cada PR se valida solo |
 | 0.7 | **Firma y `bundleRelease`** | S | ✅ hecho | Sin esto no hay subida posible |
