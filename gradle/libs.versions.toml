@@ -29,6 +29,8 @@ koin = "4.1.1"
 koinComposeMultiplatform = "4.1.1"
 
 firebase-gitlive = "2.4.0"
+# Alineado con el BOM que arrastra gitlive, para no mezclar versiones del SDK nativo.
+firebase-bom = "33.15.0"
 gms-google-services = "4.4.4"
 firebase-crashlytics-plugin = "3.0.8"
 googleid = "1.2.0"
@@ -68,6 +70,12 @@ firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "firebase-
 firebase-firestore = { module = "dev.gitlive:firebase-firestore", version.ref = "firebase-gitlive" }
 firebase-functions = { module = "dev.gitlive:firebase-functions", version.ref = "firebase-gitlive" }
 firebase-crashlytics = { module = "dev.gitlive:firebase-crashlytics", version.ref = "firebase-gitlive" }
+
+# App Check no existe en gitlive, así que se usa el SDK nativo directamente. No hace falta API
+# compartida: se inicializa por plataforma y el resto de SDK de Firebase adjuntan el token solos.
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
+firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }
 
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 

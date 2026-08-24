@@ -160,6 +160,54 @@ entorno decida por su cuenta contra qué base escribe.
 > de servicio** — la credencial más peligrosa del proyecto, porque se salta todas las reglas. Nunca
 > debe entrar en el repositorio, y conviene borrarla cuando la migración termine.
 
+## App Check
+
+Demuestra a Firebase que quien llama es **la app genuina** y no un script con la configuración
+sacada del binario — que es pública por definición, va dentro del APK y del IPA. Las reglas impiden
+leer datos ajenos; App Check impide que alguien te consuma la cuota llamando a las *callables* en
+bucle.
+
+No toca el código compartido: se inicializa por plataforma y **el resto de SDK de Firebase adjuntan
+el token solos**. `dev.gitlive` no tiene módulo de App Check, y no hace falta.
+
+| Build | Proveedor | Por qué |
+|-------|-----------|---------|
+| Android debug | `DebugAppCheckProviderFactory` | Play Integrity no funciona en emulador ni sin firma de Play |
+| Android release | `PlayIntegrityAppCheckProviderFactory` | |
+| iOS debug | `AppCheckDebugProviderFactory` | App Attest no funciona en el simulador |
+| iOS release | `AppAttestProviderFactory` | |
+
+La dependencia del proveedor de depuración de Android es `debugImplementation`, así que **no existe
+siquiera** en una build de release.
+
+### Los dos pasos, y por qué no se hacen juntos
+
+**1. Mandar tokens** (lo que hace el código). Firebase los recibe y los cuenta, pero **no rechaza a
+nadie**. Instalarlo es inofensivo.
+
+**2. Activar la exigencia** (*enforcement*, en la consola, por servicio). Firebase **rechaza toda
+petición sin token válido**.
+
+> **Activar el 2 antes de que todos los clientes hagan el 1 deja fuera a la app entera**, no una
+> función suelta. El orden correcto es: desplegar la app → distribuirla → mirar en la consola las
+> métricas de App Check hasta que casi todas las peticiones lleguen verificadas → y **entonces**
+> activar la exigencia, servicio por servicio.
+
+### El token de depuración
+
+El proveedor de depuración imprime en el log un token que hay que **registrar a mano** en la consola
+(*App Check → la app → Administrar tokens de depuración*). Es **uno por instalación**: cada
+dispositivo y cada emulador genera el suyo.
+
+```sh
+adb logcat | grep -i DebugAppCheckProvider
+```
+
+En iOS aparece en la consola de Xcode al arrancar.
+
+Sin registrarlo no pasa nada mientras la exigencia esté apagada — pero tus pruebas no contarán como
+verificadas en las métricas, que son justo lo que dice cuándo es seguro encenderla.
+
 ## Tests de reglas
 
 ```sh

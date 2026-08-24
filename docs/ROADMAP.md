@@ -295,7 +295,7 @@ Ninguna se ve en la pantalla, y todas hacen que lo siguiente cueste menos.*
 | 0.5 | **Crashlytics** + un log mínimo compartido | S | | Lo que más devuelve por lo que cuesta. **Subido de prioridad**: ver abajo |
 | 0.6 | **CI en GitHub Actions**: Android + iOS (Xcode) + functions | S | ✅ hecho | A partir de aquí cada PR se valida solo |
 | 0.7 | **Firma y `bundleRelease`** | S | ✅ hecho | Sin esto no hay subida posible |
-| 0.8 | **App Check** (§2.6) | M | | Antes de tener usuarios, no después |
+| 0.8 | **App Check** (§2.6) | M | ✅ código; exigencia pendiente | Antes de tener usuarios, no después |
 | 0.9 | **Separar proyectos Firebase dev/prod** (§2.4) | M | acordado | Hoy media tarde; después, una migración |
 
 > **Por qué 0.5 subió de prioridad.** Diagnosticar por qué fallaba el login con Google en Android

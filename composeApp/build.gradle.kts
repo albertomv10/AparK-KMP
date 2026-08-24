@@ -70,6 +70,9 @@ kotlin {
             implementation(libs.play.services.location)
             implementation(libs.kotlinx.coroutines.play.services)
 
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.appcheck.playintegrity)
+
             implementation(libs.koin.android)
             implementation(libs.androidx.credentials)
             implementation(libs.androidx.credentials.play.services.auth)
@@ -175,4 +178,10 @@ android {
 dependencies {
 
     debugImplementation(compose.uiTooling)
+
+    // El proveedor de depuración de App Check solo entra en las builds de debug: acepta un token
+    // que se registra a mano, así que en release no debe existir ni como dependencia. Va aquí y no
+    // en el source set de KMP porque `debugImplementation` es una configuración de AGP.
+    debugImplementation(project.dependencies.platform(libs.firebase.bom))
+    debugImplementation(libs.firebase.appcheck.debug)
 }
