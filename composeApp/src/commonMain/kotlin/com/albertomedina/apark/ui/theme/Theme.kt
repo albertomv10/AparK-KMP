@@ -1,6 +1,7 @@
 package com.albertomedina.apark.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import com.albertomedina.apark.domain.settings.ThemeMode
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -249,11 +250,20 @@ val unspecified_scheme = ColorFamily(
     Color.Unspecified, Color.Unspecified, Color.Unspecified, Color.Unspecified
 )
 
+/**
+ * [themeMode] decide de dónde sale el tema. Con [ThemeMode.SYSTEM], que es el defecto, se comporta
+ * exactamente como antes de que existieran las preferencias: sigue al sistema operativo.
+ */
 @Composable
 fun AparKTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
     content: @Composable () -> Unit
 ) {
+    val darkTheme = when (themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
+    }
     val colorScheme = if (darkTheme) darkScheme else lightScheme
     val extraColors = if (darkTheme) extraDarkColors else extraLightColors
 

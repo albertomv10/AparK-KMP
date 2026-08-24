@@ -1,12 +1,15 @@
 package com.albertomedina.apark.di
 
 import com.albertomedina.apark.data.logging.FirebaseCrashReporter
+import com.albertomedina.apark.data.settings.DataStoreSettingsRepository
+import com.albertomedina.apark.data.settings.createSettingsDataStore
 import com.albertomedina.apark.data.repository.FirebaseAuthRepository
 import com.albertomedina.apark.data.repository.FirebaseInviteRepository
 import com.albertomedina.apark.data.repository.FirestoreUserRepository
 import com.albertomedina.apark.data.repository.FirestoreVehicleRepository
 import com.albertomedina.apark.data.repository.LocationRepositoryImpl
 import com.albertomedina.apark.domain.logging.CrashReporter
+import com.albertomedina.apark.domain.settings.SettingsRepository
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.repository.InviteRepository
 import com.albertomedina.apark.domain.repository.LocationRepository
@@ -64,6 +67,10 @@ val sharedModule = module {
     single<FirebaseFunctions> { Firebase.functions(region = "europe-west4") }
 
     single<CrashReporter> { FirebaseCrashReporter() }
+
+    // Un único DataStore por proceso: abrir dos sobre el mismo fichero lanza en tiempo de ejecución.
+    single { createSettingsDataStore() }
+    single<SettingsRepository> { DataStoreSettingsRepository(dataStore = get()) }
 
     single<VehicleRepository> { FirestoreVehicleRepository(firestore = get()) }
     single<UserRepository> { FirestoreUserRepository(firestore = get()) }
