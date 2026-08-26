@@ -1,5 +1,6 @@
 import SwiftUI
 import ComposeApp
+import FirebaseAppCheck
 import FirebaseCore
 import GoogleSignIn
 import CoreLocation
@@ -13,6 +14,18 @@ struct iOSApp: App {
     init() {
         
         //Firebase
+        // App Check va ANTES de configure(): demuestra a Firebase que quien llama es esta app y no
+        // un script con la configuracion sacada del binario, que es publica por definicion. Una vez
+        // instalado, el resto de SDK adjuntan el token solos y no hace falta nada en Kotlin.
+        //
+        // En debug se usa el proveedor de depuracion, que imprime en consola un token que hay que
+        // registrar a mano; App Attest no funciona en el simulador. En release, App Attest.
+        #if DEBUG
+        AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
+        #else
+        AppCheck.setAppCheckProviderFactory(AppAttestProviderFactory())
+        #endif
+
         // Qué proyecto (dev o prod) se usa lo decide el GoogleService-Info.plist que la fase de
         // build copia según la configuración, no nada en tiempo de ejecución.
         FirebaseApp.configure()
