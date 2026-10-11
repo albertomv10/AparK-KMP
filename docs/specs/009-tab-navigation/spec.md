@@ -1,7 +1,7 @@
 # Spec: pestañas que navegan de verdad
 
 - **ID**: 009-tab-navigation
-- **Estado**: Borrador
+- **Estado**: Aprobada (preguntas de producto cerradas; las técnicas, al diseño)
 - **Fecha**: 2026-10-11
 
 ## Problema / Por qué
@@ -59,26 +59,29 @@ sobre DataStore **no tiene pantalla que lo escriba**, así que hoy es infraestru
 
 ## Preguntas abiertas
 
-Para cerrar en `design.md`.
+Las de producto **ya están cerradas** en [`docs/NAVIGATION.md`](../../NAVIGATION.md), que es ahora
+la referencia de dónde vive cada pantalla:
+
+- **¿Qué es *Mis Coches*?** → **Vehículos**: la lista muestra el **estado** (incidencias abiertas,
+  vencimientos), no la ubicación. *El carrusel dice dónde está; la lista, cómo está.* Si acaba
+  enseñando lo mismo que el carrusel, es redundante y se quita.
+- **¿Qué se pone en *Perfil*?** → **Cuenta**, en una sola pantalla: perfil arriba, ajustes en
+  medio, cerrar sesión y eliminar cuenta abajo.
+- **¿Sobrevive el menú de tres puntos?** → **No.** El cierre de sesión es una acción de cuenta.
+- **¿Llevan pestañas el detalle y añadir vehículo?** → El detalle **sí** (vive dentro de la
+  pestaña); añadir vehículo **no** (es una tarea de pantalla completa).
+
+Quedan las técnicas, para cerrar en `design.md`:
 
 1. **¿Una pila por pestaña, o una sola compartida?** El criterio 2 pide que cada pestaña recuerde su
    sitio, y eso normalmente significa **una pila de navegación por pestaña**. Navigation 3 está en
    alpha y hay que ver qué soporta de serie y qué habría que montar a mano — es la decisión técnica
    gorda de esta spec.
-2. **¿Dónde vive la barra?** Lo natural es un *shell* que envuelva al `NavDisplay`, pero hay que
-   decidir cómo sabe ese shell si la pantalla actual lleva pestañas o no (criterio 3): ¿lo declara
-   cada destino, o lo decide el shell por una lista?
+2. **¿Dónde vive la barra, y cómo sabe si ocultarse?** Lo natural es un *shell* que envuelva al
+   `NavDisplay`. Qué pantallas la llevan ya está decidido; falta el mecanismo: ¿lo declara cada
+   destino, o lo decide el shell por una lista?
 3. **¿Qué hace el botón atrás en una pestaña que no es la primera?** ¿Vuelve a *Mapa* o cierra la
    app? Android y iOS tienen expectativas distintas aquí.
-4. **¿Qué es *Mis Coches*, exactamente?** Hoy el carrusel de la Home ya lista los vehículos, así que
-   la pestaña corre el riesgo de duplicarla. La lectura que da sentido a las tres es que *Mapa*
-   responde a **dónde está** y *Mis Coches* a **cómo está** — y que sea por tanto la puerta de
-   entrada a lo que traen las fases 2 y 3: datos del vehículo, miembros, incidencias, ITV. Conviene
-   decidirlo ahora, porque cambia si la pestaña es una lista o algo más.
-5. **¿Qué se pone de momento en *Perfil*?** Un marcador de posición, o adelantar el cierre de sesión
-   —que hoy vive en un menú de tres puntos sobre el mapa— para que la pestaña no nazca vacía.
-6. **¿Sobrevive el menú de tres puntos de la Home?** Si *Perfil* existe, tener ahí el cierre de
-   sesión pasa a ser redundante.
 
 ## Fuera de alcance
 

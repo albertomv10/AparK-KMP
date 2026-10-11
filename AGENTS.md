@@ -16,6 +16,7 @@ Play, so store requirements are treated as real constraints rather than someday-
 | [`docs/PROCESS.md`](docs/PROCESS.md) | How work happens here: Spec-Driven Development and the Git flow |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Architecture review and the phased plan to publication |
 | [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md) | Where the schema is **going**, and the method behind it |
+| [`docs/NAVIGATION.md`](docs/NAVIGATION.md) | Where a new **screen** goes, and why the tabs are what they are |
 | [`docs/FIREBASE.md`](docs/FIREBASE.md) | The two projects, and how to stand one up from zero |
 | [`docs/specs/NNN-*/`](docs/specs/) | One folder per feature: `spec.md`, `design.md`, `tasks.md` |
 | [`CHANGELOG.md`](CHANGELOG.md) | What has actually shipped |
