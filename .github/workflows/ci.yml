@@ -29,7 +29,9 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
+      # v4 y no v3: la v3 instala el paquete `tools` del SDK, que Google ha retirado de sus
+      # repositorios, así que sdkmanager falla y el job se cae antes de compilar nada.
+      - uses: android-actions/setup-android@v4
 
       - uses: gradle/actions/setup-gradle@v4
 
@@ -74,22 +76,33 @@ jobs:
             echo "::error::Faltan GOOGLE_SERVICES_JSON o GOOGLE_SERVICE_INFO_PLIST. Ver docs/FIREBASE.md."
             exit 1
           fi
-          mkdir -p composeApp/src/debug iosApp/FirebaseConfig/debug
+          mkdir -p composeApp/src/debug iosApp/FirebaseConfig/debug iosApp/FirebaseConfig/release
           echo "$GOOGLE_SERVICES_JSON" | base64 --decode > composeApp/src/debug/google-services.json
           cp composeApp/src/debug/google-services.json composeApp/google-services.json
           echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > iosApp/FirebaseConfig/debug/GoogleService-Info.plist
+          # La configuración de DESARROLLO también en la ruta de release: aquí solo se comprueba que
+          # compila, nunca se produce nada distribuible, así que no hay motivo para meter la config
+          # de producción en los secretos. La fase "Setup Firebase" exige que el fichero exista.
+          cp iosApp/FirebaseConfig/debug/GoogleService-Info.plist iosApp/FirebaseConfig/release/GoogleService-Info.plist
           echo "MAPS_API_KEY=${MAPS_API_KEY:-PLACEHOLDER_NOT_A_REAL_KEY}" >> local.properties
           echo "GOOGLE_MAPS_API_KEY=${MAPS_API_KEY:-PLACEHOLDER_NOT_A_REAL_KEY}" > iosApp/iosApp/Secrets.xcconfig
 
-      - name: Compilar la app de iOS
+      # Las DOS configuraciones, no solo Debug. Swift compila únicamente la rama viva de un
+      # `#if DEBUG`, así que compilar solo Debug deja el código de release sin tocar por nadie:
+      # así se coló una referencia a un tipo inexistente que solo fallaba en Release.
+      - name: Compilar la app de iOS (Debug y Release)
         # Sin firma: no hace falta certificado ni equipo para comprobar que compila.
         run: |
-          xcodebuild -project iosApp/iosApp.xcodeproj \
-            -scheme iosApp \
-            -sdk iphonesimulator \
-            -configuration Debug \
-            -destination 'generic/platform=iOS Simulator' \
-            build CODE_SIGNING_ALLOWED=NO
+          for CONFIG in Debug Release; do
+            echo "::group::iOS $CONFIG"
+            xcodebuild -project iosApp/iosApp.xcodeproj \
+              -scheme iosApp \
+              -sdk iphonesimulator \
+              -configuration "$CONFIG" \
+              -destination 'generic/platform=iOS Simulator' \
+              build CODE_SIGNING_ALLOWED=NO
+            echo "::endgroup::"
+          done
 
   functions:
     name: Cloud Functions

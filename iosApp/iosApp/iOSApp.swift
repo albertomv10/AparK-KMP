@@ -23,7 +23,7 @@ struct iOSApp: App {
         #if DEBUG
         AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
         #else
-        AppCheck.setAppCheckProviderFactory(AppAttestProviderFactory())
+        AppCheck.setAppCheckProviderFactory(AppAttestFactory())
         #endif
 
         // Qué proyecto (dev o prod) se usa lo decide el GoogleService-Info.plist que la fase de
@@ -175,6 +175,19 @@ struct iOSApp: App {
         WindowGroup {
             ContentView()
         }
+    }
+}
+
+
+/// Fabrica de App Attest.
+///
+/// Hay que escribirla: el SDK trae `AppCheckDebugProviderFactory` y `DeviceCheckProviderFactory`
+/// hechas, pero **App Attest no tiene fabrica propia** — solo el proveedor. No hace falta comprobar
+/// la version del sistema porque el target minimo del proyecto es iOS 18.2, muy por encima del 14
+/// que App Attest requiere.
+private final class AppAttestFactory: NSObject, AppCheckProviderFactory {
+    func createProvider(with app: FirebaseApp) -> AppCheckProvider? {
+        AppAttestProvider(app: app)
     }
 }
 

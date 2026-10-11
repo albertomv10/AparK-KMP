@@ -273,6 +273,10 @@ Esto no es opinión: son motivos de rechazo.
    y lo que recojan Crashlytics/Analytics si los añades.
 4. **Cuenta de demostración para la revisión de Apple**, porque la app requiere login para
    hacer cualquier cosa. Sin ella, rechazo casi seguro.
+5. **La cuenta de desarrollador de Apple bloquea más de lo que parece.** Además del IPA y de
+   TestFlight, de ella depende **activar la exigencia de App Check**: iOS atestigua con App Attest,
+   que exige la membresía de pago. Y como la exigencia es **por servicio y no por plataforma**, no
+   se puede encender solo para Android sin dejar fuera a los iPhone.
 
 ---
 
@@ -295,7 +299,7 @@ Ninguna se ve en la pantalla, y todas hacen que lo siguiente cueste menos.*
 | 0.5 | **Crashlytics** + un log mínimo compartido | S | | Lo que más devuelve por lo que cuesta. **Subido de prioridad**: ver abajo |
 | 0.6 | **CI en GitHub Actions**: Android + iOS (Xcode) + functions | S | ✅ hecho | A partir de aquí cada PR se valida solo |
 | 0.7 | **Firma y `bundleRelease`** | S | ✅ hecho | Sin esto no hay subida posible |
-| 0.8 | **App Check** (§2.6) | M | ✅ código; exigencia pendiente | Antes de tener usuarios, no después |
+| 0.8 | **App Check** (§2.6) | M | ✅ código; **exigencia bloqueada por la cuenta de Apple** | Antes de tener usuarios, no después |
 | 0.9 | **Separar proyectos Firebase dev/prod** (§2.4) | M | acordado | Hoy media tarde; después, una migración |
 
 > **Por qué 0.5 subió de prioridad.** Diagnosticar por qué fallaba el login con Google en Android
