@@ -16,6 +16,7 @@ Play, so store requirements are treated as real constraints rather than someday-
 | [`docs/PROCESS.md`](docs/PROCESS.md) | How work happens here: Spec-Driven Development and the Git flow |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Architecture review and the phased plan to publication |
 | [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md) | Where the schema is **going**, and the method behind it |
+| [`docs/NAVIGATION.md`](docs/NAVIGATION.md) | Where a new **screen** goes, and why the tabs are what they are |
 | [`docs/FIREBASE.md`](docs/FIREBASE.md) | The two projects, and how to stand one up from zero |
 | [`docs/specs/NNN-*/`](docs/specs/) | One folder per feature: `spec.md`, `design.md`, `tasks.md` |
 | [`CHANGELOG.md`](CHANGELOG.md) | What has actually shipped |
@@ -107,13 +108,16 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 
 | Collection | Document ID | Key fields |
 |------------|-------------|------------|
-| `users` | `FirebaseAuth.uid` | `email`, `name`, `userVehicles: List<String>` — **its order is the carousel order** |
-| `vehicles` | Auto-generated | `name`, `licensePlate`, `ownerId`, `sharedUsers: List<String>`, `lastLocation` |
+| `users` | `FirebaseAuth.uid` | `email`, `name`, `userVehicles: List<String>` — **an ordering hint only**, never the source of the list |
+| `vehicles` | Auto-generated | `name`, `licensePlate`, `ownerId`, `memberIds: List<String>` (owner included), `lastLocation`, `createdAt`, `updatedAt` |
 | `invites` | The 8-character code | `vehicleId`, `createdBy`, `expiresAt`, `usedBy` — clients are denied all access |
 
-> This is the current shape, not the intended one. [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md)
-> describes where it is going, and [spec 008](docs/specs/008-vehicle-membership-model/spec.md) is
-> the next step.
+> [spec 008](docs/specs/008-vehicle-membership-model/spec.md) shipped this shape.
+> [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md) describes where the rest is going — the subcollections
+> for incidents, maintenance and reminders are not built yet.
+>
+> **Production documents still carry a dead `sharedUsers` field**: the cleanup is the last step of
+> that migration and waits until every installed app has updated.
 
 ## Backend — Cloud Functions
 
@@ -206,9 +210,10 @@ graphify path "A" "B" --undirected
 - **`apps:android:sha:create` reports `Failed to create SHA certificate hash` and registers it
   anyway.** Verify with `sha:list`; do not trust the exit code.
 - **Listening to a Firestore document that does not exist returns PERMISSION_DENIED**, not "not
-  found", because the rule dereferences a null `resource`. `getVehiclesForUser` wraps each snapshot
-  in `retryWhen` + `catch`; without it a just-created vehicle can crash the app. Spec 008 removes
-  the need for this.
+  found", because the rule dereferences a null `resource`. That used to crash the app and was
+  survived with `retryWhen` + `catch`. **Spec 008 removed the need**: vehicles come from a query
+  Firestore can prove safe, so nothing is ever asked for that cannot be answered. Keep it in mind
+  before reading a document by id somewhere new — the hazard is still there, just not on that path.
 
 ### App code
 
@@ -247,10 +252,11 @@ graphify path "A" "B" --undirected
   the delete dialog points users at it.
 - **`UpdateVehicleUseCase` is wired into Koin but nothing calls it**, so `Vehicle.model` and
   `Vehicle.color` are never written. `Vehicle.inviteCode` is dead too.
-- **`lastLocation.user` stores a whole `User`**, `userVehicles` included
-  (`UpdateVehicleLocationUseCase.kt:34`), so any member can read the vehicle ids of whoever parked
-  it last. Fixed by spec 008.
-- **One placeholder test**, no CI, no Crashlytics, no App Check, no local persistence.
+- **App Check sends tokens but enforcement is off**, and cannot be turned on until there is a paid
+  Apple Developer account: iOS attests with App Attest, and enforcement is **per service, not per
+  platform**, so enabling it would lock out the iPhones. See [`docs/FIREBASE.md`](docs/FIREBASE.md).
+- `ComposeAppCommonTest.kt` is still a placeholder, though real tests now exist beside it
+  (`commonTest/.../settings/`) and in `tools/test/`.
 - Hardcoded Spanish strings: the GPS-denied snackbar and the "Logout" item in `HomeScreen.kt`.
 - `userEmail` in `HomeUiState` is never written — dead field.
 
