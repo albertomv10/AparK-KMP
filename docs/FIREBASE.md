@@ -188,10 +188,30 @@ nadie**. Instalarlo es inofensivo.
 **2. Activar la exigencia** (*enforcement*, en la consola, por servicio). Firebase **rechaza toda
 petición sin token válido**.
 
-> **Activar el 2 antes de que todos los clientes hagan el 1 deja fuera a la app entera**, no una
+> **La exigencia es por servicio, no por plataforma ni por app**, y activarla antes de que todos los clientes hagan el 1 deja fuera a la app entera, no una
 > función suelta. El orden correcto es: desplegar la app → distribuirla → mirar en la consola las
 > métricas de App Check hasta que casi todas las peticiones lleguen verificadas → y **entonces**
 > activar la exigencia, servicio por servicio.
+
+### iOS está bloqueado por la cuenta de Apple
+
+**App Attest exige el Apple Developer Program de pago** (99 $/año). Hacen falta tres cosas que hoy
+no están: la membresía, el *entitlement* `com.apple.developer.devicecheck.appattest-environment`
+—el proyecto no tiene ningún fichero de entitlements— y distribución por TestFlight o App Store,
+porque App Attest no funciona en builds instaladas de lado. **DeviceCheck**, la alternativa, pide
+una clave `.p8` del portal de desarrollador, que también es de pago.
+
+El Team ID para el formulario de registro sale del propio proyecto: `DEVELOPMENT_TEAM` en
+`project.pbxproj`. Registrarlo ya es inofensivo y deja el terreno preparado.
+
+> **Consecuencia para el despliegue, y es la que importa**: la exigencia **no se activa por
+> plataforma, sino por servicio**. No existe un «exigir solo en Android»: al encenderla para
+> Firestore, Firebase rechaza toda petición sin token válido venga de donde venga. Con iOS sin
+> atestar, eso deja fuera a los iPhone.
+>
+> Así que **App Check queda listo pero dormido**, y se enciende como parte de preparar la
+> publicación —cuando exista la cuenta de Apple—, no antes. Las métricas, que **sí** son por app,
+> sirven mientras tanto para confirmar que la parte de Android llega verificada.
 
 ### El token de depuración
 
