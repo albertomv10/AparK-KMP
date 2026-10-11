@@ -76,10 +76,14 @@ jobs:
             echo "::error::Faltan GOOGLE_SERVICES_JSON o GOOGLE_SERVICE_INFO_PLIST. Ver docs/FIREBASE.md."
             exit 1
           fi
-          mkdir -p composeApp/src/debug iosApp/FirebaseConfig/debug
+          mkdir -p composeApp/src/debug iosApp/FirebaseConfig/debug iosApp/FirebaseConfig/release
           echo "$GOOGLE_SERVICES_JSON" | base64 --decode > composeApp/src/debug/google-services.json
           cp composeApp/src/debug/google-services.json composeApp/google-services.json
           echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > iosApp/FirebaseConfig/debug/GoogleService-Info.plist
+          # La configuración de DESARROLLO también en la ruta de release: aquí solo se comprueba que
+          # compila, nunca se produce nada distribuible, así que no hay motivo para meter la config
+          # de producción en los secretos. La fase "Setup Firebase" exige que el fichero exista.
+          cp iosApp/FirebaseConfig/debug/GoogleService-Info.plist iosApp/FirebaseConfig/release/GoogleService-Info.plist
           echo "MAPS_API_KEY=${MAPS_API_KEY:-PLACEHOLDER_NOT_A_REAL_KEY}" >> local.properties
           echo "GOOGLE_MAPS_API_KEY=${MAPS_API_KEY:-PLACEHOLDER_NOT_A_REAL_KEY}" > iosApp/iosApp/Secrets.xcconfig
 
