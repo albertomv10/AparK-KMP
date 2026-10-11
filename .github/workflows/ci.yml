@@ -83,15 +83,22 @@ jobs:
           echo "MAPS_API_KEY=${MAPS_API_KEY:-PLACEHOLDER_NOT_A_REAL_KEY}" >> local.properties
           echo "GOOGLE_MAPS_API_KEY=${MAPS_API_KEY:-PLACEHOLDER_NOT_A_REAL_KEY}" > iosApp/iosApp/Secrets.xcconfig
 
-      - name: Compilar la app de iOS
+      # Las DOS configuraciones, no solo Debug. Swift compila únicamente la rama viva de un
+      # `#if DEBUG`, así que compilar solo Debug deja el código de release sin tocar por nadie:
+      # así se coló una referencia a un tipo inexistente que solo fallaba en Release.
+      - name: Compilar la app de iOS (Debug y Release)
         # Sin firma: no hace falta certificado ni equipo para comprobar que compila.
         run: |
-          xcodebuild -project iosApp/iosApp.xcodeproj \
-            -scheme iosApp \
-            -sdk iphonesimulator \
-            -configuration Debug \
-            -destination 'generic/platform=iOS Simulator' \
-            build CODE_SIGNING_ALLOWED=NO
+          for CONFIG in Debug Release; do
+            echo "::group::iOS $CONFIG"
+            xcodebuild -project iosApp/iosApp.xcodeproj \
+              -scheme iosApp \
+              -sdk iphonesimulator \
+              -configuration "$CONFIG" \
+              -destination 'generic/platform=iOS Simulator' \
+              build CODE_SIGNING_ALLOWED=NO
+            echo "::endgroup::"
+          done
 
   functions:
     name: Cloud Functions
