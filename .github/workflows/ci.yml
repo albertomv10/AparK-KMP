@@ -29,7 +29,9 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
+      # v4 y no v3: la v3 instala el paquete `tools` del SDK, que Google ha retirado de sus
+      # repositorios, así que sdkmanager falla y el job se cae antes de compilar nada.
+      - uses: android-actions/setup-android@v4
 
       - uses: gradle/actions/setup-gradle@v4
 
