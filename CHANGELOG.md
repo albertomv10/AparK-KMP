@@ -9,6 +9,13 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **Pestañas que navegan de verdad** ([spec 009](docs/specs/009-tab-navigation/spec.md)): las tres
+  pestañas de abajo dejan de ser decorado. La navegación pasa a **dos capas** —una pila de fuera
+  con la autenticación, y un shell con **una pila por pestaña**—, así que cada pestaña recuerda por
+  dónde iba y la barra no puede aparecer en el login, porque vive dentro del shell. Estrena dos
+  pantallas: *Vehículos*, la lista, y ***Cuenta***, que por fin le da interfaz al **selector de
+  tema** que quedó cableado sobre DataStore sin nadie que lo escribiera, y donde se muda el
+  **cerrar sesión** que estaba escondido en un menú de tres puntos sobre el mapa.
 - **Compartir vehículo** ([spec 005](docs/specs/005-share-vehicle/spec.md)): el dueño genera una
   invitación de **un solo uso que caduca en 24 h**, y puede copiarla o enviarla con la hoja de
   compartir del sistema; otra persona se une desde la nueva pestaña *Unirme* de añadir vehículo.
@@ -55,6 +62,10 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   a las bases de datos `(default)` y `apark-at`.
 
 ### Fixed
+- **Los tests comunes no compilaban para iOS, y nadie se enteraba.** Kotlin/Native rechaza nombres
+  entre acentos graves que la JVM acepta —basta una coma—, y la CI solo ejecutaba los de JVM, así
+  que dos tests del repositorio de ajustes llevaban rotos desde que se escribieron sin que ningún
+  job se pusiera rojo. Renombrados, y la CI pasa a **compilarlos también para iOS**.
 - **Las invitaciones ya no se acumulan para siempre**
   ([spec 007](docs/specs/007-invite-cleanup/spec.md)). La limpieza que había solo actuaba al volver
   a compartir el mismo vehículo, así que una invitación de un vehículo que no se comparte dos veces

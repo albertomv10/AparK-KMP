@@ -39,7 +39,9 @@ import com.albertomedina.apark.presentation.auth.resetPassword.ResetPassWordView
 import com.albertomedina.apark.presentation.auth.verification.EmailVerificationViewModel
 import com.albertomedina.apark.presentation.addvehicle.AddVehicleViewModel
 import com.albertomedina.apark.presentation.home.HomeViewModel
+import com.albertomedina.apark.presentation.account.AccountViewModel
 import com.albertomedina.apark.presentation.splash.SplashViewModel
+import com.albertomedina.apark.presentation.vehicles.VehiclesViewModel
 import com.albertomedina.apark.presentation.vehicledetail.VehicleDetailViewModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.app
@@ -121,6 +123,21 @@ val sharedModule = module {
     viewModel { SplashViewModel(authRepository = get()) }
 
     viewModel {
+        VehiclesViewModel(
+            authRepository = get(),
+            getVehicleListUseCase = get()
+        )
+    }
+
+    viewModel {
+        AccountViewModel(
+            authRepository = get(),
+            signOutUseCase = get(),
+            settingsRepository = get()
+        )
+    }
+
+    viewModel {
         LoginViewModel(
             loginUseCase = get(),
             loginGoogleUseCase = get(),
@@ -154,7 +171,6 @@ val sharedModule = module {
             authRepository = get(),
             updateVehicleLocationUseCase = get(),
             getVehicleListUseCase = get(),
-            signOutUseCase = get(),
             deleteVehicleUseCase = get(),
             removeUserFromVehicleUseCase = get(),
             moveVehicleUseCase = get(),

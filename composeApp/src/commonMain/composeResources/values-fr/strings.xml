@@ -128,4 +128,20 @@
     <string name="join_vehicle_error_expired">Cette invitation a expiré</string>
     <string name="join_vehicle_error_already_member">Vous avez déjà ce véhicule</string>
     <string name="join_vehicle_success">Vous avez rejoint %1$s</string>
+
+    <!-- Onglets -->
+    <string name="tab_map">Carte</string>
+    <string name="tab_vehicles">Véhicules</string>
+    <string name="tab_account">Compte</string>
+
+    <!-- Véhicules -->
+    <string name="vehicles_empty">Vous n\'avez encore aucun véhicule</string>
+
+    <!-- Compte -->
+    <string name="account_theme">Thème</string>
+    <string name="account_theme_system">Automatique</string>
+    <string name="account_theme_light">Clair</string>
+    <string name="account_theme_dark">Sombre</string>
+    <string name="account_sign_out">Se déconnecter</string>
+    <string name="error_sign_out">Impossible de se déconnecter. Veuillez réessayer</string>
 </resources>

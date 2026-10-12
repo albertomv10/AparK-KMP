@@ -39,8 +39,16 @@ Pull Request — never push to `main` directly.
 ./gradlew :composeApp:assembleDebug                      # Android debug APK
 ./gradlew :composeApp:installDebug                       # install on a connected device
 ./gradlew :composeApp:compileKotlinIosSimulatorArm64     # fast iOS check, no Xcode needed
-./gradlew :composeApp:allTests                           # commonTest (one placeholder test)
+./gradlew :composeApp:testDebugUnitTest                  # run commonTest on the JVM
+./gradlew :composeApp:compileTestKotlinIosSimulatorArm64 # check it also compiles for iOS
 ```
+
+**`allTests` does not pass, and that is not a bug in the tests.** It links the iOS test binary,
+which needs the Firebase frameworks — and those are resolved by SPM from Xcode, so Gradle has no
+idea where they are (`ld: framework 'FirebaseCore' not found`). Run the two commands above instead:
+the JVM run executes them, the iOS one compiles them. Compiling for iOS matters on its own, because
+Kotlin/Native rejects backtick names the JVM accepts — a comma is enough — so a green Android job
+says nothing about whether the same test builds for iOS.
 
 iOS runs from `iosApp/iosApp.xcodeproj` in Xcode. To check the Swift side compiles without opening
 the IDE:
@@ -79,10 +87,19 @@ npx firebase-tools@latest deploy --only firestore:rules -P prod     # production
 DataSource (impl). Koin for DI — `single` for repositories, `factory` for use cases, `viewModel` for
 ViewModels, all in `SharedModule.kt`.
 
-**Navigation 3** (`navigation3-ui`, alpha): a `sealed interface Destiny` of `@Serializable` objects
-in `BasicNavigationWrapper.kt`. Login/logout routing uses `backStack.clear()` + `add()`.
+**Navigation 3** (`navigation3-ui`, alpha), in **two layers** — see
+[spec 009](docs/specs/009-tab-navigation/design.md):
 
-**Auth flow**: Splash → Login/Register → EmailVerification → Home.
+- `RootNavigation` holds one stack: the auth flow plus `Tabs`, the whole tabbed app as a **single
+  destination**. Signing in and out move *this* stack with `clear()` + `add()`.
+- `TabShell` holds **one `NavBackStack` per tab** — they are plain `MutableList`s, so three tabs
+  are three lists — and hands the active one to the `NavDisplay`. It owns the bottom bar, which is
+  why the auth screens cannot show it.
+
+Destinations live in `Destiny.kt` and each declares `showsTabBar`, rather than the shell keeping a
+list someone has to remember to update.
+
+**Auth flow**: Splash → Login/Register → EmailVerification → Tabs.
 
 **expect/actual** for maps (`AparKMap`), location (`LocationSource`), the social sign-in buttons,
 permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSettingsHandler`).
@@ -99,6 +116,7 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 | `domain.usecase` | One `operator fun invoke()` each |
 | `presentation.splash` · `presentation.auth.*` | Splash, login, register, verification, reset |
 | `presentation.home` | Map + vehicle carousel + edit mode |
+| `presentation.vehicles` · `presentation.account` | The vehicle list, and email + theme + sign out |
 | `presentation.addvehicle` · `presentation.vehicledetail` | Create/join, and the detail placeholder |
 | `presentation.components` | Shared composables: map, buttons, dialog, permission handlers |
 | `presentation.navigation` | Navigation 3 setup |
@@ -246,7 +264,6 @@ graphify path "A" "B" --undirected
 
 > The full picture and the order to tackle it: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
-- **Bottom nav tabs are cosmetic**: three tabs switching local state, no navigation behind them.
 - **The vehicle-detail screen is a placeholder**: name plus a share button for the owner.
 - **No transfer-ownership UI**: `transferVehicleOwnership` exists but nothing calls it, even though
   the delete dialog points users at it.
@@ -257,8 +274,7 @@ graphify path "A" "B" --undirected
   platform**, so enabling it would lock out the iPhones. See [`docs/FIREBASE.md`](docs/FIREBASE.md).
 - `ComposeAppCommonTest.kt` is still a placeholder, though real tests now exist beside it
   (`commonTest/.../settings/`) and in `tools/test/`.
-- Hardcoded Spanish strings: the GPS-denied snackbar and the "Logout" item in `HomeScreen.kt`.
-- `userEmail` in `HomeUiState` is never written — dead field.
+- Hardcoded Spanish string: the GPS-denied snackbar in `HomeScreen.kt`.
 
 **Not a bug**: `AppleSignInButton`'s Android `actual` has an empty body, so the button is not
 composed at all outside iOS. That is deliberate — the platform decides whether the button exists.
