@@ -50,6 +50,9 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   `docs/specs/_template/` y este `CHANGELOG.md`.
 
 ### Changed
+- **Cambiar de pestaña ya no desliza una pantalla sobre otra.** Deslizar lateralmente sugiere que
+  se avanza, y entre pestañas no se avanza: son tres sitios al mismo nivel. Ahora es un fundido
+  corto, y la navegación de dentro de cada pestaña conserva la transición propia de la plataforma.
 - **ViewModels con ámbito de pantalla** ([spec 006](docs/specs/006-scoped-viewmodels/spec.md)):
   `NavDisplay` no traía el decorador de `ViewModelStore`, así que **ningún ViewModel se destruía
   nunca** y cada pantalla arrastraba el estado de su visita anterior. Añadirlo exigía subir
@@ -66,6 +69,10 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   Android: su plugin sí convierte `\n` en salto de línea, pero `\'` lo copia tal cual, así que la
   app mostraba `You don\'t have any vehicles yet`. Afectaba a **catorce** cadenas, trece de ellas
   en francés, donde llevaban meses sin que nadie las leyera.
+- **En iPhone, las tarjetas tapaban el logo de Google Maps.** El `-30.0` de `AparKMap.ios.kt`
+  compensaba que el mapa se dibujara por detrás de la barra de pestañas, cuando la barra vivía
+  dentro de la pantalla del mapa. Al sacarla fuera, el mapa dejó de llegar hasta ahí y esa resta
+  pasó a meter el logo debajo de las tarjetas. Las dos plataformas pasan ya el mismo valor.
 - **El mapa no seguía al tema de la app.** Preguntaba por el del **sistema**, cosa que daba igual
   mientras no hubo selector: desde que lo hay, con el móvil en oscuro y la app en claro el mapa se
   quedaba negro. Ahora el tema publica cuál ha resuelto y el mapa lee eso.

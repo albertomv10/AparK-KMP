@@ -7,8 +7,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
@@ -16,7 +23,10 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
+import androidx.navigation3.ui.defaultPopTransitionSpec
+import androidx.navigation3.ui.defaultTransitionSpec
 import com.albertomedina.apark.presentation.account.AccountScreen
 import com.albertomedina.apark.presentation.addvehicle.AddVehicleScreen
 import com.albertomedina.apark.presentation.components.AparkBottomNavigationBar
@@ -50,6 +60,17 @@ fun TabShell(onSignedOut: () -> Unit) {
 
     var currentTab by rememberSaveable { mutableStateOf(Tab.Default) }
 
+    // Entrar en una pantalla es avanzar, y el deslizamiento lateral lo cuenta bien. Cambiar de
+    // pestaña no es avanzar: son tres sitios al mismo nivel, y deslizar uno sobre otro sugiere una
+    // profundidad que no existe. Hay que distinguir por **qué** ha cambiado el contenido, no por
+    // cuál es, así que se marca en el momento de cambiarlo.
+    var isTabSwitch by remember { mutableStateOf(false) }
+
+    fun goToTab(tab: Tab) {
+        isTabSwitch = true
+        currentTab = tab
+    }
+
     val stack = when (currentTab) {
         Tab.MAP -> mapStack
         Tab.VEHICLES -> vehiclesStack
@@ -59,7 +80,7 @@ fun TabShell(onSignedOut: () -> Unit) {
     // Desde cualquier pestaña que no sea la primera, atrás vuelve a ella en vez de cerrar la app.
     // Solo en su raíz: dentro de una pestaña, atrás es navegación normal y lo maneja el NavDisplay.
     BackHandler(enabled = currentTab != Tab.Default && stack.size == 1) {
-        currentTab = Tab.Default
+        goToTab(Tab.Default)
     }
 
     val showsTabBar = (stack.lastOrNull() as? Destiny)?.showsTabBar ?: true
@@ -73,9 +94,10 @@ fun TabShell(onSignedOut: () -> Unit) {
                         // Tocar la pestaña en la que ya estás te devuelve a su raíz, que es lo que
                         // espera todo el mundo y la salida de emergencia si te has perdido dentro.
                         if (tab == currentTab) {
+                            isTabSwitch = false
                             while (stack.size > 1) stack.removeLastOrNull()
                         } else {
-                            currentTab = tab
+                            goToTab(tab)
                         }
                     }
                 )
@@ -88,10 +110,24 @@ fun TabShell(onSignedOut: () -> Unit) {
         // pequeño y apenas se nota, pero en iPhone el del indicador de inicio son ~34pt y el
         // contenido sube de más.
         val tabBarPadding = PaddingValues(bottom = padding.calculateBottomPadding())
+        fun push(key: Destiny) {
+            isTabSwitch = false
+            stack.add(key)
+        }
+
+        fun pop() {
+            isTabSwitch = false
+            stack.removeLastOrNull()
+        }
+
         NavDisplay(
             modifier = Modifier.padding(tabBarPadding).consumeWindowInsets(tabBarPadding),
             backStack = stack,
-            onBack = { stack.removeLastOrNull() },
+            onBack = { pop() },
+            // Se delega en el de la plataforma —en iOS es el deslizamiento con la curva de UIKit—
+            // y solo se sustituye cuando el cambio viene de la barra de pestañas.
+            transitionSpec = { if (isTabSwitch) TabSwitchTransition else defaultTransitionSpec<NavKey>()() },
+            popTransitionSpec = { if (isTabSwitch) TabSwitchTransition else defaultPopTransitionSpec<NavKey>()() },
             entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator()
@@ -100,14 +136,14 @@ fun TabShell(onSignedOut: () -> Unit) {
                 when (key) {
                     is Home -> NavEntry(key) {
                         HomeScreen(
-                            onNavigateToDetails = { stack.add(VehicleDetail(it)) },
-                            onNavigateToAddVehicle = { stack.add(AddVehicle) }
+                            onNavigateToDetails = { push(VehicleDetail(it)) },
+                            onNavigateToAddVehicle = { push(AddVehicle) }
                         )
                     }
                     is Vehicles -> NavEntry(key) {
                         VehiclesScreen(
-                            onNavigateToDetails = { stack.add(VehicleDetail(it)) },
-                            onNavigateToAddVehicle = { stack.add(AddVehicle) }
+                            onNavigateToDetails = { push(VehicleDetail(it)) },
+                            onNavigateToAddVehicle = { push(AddVehicle) }
                         )
                     }
                     is Account -> NavEntry(key) {
@@ -116,11 +152,11 @@ fun TabShell(onSignedOut: () -> Unit) {
                     is VehicleDetail -> NavEntry(key) {
                         VehicleDetailScreen(
                             vehicleId = key.vehicleId,
-                            onBack = { stack.removeLastOrNull() }
+                            onBack = { pop() }
                         )
                     }
                     is AddVehicle -> NavEntry(key) {
-                        AddVehicleScreen(onBack = { stack.removeLastOrNull() })
+                        AddVehicleScreen(onBack = { pop() })
                     }
                     else -> error("Destino inesperado dentro de las pestañas: $key")
                 }
@@ -128,3 +164,13 @@ fun TabShell(onSignedOut: () -> Unit) {
         )
     }
 }
+
+/**
+ * Un fundido corto entre pestañas: sin dirección, porque entre pestañas no hay ni adelante ni
+ * atrás. Para que el cambio sea instantáneo basta con `EnterTransition.None togetherWith
+ * ExitTransition.None`, pero sobre el mapa un corte seco parpadea.
+ */
+private val TabSwitchTransition = ContentTransform(
+    targetContentEnter = fadeIn(tween(150)),
+    initialContentExit = fadeOut(tween(150))
+)

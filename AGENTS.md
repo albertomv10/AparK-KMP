@@ -255,13 +255,24 @@ graphify path "A" "B" --undirected
   for the system bars *again*, and the content floats up by that much. `Modifier.padding(p)` plus
   `consumeWindowInsets(p)` is the fix. On Android the gesture inset is small enough to miss; on
   iPhone the home indicator is ~34pt and it is obvious.
+- **Switching tabs is not navigating forward.** `NavDisplay` animates on whatever its back stack
+  shows, so swapping in another tab's stack looks like a push and slides sideways, suggesting a
+  depth that is not there. The shell tells the two apart by *cause*, not by key: every push and pop
+  goes through its own `push`/`pop`, which clear the flag that the tab bar sets. Normal navigation
+  delegates to `defaultTransitionSpec()`, which is `expect`/`actual` — on iOS that is the UIKit
+  curve, so it is worth keeping rather than hand-rolling a slide.
 - **`BackHandler` is not part of `compose.ui`** — `org.jetbrains.compose.ui:ui-backhandler` must be
   declared explicitly, with `@OptIn(ExperimentalComposeUiApi::class)`.
 - **Social sign-in errors carry a reason, not a string.** `SocialLoginFailure` has a
   `SocialLoginReason`: `CANCELLED` shows nothing, `NO_ACCOUNTS` is actionable, everything else gets
   one readable message. Its `detail` field is for diagnostics and **must never be displayed**.
-- **iOS map padding**: the `-30.0` magic number in `AparKMap.ios.kt` for the bottom sheet offset can
-  break with layout changes.
+- **The iOS map's `-30.0` is gone, and nothing should put it back.** It compensated for the map
+  being drawn *behind* the tab bar, back when the bar lived inside `HomeScreen`. Spec 009 moved the
+  bar out, the map stopped reaching that far, and the same subtraction started hiding the Google
+  logo under the vehicle cards. Both platforms now pass `bottomPadding` straight through, which is
+  what Android always did. If the logo is covered again, the thing to check is what `pagerHeight`
+  measures — `onGloballyPositioned` sits *before* `.padding(...)` in the chain on purpose, so it
+  includes it.
 
 ### Testing on devices
 

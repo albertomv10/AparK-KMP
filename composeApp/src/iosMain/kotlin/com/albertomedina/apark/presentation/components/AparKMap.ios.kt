@@ -111,7 +111,12 @@ actual fun AparKMap(
             iosMapViewFactory?.invoke() ?: UIView()
         },
         update = {
-            updateMapPadding?.invoke(bottomPadding.value.toDouble()-30.0)
+            // Sin restarle nada, igual que Android: `bottomPadding` ya es la altura del bloque
+            // de tarjetas medida con su propio padding, así que es justo lo que hay que dejar
+            // libre. El -30.0 que había compensaba que el mapa se dibujaba por detrás de la barra
+            // de pestañas, cuando la barra vivía dentro de esta pantalla; desde la spec 009 la
+            // barra está fuera y el mapa ya no llega hasta ahí, así que restar tapaba el logo.
+            updateMapPadding?.invoke(bottomPadding.value.toDouble())
         },
         modifier = modifier
     )
