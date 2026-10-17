@@ -89,6 +89,21 @@ Una feature está terminada cuando:
 
 El ciclo completo, tal y como se aplicó en la feature `001-delete-vehicle`.
 
+### 0. Sin worktree: el asistente trabaja en el checkout de siempre
+
+Claude Code ofrece crear un **worktree** por sesión —una segunda carpeta de trabajo sobre el mismo
+repositorio— y aquí **no se usa**. Al arrancar la sesión hay que decirle que no.
+
+El worktree existe para que varias sesiones no se pisen, y en este proyecto trabaja una persona con
+una sesión a la vez, así que aísla de un problema que no hay. A cambio cobra caro: Android Studio
+está abierto sobre el checkout normal, así que probar lo recién escrito obliga a `fetch` y a mover
+ramas; y como `local.properties`, los `google-services.json` y `Secrets.xcconfig` están
+gitignorados, un worktree recién creado **no compila** hasta que alguien los copia a mano.
+
+Trabajando sobre el checkout de siempre, el IDE ve los cambios en cuanto se guardan. La única regla
+es no editar a la vez los mismos ficheros que el asistente está tocando; compilar y ejecutar
+mientras tanto no estorba.
+
 ### 1. Partir de `main` actualizado
 
 Siempre se ramifica desde la última versión integrada, nunca desde una rama vieja:
@@ -119,6 +134,18 @@ feat: exit edit mode with the back gesture
 El primero es la funcionalidad; los otros tres son correcciones que aparecieron **al
 verificar**. Que la verificación genere commits es normal y sano.
 
+Lo que no es sano es commitear algo *antes* de que su verificación haya ocurrido. **El criterio es
+quién puede verificarlo:**
+
+| Quién verifica | Qué hace el asistente |
+|----------------|------------------------|
+| **Él** — compila, tests, lógica que se lee | Commitea y sigue. |
+| **Tú** — aspecto visual, comportamiento en el dispositivo, cualquier cosa detrás del login | Lo escribe, lo deja **sin commitear** y te avisa. Commitea una vez cuando confirmes. |
+
+Sin esta regla, la spec 009 acumuló seis commits de `fix:` que no corregían trabajo verificado,
+sino trabajo que nadie había mirado todavía: el logo del mapa tapado, el tema del mapa, las
+transiciones. Compilar no es verificar.
+
 ### 4. Subir la rama
 
 La primera vez, con `-u` para enlazarla con su rama remota:
@@ -136,6 +163,11 @@ gh pr create --base main --head feature/delete-vehicle --title "..." --body "...
 ### 6. Seguir puliendo sobre la misma rama
 
 Cada `git push` posterior **actualiza el PR automáticamente**. No se cierra ni se abre otro.
+
+Se mergea con **Squash and merge**, no con merge commit: cada spec deja **un commit en `main`**.
+Los commits intermedios siguen visibles dentro del PR, que es donde sirven de registro de cómo se
+llegó ahí; y la narrativa duradera no vive en `git log`, sino en `docs/specs/` y en
+[`CHANGELOG.md`](../CHANGELOG.md).
 
 ### 7. Tras mergear, sincronizar y limpiar
 
@@ -209,5 +241,7 @@ señal es partirla, no seguir añadiendo.
 
 - **Ramas**: `feature/nombre`, `fix/nombre`, `docs/nombre`, `chore/nombre`.
 - **Commits**: prefijo tipo Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`).
-- **Integración**: siempre vía **Pull Request** a `main` (no push directo a `main`).
+- **Integración**: siempre vía **Pull Request** a `main` (no push directo a `main`), y con
+  **Squash and merge**: un commit en `main` por spec.
+- **Worktrees**: no se usan. El asistente trabaja en el checkout de siempre (ver paso 0).
 - **Numeración de specs**: correlativa; no se reutilizan números.
