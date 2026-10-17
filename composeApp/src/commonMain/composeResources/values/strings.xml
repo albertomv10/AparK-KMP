@@ -128,4 +128,20 @@
     <string name="join_vehicle_error_expired">Esa invitación ha caducado</string>
     <string name="join_vehicle_error_already_member">Ya tienes este vehículo</string>
     <string name="join_vehicle_success">Te has unido a %1$s</string>
+
+    <!-- Pestañas -->
+    <string name="tab_map">Mapa</string>
+    <string name="tab_vehicles">Vehículos</string>
+    <string name="tab_account">Cuenta</string>
+
+    <!-- Vehículos -->
+    <string name="vehicles_empty">Todavía no tienes vehículos</string>
+
+    <!-- Cuenta -->
+    <string name="account_theme">Tema</string>
+    <string name="account_theme_system">Automático</string>
+    <string name="account_theme_light">Claro</string>
+    <string name="account_theme_dark">Oscuro</string>
+    <string name="account_sign_out">Cerrar sesión</string>
+    <string name="error_sign_out">No se pudo cerrar la sesión. Inténtalo de nuevo</string>
 </resources>

@@ -7,11 +7,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.interop.UIKitView
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
 import com.albertomedina.apark.domain.model.Vehicle
+import com.albertomedina.apark.ui.theme.LocalIsDarkTheme
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
 import platform.UIKit.UIView
@@ -19,6 +19,12 @@ import platform.UIKit.UIView
 data class IosMapMarker(val id: String, val lat: Double, val lng: Double, val title: String, val vehicleIndex:Int, val selectedVehicleIndex: Int)
 var iosMapViewFactory: (() -> UIView)? = null
 var updateMapPadding: ((Double) -> Unit)? = null
+
+/**
+ * El JSON del estilo oscuro, o `null` para el estilo normal. Lo aplica Swift, que es quien tiene el
+ * `GMSMapView`: aquí no hay un equivalente a `MapProperties` de maps-compose.
+ */
+var updateMapStyle: ((String?) -> Unit)? = null
 
 var iosMapUpdateCamera: ((Double, Double, Double, Boolean) -> Unit)? = null
 var iosMapUpdateMarkers: ((List<IosMapMarker>) -> Unit)? = null
@@ -35,6 +41,10 @@ actual fun AparKMap(
     centerCameraTrigger:Int,
     onMarkerDragged: (String, Double, Double) -> Unit
 ) {
+    // El tema de la app, no el del sistema — igual que en Android, porque el selector de Cuenta
+    // puede tenerlos en desacuerdo.
+    val isDarkTheme = LocalIsDarkTheme.current
+
     var isFirstLoad by remember { mutableStateOf(true) }
 
     // Variables de estado para detectar cambios de posición vs cambios de tarjeta
@@ -99,6 +109,16 @@ actual fun AparKMap(
         }
     }
 
+    // El estilo se manda por LaunchedEffect, como todo lo demás que este fichero le dice a Swift.
+    // Ponerlo solo en el `update` de UIKitView aplicaba bien el oscuro al crearse el mapa, pero no
+    // lo retiraba al pasar a claro: esa lambda captura `isDarkTheme` por valor, y que se reejecute
+    // al recomponer no es algo en lo que convenga confiar. La llamada del `update` se queda, porque
+    // cubre el caso contrario —el mapa puede crearse durante la medición, después de que este
+    // efecto ya haya corrido—; mandar dos veces el mismo estilo no hace nada.
+    LaunchedEffect(isDarkTheme) {
+        updateMapStyle?.invoke(if (isDarkTheme) darkMapStyleJson else null)
+    }
+
     LaunchedEffect(onMarkerDragged) {
         iosOnMarkerDragged = { id, lat, lng ->
             onMarkerDragged(id, lat, lng)
@@ -111,7 +131,14 @@ actual fun AparKMap(
             iosMapViewFactory?.invoke() ?: UIView()
         },
         update = {
-            updateMapPadding?.invoke(bottomPadding.value.toDouble()-30.0)
+            updateMapStyle?.invoke(if (isDarkTheme) darkMapStyleJson else null)
+
+            // Sin restarle nada, igual que Android: `bottomPadding` ya es la altura del bloque
+            // de tarjetas medida con su propio padding, así que es justo lo que hay que dejar
+            // libre. El -30.0 que había compensaba que el mapa se dibujaba por detrás de la barra
+            // de pestañas, cuando la barra vivía dentro de esta pantalla; desde la spec 009 la
+            // barra está fuera y el mapa ya no llega hasta ahí, así que restar tapaba el logo.
+            updateMapPadding?.invoke(bottomPadding.value.toDouble())
         },
         modifier = modifier
     )

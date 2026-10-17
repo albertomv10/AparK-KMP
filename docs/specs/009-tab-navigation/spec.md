@@ -1,7 +1,7 @@
 # Spec: pestañas que navegan de verdad
 
 - **ID**: 009-tab-navigation
-- **Estado**: Aprobada (preguntas de producto cerradas; las técnicas, al diseño)
+- **Estado**: Aprobada · diseño en [design.md](design.md)
 - **Fecha**: 2026-10-11
 
 ## Problema / Por qué

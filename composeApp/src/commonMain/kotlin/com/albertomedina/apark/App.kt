@@ -5,7 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.albertomedina.apark.domain.settings.SettingsRepository
 import com.albertomedina.apark.domain.settings.ThemeMode
-import com.albertomedina.apark.presentation.navigation.BasicNavigationWrapper
+import com.albertomedina.apark.presentation.navigation.RootNavigation
 import com.albertomedina.apark.ui.theme.AparKTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
@@ -19,6 +19,6 @@ fun App() {
     val themeMode by settings.themeMode.collectAsStateWithLifecycle(ThemeMode.SYSTEM)
 
     AparKTheme(themeMode = themeMode) {
-        BasicNavigationWrapper()
+        RootNavigation()
     }
 }
