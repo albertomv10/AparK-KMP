@@ -267,6 +267,12 @@ graphify path "A" "B" --undirected
   it to `MapStyleOptions`; iOS has no maps-compose, so Kotlin hands the string to Swift through
   `updateMapStyle` and Swift builds a `GMSMapStyle` — whose initializer **throws**, so it needs
   `try?`. The Kotlin side compiled happily with the Swift broken; only Xcode caught it.
+- **Push to Swift from a `LaunchedEffect`, not from `UIKitView`'s `update`.** `update`'s lambda
+  captures its values, and re-running it on recomposition is not something to rely on: the dark
+  style was applied when the map was created and then never withdrawn, leaving a dark map in a
+  light app. Everything else in `AparKMap.ios.kt` already used `LaunchedEffect` with an explicit
+  key; the style now does too. The `update` call stays only to cover creation during measurement,
+  which can happen after the effect has already run.
 - **The tab fade is `expect`/`actual` on purpose.** 350ms on Android, 150 on iOS. Android's longer
   fade also covers the `MapView` rebuild; on iOS there is nothing to cover, and during a crossfade
   the outgoing screen stays painted over the map, so a long fade reads as a veil and costs the

@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.interop.UIKitView
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
@@ -108,6 +107,16 @@ actual fun AparKMap(
         if (centerCameraTrigger > 0) {
             iosCenterOnUserLocation?.invoke(true)
         }
+    }
+
+    // El estilo se manda por LaunchedEffect, como todo lo demás que este fichero le dice a Swift.
+    // Ponerlo solo en el `update` de UIKitView aplicaba bien el oscuro al crearse el mapa, pero no
+    // lo retiraba al pasar a claro: esa lambda captura `isDarkTheme` por valor, y que se reejecute
+    // al recomponer no es algo en lo que convenga confiar. La llamada del `update` se queda, porque
+    // cubre el caso contrario —el mapa puede crearse durante la medición, después de que este
+    // efecto ya haya corrido—; mandar dos veces el mismo estilo no hace nada.
+    LaunchedEffect(isDarkTheme) {
+        updateMapStyle?.invoke(if (isDarkTheme) darkMapStyleJson else null)
     }
 
     LaunchedEffect(onMarkerDragged) {
