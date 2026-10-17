@@ -263,6 +263,14 @@ graphify path "A" "B" --undirected
   the problem: a fresh composition has `isFirstLoad = true` and calls `move()`, an instant jump, so
   hoisting the camera state would fix nothing. What is left is the blank first frame, and the fix
   is to cover it — `onMapLoaded` drives a veil over the map.
+- **The map's dark style is one JSON in `commonMain`, applied two different ways.** Android passes
+  it to `MapStyleOptions`; iOS has no maps-compose, so Kotlin hands the string to Swift through
+  `updateMapStyle` and Swift builds a `GMSMapStyle` — whose initializer **throws**, so it needs
+  `try?`. The Kotlin side compiled happily with the Swift broken; only Xcode caught it.
+- **The tab fade is `expect`/`actual` on purpose.** 350ms on Android, 150 on iOS. Android's longer
+  fade also covers the `MapView` rebuild; on iOS there is nothing to cover, and during a crossfade
+  the outgoing screen stays painted over the map, so a long fade reads as a veil and costs the
+  immediacy that platform already had.
 - **Switching tabs is not navigating forward.** `NavDisplay` animates on whatever its back stack
   shows, so swapping in another tab's stack looks like a push and slides sideways, suggesting a
   depth that is not there. The shell tells the two apart by *cause*, not by key: every push and pop

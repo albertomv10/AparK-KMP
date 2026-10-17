@@ -95,6 +95,19 @@ struct iOSApp: App {
             return mapView
         }
         
+        // El tema del mapa lo decide la app, no el sistema: Kotlin manda el JSON del estilo
+        // oscuro, o nil para el normal. Es el mismo JSON que usa Android, desde commonMain.
+        AparKMap_iosKt.updateMapStyle = { json in
+            guard let json else {
+                MapLocationController.shared.mapView?.mapStyle = nil
+                return
+            }
+            // El inicializador lanza si el JSON no es válido. Es un literal del propio repositorio,
+            // así que si fallara sería un error de programación, no algo que el usuario pueda
+            // provocar: se cae al estilo normal, que es legible, en vez de arrastrar un throw.
+            MapLocationController.shared.mapView?.mapStyle = try? GMSMapStyle(jsonString: json)
+        }
+
         //Escuchamos los cambios de padding que manda Kotlin
         AparKMap_iosKt.updateMapPadding = { newPadding in
                     // Convertimos el Double que manda Kotlin a CGFloat y actualizamos el mapa

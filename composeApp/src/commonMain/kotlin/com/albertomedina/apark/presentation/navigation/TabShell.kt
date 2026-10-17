@@ -171,6 +171,6 @@ fun TabShell(onSignedOut: () -> Unit) {
  * ExitTransition.None`, pero sobre el mapa un corte seco parpadea.
  */
 private val TabSwitchTransition = ContentTransform(
-    targetContentEnter = fadeIn(tween(350)),
-    initialContentExit = fadeOut(tween(350))
+    targetContentEnter = fadeIn(tween(tabSwitchFadeMillis)),
+    initialContentExit = fadeOut(tween(tabSwitchFadeMillis))
 )

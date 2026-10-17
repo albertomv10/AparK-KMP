@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
 import com.albertomedina.apark.domain.model.Vehicle
+import com.albertomedina.apark.ui.theme.LocalIsDarkTheme
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
 import platform.UIKit.UIView
@@ -19,6 +20,12 @@ import platform.UIKit.UIView
 data class IosMapMarker(val id: String, val lat: Double, val lng: Double, val title: String, val vehicleIndex:Int, val selectedVehicleIndex: Int)
 var iosMapViewFactory: (() -> UIView)? = null
 var updateMapPadding: ((Double) -> Unit)? = null
+
+/**
+ * El JSON del estilo oscuro, o `null` para el estilo normal. Lo aplica Swift, que es quien tiene el
+ * `GMSMapView`: aquí no hay un equivalente a `MapProperties` de maps-compose.
+ */
+var updateMapStyle: ((String?) -> Unit)? = null
 
 var iosMapUpdateCamera: ((Double, Double, Double, Boolean) -> Unit)? = null
 var iosMapUpdateMarkers: ((List<IosMapMarker>) -> Unit)? = null
@@ -35,6 +42,10 @@ actual fun AparKMap(
     centerCameraTrigger:Int,
     onMarkerDragged: (String, Double, Double) -> Unit
 ) {
+    // El tema de la app, no el del sistema — igual que en Android, porque el selector de Cuenta
+    // puede tenerlos en desacuerdo.
+    val isDarkTheme = LocalIsDarkTheme.current
+
     var isFirstLoad by remember { mutableStateOf(true) }
 
     // Variables de estado para detectar cambios de posición vs cambios de tarjeta
@@ -111,6 +122,8 @@ actual fun AparKMap(
             iosMapViewFactory?.invoke() ?: UIView()
         },
         update = {
+            updateMapStyle?.invoke(if (isDarkTheme) darkMapStyleJson else null)
+
             // Sin restarle nada, igual que Android: `bottomPadding` ya es la altura del bloque
             // de tarjetas medida con su propio padding, así que es justo lo que hay que dejar
             // libre. El -30.0 que había compensaba que el mapa se dibujaba por detrás de la barra

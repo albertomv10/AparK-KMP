@@ -57,6 +57,8 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 - **Cambiar de pestaña ya no desliza una pantalla sobre otra.** Deslizar lateralmente sugiere que
   se avanza, y entre pestañas no se avanza: son tres sitios al mismo nivel. Ahora es un fundido
   corto, y la navegación de dentro de cada pestaña conserva la transición propia de la plataforma.
+  Dura distinto en cada sistema: en Android acompaña además a la reconstrucción del mapa, y en iOS,
+  que no la tiene, se queda en lo justo para no ser un corte seco.
 - **ViewModels con ámbito de pantalla** ([spec 006](docs/specs/006-scoped-viewmodels/spec.md)):
   `NavDisplay` no traía el decorador de `ViewModelStore`, así que **ningún ViewModel se destruía
   nunca** y cada pantalla arrastraba el estado de su visita anterior. Añadirlo exigía subir
@@ -77,6 +79,9 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   compensaba que el mapa se dibujara por detrás de la barra de pestañas, cuando la barra vivía
   dentro de la pantalla del mapa. Al sacarla fuera, el mapa dejó de llegar hasta ahí y esa resta
   pasó a meter el logo debajo de las tarjetas. Las dos plataformas pasan ya el mismo valor.
+- **En iOS el mapa no tenía estilo oscuro en absoluto.** Con la app en oscuro se quedaba claro, el
+  espejo de lo que pasaba en Android. El JSON del estilo pasa a vivir en código común y iOS se lo
+  manda a Swift, que construye el `GMSMapStyle`.
 - **El mapa no seguía al tema de la app.** Preguntaba por el del **sistema**, cosa que daba igual
   mientras no hubo selector: desde que lo hay, con el móvil en oscuro y la app en claro el mapa se
   quedaba negro. Ahora el tema publica cuál ha resuelto y el mapa lee eso.
