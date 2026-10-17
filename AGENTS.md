@@ -263,6 +263,13 @@ graphify path "A" "B" --undirected
   the problem: a fresh composition has `isFirstLoad = true` and calls `move()`, an instant jump, so
   hoisting the camera state would fix nothing. What is left is the blank first frame, and the fix
   is to cover it — `onMapLoaded` drives a veil over the map.
+- **The iOS map follows the *system* appearance unless told otherwise, and `mapStyle = nil` does
+  not undo it.** `GMSMapView.overrideUserInterfaceStyle` is what drives the map's colour scheme
+  (its own header says so), and the Maps SDK has honoured the inherited trait since v9 — so the
+  map had been quietly dark on a dark phone long before anything here set a style, and clearing
+  the style returned it to *that*, not to a light map. Since the app has its own theme selector,
+  the trait has to be pinned explicitly. Nothing in Swift mentioned the map's appearance, which is
+  exactly why grepping for it found nothing: the behaviour came from the SDK's default.
 - **The map's dark style is one JSON in `commonMain`, applied two different ways.** Android passes
   it to `MapStyleOptions`; iOS has no maps-compose, so Kotlin hands the string to Swift through
   `updateMapStyle` and Swift builds a `GMSMapStyle` — whose initializer **throws**, so it needs

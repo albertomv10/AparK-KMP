@@ -79,9 +79,11 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   compensaba que el mapa se dibujara por detrás de la barra de pestañas, cuando la barra vivía
   dentro de la pantalla del mapa. Al sacarla fuera, el mapa dejó de llegar hasta ahí y esa resta
   pasó a meter el logo debajo de las tarjetas. Las dos plataformas pasan ya el mismo valor.
-- **En iOS el mapa no tenía estilo oscuro en absoluto.** Con la app en oscuro se quedaba claro, el
-  espejo de lo que pasaba en Android. El JSON del estilo pasa a vivir en código común y iOS se lo
-  manda a Swift, que construye el `GMSMapStyle`.
+- **En iOS el mapa salía siempre oscuro, mirase lo que mirase la app.** Desde su versión 9, el SDK
+  de Google Maps adapta el mapa al modo oscuro **del sistema** por su cuenta, así que llevaba
+  oscuro sin que nadie lo hubiera programado, y quitarle el estilo lo devolvía a ese oscuro en vez
+  de aclararlo. Ahora se le fija el `overrideUserInterfaceStyle` según el tema de la app, y el JSON
+  del estilo —el mismo que usa Android— pasa a vivir en código común.
 - **El mapa no seguía al tema de la app.** Preguntaba por el del **sistema**, cosa que daba igual
   mientras no hubo selector: desde que lo hay, con el móvil en oscuro y la app en claro el mapa se
   quedaba negro. Ahora el tema publica cuál ha resuelto y el mapa lee eso.
