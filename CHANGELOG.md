@@ -55,6 +55,12 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   a las bases de datos `(default)` y `apark-at`.
 
 ### Fixed
+- **Los listeners de Firestore ya no se reinician cada hora.** La Home observa el estado de auth
+  para que los datos cambien con el usuario, pero `authStateChanges` emite también al refrescarse
+  el token —cada hora aproximadamente—, no solo al entrar o salir. Como el `flatMapLatest` no
+  filtraba el uid, cada refresco cancelaba las dos suscripciones de `getVehiclesForUser` y las
+  volvía a abrir **para el mismo usuario**: una relectura completa a cambio de nada. Un
+  `distinctUntilChanged()` sobre el uid deja que se reinicie solo cuando cambia de verdad.
 - **Las invitaciones ya no se acumulan para siempre**
   ([spec 007](docs/specs/007-invite-cleanup/spec.md)). La limpieza que había solo actuaba al volver
   a compartir el mismo vehículo, así que una invitación de un vehículo que no se comparte dos veces
