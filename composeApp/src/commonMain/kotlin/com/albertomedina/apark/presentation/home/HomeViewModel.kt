@@ -1,6 +1,5 @@
 package com.albertomedina.apark.presentation.home
 
-import androidx.compose.animation.core.copy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.model.Vehicle

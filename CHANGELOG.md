@@ -71,6 +71,10 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   a las bases de datos `(default)` y `apark-at`.
 
 ### Fixed
+- **La lista de vehículos reiniciaba sus listeners en cada refresco de token.** `authStateChanges`
+  emite también al refrescarse el token, cada hora más o menos, y no solo al entrar o salir, así
+  que `flatMapLatest` volvía a abrir las suscripciones de Firestore para el mismo usuario. Mismo
+  filtro que recibió `HomeViewModel`.
 - **Los apóstrofos salían con una barra invertida delante.** `composeResources` no es `res/` de
   Android: su plugin sí convierte `\n` en salto de línea, pero `\'` lo copia tal cual, así que la
   app mostraba `You don\'t have any vehicles yet`. Afectaba a **catorce** cadenas, trece de ellas

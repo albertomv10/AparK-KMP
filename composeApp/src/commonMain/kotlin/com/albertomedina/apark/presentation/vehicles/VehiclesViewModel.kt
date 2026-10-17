@@ -9,6 +9,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -34,6 +35,10 @@ class VehiclesViewModel(
         viewModelScope.launch {
             authRepository.authStateChanges
                 .map { it?.uid }
+                // `authStateChanges` también emite al refrescarse el token, cada hora más o menos,
+                // y no solo al entrar o salir. Sin este filtro cada refresco cancelaba los
+                // listeners de Firestore y los volvía a abrir para el mismo usuario.
+                .distinctUntilChanged()
                 .flatMapLatest { userId ->
                     if (userId.isNullOrBlank()) flowOf(emptyList()) else getVehicleListUseCase(userId)
                 }
