@@ -39,8 +39,16 @@ Pull Request — never push to `main` directly.
 ./gradlew :composeApp:assembleDebug                      # Android debug APK
 ./gradlew :composeApp:installDebug                       # install on a connected device
 ./gradlew :composeApp:compileKotlinIosSimulatorArm64     # fast iOS check, no Xcode needed
-./gradlew :composeApp:allTests                           # commonTest (one placeholder test)
+./gradlew :composeApp:testDebugUnitTest                  # run commonTest on the JVM
+./gradlew :composeApp:compileTestKotlinIosSimulatorArm64 # check it also compiles for iOS
 ```
+
+**`allTests` does not pass, and that is not a bug in the tests.** It links the iOS test binary,
+which needs the Firebase frameworks — and those are resolved by SPM from Xcode, so Gradle has no
+idea where they are (`ld: framework 'FirebaseCore' not found`). Run the two commands above instead:
+the JVM run executes them, the iOS one compiles them. Compiling for iOS matters on its own, because
+Kotlin/Native rejects backtick names the JVM accepts — a comma is enough — so a green Android job
+says nothing about whether the same test builds for iOS.
 
 iOS runs from `iosApp/iosApp.xcodeproj` in Xcode. To check the Swift side compiles without opening
 the IDE:
@@ -79,10 +87,19 @@ npx firebase-tools@latest deploy --only firestore:rules -P prod     # production
 DataSource (impl). Koin for DI — `single` for repositories, `factory` for use cases, `viewModel` for
 ViewModels, all in `SharedModule.kt`.
 
-**Navigation 3** (`navigation3-ui`, alpha): a `sealed interface Destiny` of `@Serializable` objects
-in `BasicNavigationWrapper.kt`. Login/logout routing uses `backStack.clear()` + `add()`.
+**Navigation 3** (`navigation3-ui`, alpha), in **two layers** — see
+[spec 009](docs/specs/009-tab-navigation/design.md):
 
-**Auth flow**: Splash → Login/Register → EmailVerification → Home.
+- `RootNavigation` holds one stack: the auth flow plus `Tabs`, the whole tabbed app as a **single
+  destination**. Signing in and out move *this* stack with `clear()` + `add()`.
+- `TabShell` holds **one `NavBackStack` per tab** — they are plain `MutableList`s, so three tabs
+  are three lists — and hands the active one to the `NavDisplay`. It owns the bottom bar, which is
+  why the auth screens cannot show it.
+
+Destinations live in `Destiny.kt` and each declares `showsTabBar`, rather than the shell keeping a
+list someone has to remember to update.
+
+**Auth flow**: Splash → Login/Register → EmailVerification → Tabs.
 
 **expect/actual** for maps (`AparKMap`), location (`LocationSource`), the social sign-in buttons,
 permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSettingsHandler`).
@@ -99,6 +116,7 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 | `domain.usecase` | One `operator fun invoke()` each |
 | `presentation.splash` · `presentation.auth.*` | Splash, login, register, verification, reset |
 | `presentation.home` | Map + vehicle carousel + edit mode |
+| `presentation.vehicles` · `presentation.account` | The vehicle list, and email + theme + sign out |
 | `presentation.addvehicle` · `presentation.vehicledetail` | Create/join, and the detail placeholder |
 | `presentation.components` | Shared composables: map, buttons, dialog, permission handlers |
 | `presentation.navigation` | Navigation 3 setup |
@@ -226,13 +244,64 @@ graphify path "A" "B" --undirected
   This is what scopes ViewModels to the navigation entry (see spec 006).
 - **The lifecycle version is pinned by Compose**: `lifecycle-viewmodel-navigation3` 2.10.0 targets
   `compose.runtime` 1.9.3. 2.11.0 would drag a Compose Multiplatform bump with it.
+- **In `composeResources/`, do NOT escape apostrophes.** Android's `res/values/` requires `\'`;
+  the Compose resources plugin does the opposite — it resolves `\n` into a real newline but copies
+  `\'` through verbatim, so the app displays `You don\'t have any vehicles yet`, backslash and all.
+  Every French string carried one for months, because nobody reads the app in French. Verify by
+  decoding what was actually baked, not by reading the XML:
+  `composeApp/build/**/preparedResources/**/strings.commonMain.cvr` is `kind|name|base64`.
+- **A `Scaffold` inside the tab shell must consume the insets the shell already applied.** The
+  shell pads its `NavDisplay` by the tab bar's height; a screen's own `Scaffold` then reserves room
+  for the system bars *again*, and the content floats up by that much. `Modifier.padding(p)` plus
+  `consumeWindowInsets(p)` is the fix. On Android the gesture inset is small enough to miss; on
+  iPhone the home indicator is ~34pt and it is obvious.
+- **Android rebuilds the map on every return to its tab; iOS does not, and that is not Compose.**
+  `GoogleMap` wraps a native `MapView` that is destroyed when it leaves composition, so coming back
+  reinitialises the GL surface and refetches tiles. On iOS the map's state lives in Swift, in
+  `MapLocationController.shared`, outside Compose entirely — which is why it looks untouched. The
+  same split shows in other apps, so it is a platform trait, not a bug here. The camera is **not**
+  the problem: a fresh composition has `isFirstLoad = true` and calls `move()`, an instant jump, so
+  hoisting the camera state would fix nothing. What is left is the blank first frame, and the fix
+  is to cover it — `onMapLoaded` drives a veil over the map.
+- **The iOS map follows the *system* appearance unless told otherwise, and `mapStyle = nil` does
+  not undo it.** `GMSMapView.overrideUserInterfaceStyle` is what drives the map's colour scheme
+  (its own header says so), and the Maps SDK has honoured the inherited trait since v9 — so the
+  map had been quietly dark on a dark phone long before anything here set a style, and clearing
+  the style returned it to *that*, not to a light map. Since the app has its own theme selector,
+  the trait has to be pinned explicitly. Nothing in Swift mentioned the map's appearance, which is
+  exactly why grepping for it found nothing: the behaviour came from the SDK's default.
+- **The map's dark style is one JSON in `commonMain`, applied two different ways.** Android passes
+  it to `MapStyleOptions`; iOS has no maps-compose, so Kotlin hands the string to Swift through
+  `updateMapStyle` and Swift builds a `GMSMapStyle` — whose initializer **throws**, so it needs
+  `try?`. The Kotlin side compiled happily with the Swift broken; only Xcode caught it.
+- **Push to Swift from a `LaunchedEffect`, not from `UIKitView`'s `update`.** `update`'s lambda
+  captures its values, and re-running it on recomposition is not something to rely on: the dark
+  style was applied when the map was created and then never withdrawn, leaving a dark map in a
+  light app. Everything else in `AparKMap.ios.kt` already used `LaunchedEffect` with an explicit
+  key; the style now does too. The `update` call stays only to cover creation during measurement,
+  which can happen after the effect has already run.
+- **The tab fade is `expect`/`actual` on purpose.** 350ms on Android, 150 on iOS. Android's longer
+  fade also covers the `MapView` rebuild; on iOS there is nothing to cover, and during a crossfade
+  the outgoing screen stays painted over the map, so a long fade reads as a veil and costs the
+  immediacy that platform already had.
+- **Switching tabs is not navigating forward.** `NavDisplay` animates on whatever its back stack
+  shows, so swapping in another tab's stack looks like a push and slides sideways, suggesting a
+  depth that is not there. The shell tells the two apart by *cause*, not by key: every push and pop
+  goes through its own `push`/`pop`, which clear the flag that the tab bar sets. Normal navigation
+  delegates to `defaultTransitionSpec()`, which is `expect`/`actual` — on iOS that is the UIKit
+  curve, so it is worth keeping rather than hand-rolling a slide.
 - **`BackHandler` is not part of `compose.ui`** — `org.jetbrains.compose.ui:ui-backhandler` must be
   declared explicitly, with `@OptIn(ExperimentalComposeUiApi::class)`.
 - **Social sign-in errors carry a reason, not a string.** `SocialLoginFailure` has a
   `SocialLoginReason`: `CANCELLED` shows nothing, `NO_ACCOUNTS` is actionable, everything else gets
   one readable message. Its `detail` field is for diagnostics and **must never be displayed**.
-- **iOS map padding**: the `-30.0` magic number in `AparKMap.ios.kt` for the bottom sheet offset can
-  break with layout changes.
+- **The iOS map's `-30.0` is gone, and nothing should put it back.** It compensated for the map
+  being drawn *behind* the tab bar, back when the bar lived inside `HomeScreen`. Spec 009 moved the
+  bar out, the map stopped reaching that far, and the same subtraction started hiding the Google
+  logo under the vehicle cards. Both platforms now pass `bottomPadding` straight through, which is
+  what Android always did. If the logo is covered again, the thing to check is what `pagerHeight`
+  measures — `onGloballyPositioned` sits *before* `.padding(...)` in the chain on purpose, so it
+  includes it.
 
 ### Testing on devices
 
@@ -246,7 +315,6 @@ graphify path "A" "B" --undirected
 
 > The full picture and the order to tackle it: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
-- **Bottom nav tabs are cosmetic**: three tabs switching local state, no navigation behind them.
 - **The vehicle-detail screen is a placeholder**: name plus a share button for the owner.
 - **No transfer-ownership UI**: `transferVehicleOwnership` exists but nothing calls it, even though
   the delete dialog points users at it.
@@ -257,8 +325,7 @@ graphify path "A" "B" --undirected
   platform**, so enabling it would lock out the iPhones. See [`docs/FIREBASE.md`](docs/FIREBASE.md).
 - `ComposeAppCommonTest.kt` is still a placeholder, though real tests now exist beside it
   (`commonTest/.../settings/`) and in `tools/test/`.
-- Hardcoded Spanish strings: the GPS-denied snackbar and the "Logout" item in `HomeScreen.kt`.
-- `userEmail` in `HomeUiState` is never written — dead field.
+- Hardcoded Spanish string: the GPS-denied snackbar in `HomeScreen.kt`.
 
 **Not a bug**: `AppleSignInButton`'s Android `actual` has an empty body, so the button is not
 composed at all outside iOS. That is deliberate — the platform decides whether the button exists.

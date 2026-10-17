@@ -1,6 +1,5 @@
 package com.albertomedina.apark.presentation.home
 
-import androidx.compose.animation.core.copy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.model.Vehicle
@@ -10,7 +9,6 @@ import com.albertomedina.apark.domain.usecase.DeleteVehicleUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
 import com.albertomedina.apark.domain.usecase.MoveVehicleUseCase
 import com.albertomedina.apark.domain.usecase.RemoveUserFromVehicleUseCase
-import com.albertomedina.apark.domain.usecase.SignOutUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleLocationUseCase
 import com.albertomedina.apark.utils.SnackbarMessage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,7 +26,6 @@ class HomeViewModel(
     private val authRepository: AuthRepository,
     private val updateVehicleLocationUseCase: UpdateVehicleLocationUseCase,
     private val getVehicleListUseCase: GetVehicleListUseCase,
-    private val signOutUseCase: SignOutUseCase,
     private val deleteVehicleUseCase: DeleteVehicleUseCase,
     private val removeUserFromVehicleUseCase: RemoveUserFromVehicleUseCase,
     private val moveVehicleUseCase: MoveVehicleUseCase,
@@ -98,14 +95,6 @@ class HomeViewModel(
 
             is HomeEvent.CenterMapOnUserClicked -> {
                 _uiState.update { it.copy(centerCameraTrigger = it.centerCameraTrigger + 1) }
-            }
-
-            is HomeEvent.SignOutClicked -> {
-                performSignOut()
-            }
-
-            is HomeEvent.NavigationHandled -> {
-                _uiState.update { it.copy(shouldNavigateToLogin = false) }
             }
 
             is HomeEvent.SnackBarDismissed -> {
@@ -323,16 +312,6 @@ class HomeViewModel(
         }
     }
 
-    private fun performSignOut(){
-        _uiState.update { it.copy(isLoading = true) }
-        viewModelScope.launch {
-            signOutUseCase().fold(
-                onSuccess = { _uiState.update { it.copy(isLoading = false, shouldNavigateToLogin = true) } },
-                onFailure = { _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_sing_out")) } }
-            )
-        }
-    }
-
     companion object {
         const val SUCCESS_DELETED_KEY = "delete_vehicle_success_deleted"
         const val SUCCESS_REMOVED_KEY = "delete_vehicle_success_removed"
@@ -343,7 +322,6 @@ class HomeViewModel(
 }
 
 data class HomeUiState(
-    val userEmail: String = "",
     val currentUserId: String? = null,
     val vehicles: List<Vehicle> = emptyList(),
     val selectedVehicleIndex: Int = 0,
@@ -351,7 +329,6 @@ data class HomeUiState(
     val updatingVehicleId: String? = null,
     val centerCameraTrigger: Int = 0,
     val openSettingsTrigger: Int = 0,
-    val shouldNavigateToLogin: Boolean = false,
     val locationUpdateSuccessData: UndoLocationData? = null,
     val snackbarMessage: SnackbarMessage? = null,
     val isEditMode: Boolean = false,
@@ -390,8 +367,6 @@ sealed class HomeEvent {
     data object OpenSettingsClicked : HomeEvent()
     data object CenterMapOnUserClicked : HomeEvent()
     data object AddVehicleClicked : HomeEvent()
-    data object SignOutClicked : HomeEvent()
-    data object NavigationHandled : HomeEvent()
     data object SnackBarDismissed : HomeEvent()
     data object VehicleLongPressed : HomeEvent()
     data object EditModeExited : HomeEvent()

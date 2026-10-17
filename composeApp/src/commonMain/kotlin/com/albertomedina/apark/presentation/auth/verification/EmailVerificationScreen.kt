@@ -43,7 +43,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun EmailVerificationScreen(
     viewModel: EmailVerificationViewModel = koinViewModel(),
-    onNavigateToHome: (String) -> Unit,
+    onNavigateToHome: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -61,7 +61,7 @@ fun EmailVerificationScreen(
 
     LaunchedEffect(state.isVerificationComplete) {
         if (state.isVerificationComplete) {
-            onNavigateToHome(state.email)
+            onNavigateToHome()
             viewModel.onEvent(EmailVerificationEvent.NavigationHandled)
         }
     }

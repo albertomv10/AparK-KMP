@@ -37,7 +37,7 @@ class SettingsRepositoryTest {
     private fun repository() = DataStoreSettingsRepository(createSettingsDataStore(directory.toString()))
 
     @Test
-    fun `sin nada guardado usa SYSTEM, que es como se comportaba antes`() = runTest {
+    fun `sin nada guardado usa SYSTEM - como se comportaba antes`() = runTest {
         assertEquals(ThemeMode.SYSTEM, repository().themeMode.first())
     }
 
@@ -49,7 +49,7 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `lo guardado llega al disco, no se queda en memoria`() = runTest {
+    fun `lo guardado llega al disco y no se queda en memoria`() = runTest {
         repository().setThemeMode(ThemeMode.LIGHT)
 
         // No se comprueba abriendo una segunda instancia: DataStore exige **una por fichero y

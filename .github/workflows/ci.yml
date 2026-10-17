@@ -87,6 +87,16 @@ jobs:
           echo "MAPS_API_KEY=${MAPS_API_KEY:-PLACEHOLDER_NOT_A_REAL_KEY}" >> local.properties
           echo "GOOGLE_MAPS_API_KEY=${MAPS_API_KEY:-PLACEHOLDER_NOT_A_REAL_KEY}" > iosApp/iosApp/Secrets.xcconfig
 
+      # Compilar los tests comunes para iOS, sin ejecutarlos: Kotlin/Native rechaza nombres entre
+      # acentos graves que la JVM acepta —una coma basta—, así que un test válido en el job de
+      # Android puede no compilar aquí. Pasó, y no lo vio nadie.
+      #
+      # Compilar y no enlazar es deliberado: enlazar el binario de test exige los frameworks de
+      # Firebase, que los resuelve SPM desde Xcode y Gradle no tiene. Por eso `allTests` no pasa
+      # en este proyecto, y por eso esto se queda en `compileTest...`.
+      - name: Compilar los tests comunes para iOS
+        run: ./gradlew :composeApp:compileTestKotlinIosSimulatorArm64 --no-daemon
+
       # Las DOS configuraciones, no solo Debug. Swift compila únicamente la rama viva de un
       # `#if DEBUG`, así que compilar solo Debug deja el código de release sin tocar por nadie:
       # así se coló una referencia a un tipo inexistente que solo fallaba en Release.

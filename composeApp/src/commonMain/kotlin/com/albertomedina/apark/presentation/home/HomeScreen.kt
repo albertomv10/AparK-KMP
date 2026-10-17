@@ -12,13 +12,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -41,7 +39,6 @@ import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.presentation.components.AparKConfirmDialog
 import com.albertomedina.apark.presentation.components.AparKMap
-import com.albertomedina.apark.presentation.components.AparkBottomNavigationBar
 import com.albertomedina.apark.presentation.components.DynamicTimeText
 import com.albertomedina.apark.presentation.components.LocationPermissionHandler
 import com.albertomedina.apark.utils.OpenAppSettingsHandler
@@ -53,7 +50,6 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
-    onNavigateToLogin: () -> Unit,
     onNavigateToDetails: (String) -> Unit,
     onNavigateToAddVehicle: () -> Unit
 ) {
@@ -62,8 +58,6 @@ fun HomeScreen(
     var activeSnackbarMessage by remember { mutableStateOf<SnackbarMessage?>(null) }
     var pagerHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
-
-    var showMenu by remember { mutableStateOf(false) }
 
     var hasLocationPermission by remember { mutableStateOf(false) }
 
@@ -183,22 +177,13 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(state.shouldNavigateToLogin) {
-        if (state.shouldNavigateToLogin) {
-            onNavigateToLogin()
-            viewModel.onEvent(HomeEvent.NavigationHandled)
-        }
-    }
-
     // While editing, back leaves the mode rather than the screen. Only enabled in edit mode,
     // so normal back behaviour is untouched.
     BackHandler(enabled = state.isEditMode) {
         viewModel.onEvent(HomeEvent.EditModeExited)
     }
 
-    Scaffold(
-        bottomBar = { AparkBottomNavigationBar() },
-    ) { paddingValues ->
+    Scaffold { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
 
             AparKMap(
@@ -245,39 +230,6 @@ fun HomeScreen(
                     imageVector = Icons.Default.MyLocation,
                     contentDescription = stringResource(Res.string.home_center_map)
                 )
-            }
-
-            FloatingActionButton(
-                onClick = {
-                    showMenu = true
-                },
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = paddingValues.calculateTopPadding() + 16.dp, end = 16.dp),
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = ""
-                )
-
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false },
-                    modifier = Modifier.background(MaterialTheme.colorScheme.surface)
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Logout") }, // Asegúrate de tener este string
-                        leadingIcon = {
-                            Icon(Icons.Default.Logout, contentDescription = null)
-                        },
-                        onClick = {
-                            showMenu = false
-                            viewModel.onEvent(HomeEvent.SignOutClicked)
-                        }
-                    )
-                }
             }
 
             SnackbarHost(

@@ -9,6 +9,13 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **Pestañas que navegan de verdad** ([spec 009](docs/specs/009-tab-navigation/spec.md)): las tres
+  pestañas de abajo dejan de ser decorado. La navegación pasa a **dos capas** —una pila de fuera
+  con la autenticación, y un shell con **una pila por pestaña**—, así que cada pestaña recuerda por
+  dónde iba y la barra no puede aparecer en el login, porque vive dentro del shell. Estrena dos
+  pantallas: *Vehículos*, la lista, y ***Cuenta***, que por fin le da interfaz al **selector de
+  tema** que quedó cableado sobre DataStore sin nadie que lo escribiera, y donde se muda el
+  **cerrar sesión** que estaba escondido en un menú de tres puntos sobre el mapa.
 - **Compartir vehículo** ([spec 005](docs/specs/005-share-vehicle/spec.md)): el dueño genera una
   invitación de **un solo uso que caduca en 24 h**, y puede copiarla o enviarla con la hoja de
   compartir del sistema; otra persona se une desde la nueva pestaña *Unirme* de añadir vehículo.
@@ -43,6 +50,15 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   `docs/specs/_template/` y este `CHANGELOG.md`.
 
 ### Changed
+- **El mapa de Android ya no enseña el hueco mientras se reconstruye.** Volver a su pestaña rehace
+  el `MapView` nativo, que es una View y se destruye al salir de la composición. Mientras dibuja su
+  primer fotograma hay un velo con un indicador de carga, que es lo que hacen las apps que tienen
+  el mismo problema. En iOS no ocurre, porque allí el estado del mapa vive en Swift.
+- **Cambiar de pestaña ya no desliza una pantalla sobre otra.** Deslizar lateralmente sugiere que
+  se avanza, y entre pestañas no se avanza: son tres sitios al mismo nivel. Ahora es un fundido
+  corto, y la navegación de dentro de cada pestaña conserva la transición propia de la plataforma.
+  Dura distinto en cada sistema: en Android acompaña además a la reconstrucción del mapa, y en iOS,
+  que no la tiene, se queda en lo justo para no ser un corte seco.
 - **ViewModels con ámbito de pantalla** ([spec 006](docs/specs/006-scoped-viewmodels/spec.md)):
   `NavDisplay` no traía el decorador de `ViewModelStore`, así que **ningún ViewModel se destruía
   nunca** y cada pantalla arrastraba el estado de su visita anterior. Añadirlo exigía subir
@@ -60,7 +76,28 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   el token —cada hora aproximadamente—, no solo al entrar o salir. Como el `flatMapLatest` no
   filtraba el uid, cada refresco cancelaba las dos suscripciones de `getVehiclesForUser` y las
   volvía a abrir **para el mismo usuario**: una relectura completa a cambio de nada. Un
-  `distinctUntilChanged()` sobre el uid deja que se reinicie solo cuando cambia de verdad.
+  `distinctUntilChanged()` sobre el uid deja que se reinicie solo cuando cambia de verdad. La
+  pestaña de vehículos, que observa el estado de auth igual, lleva el mismo filtro.
+- **Los apóstrofos salían con una barra invertida delante.** `composeResources` no es `res/` de
+  Android: su plugin sí convierte `\n` en salto de línea, pero `\'` lo copia tal cual, así que la
+  app mostraba `You don\'t have any vehicles yet`. Afectaba a **catorce** cadenas, trece de ellas
+  en francés, donde llevaban meses sin que nadie las leyera.
+- **En iPhone, las tarjetas tapaban el logo de Google Maps.** El `-30.0` de `AparKMap.ios.kt`
+  compensaba que el mapa se dibujara por detrás de la barra de pestañas, cuando la barra vivía
+  dentro de la pantalla del mapa. Al sacarla fuera, el mapa dejó de llegar hasta ahí y esa resta
+  pasó a meter el logo debajo de las tarjetas. Las dos plataformas pasan ya el mismo valor.
+- **En iOS el mapa salía siempre oscuro, mirase lo que mirase la app.** Desde su versión 9, el SDK
+  de Google Maps adapta el mapa al modo oscuro **del sistema** por su cuenta, así que llevaba
+  oscuro sin que nadie lo hubiera programado, y quitarle el estilo lo devolvía a ese oscuro en vez
+  de aclararlo. Ahora se le fija el `overrideUserInterfaceStyle` según el tema de la app, y el JSON
+  del estilo —el mismo que usa Android— pasa a vivir en código común.
+- **El mapa no seguía al tema de la app.** Preguntaba por el del **sistema**, cosa que daba igual
+  mientras no hubo selector: desde que lo hay, con el móvil en oscuro y la app en claro el mapa se
+  quedaba negro. Ahora el tema publica cuál ha resuelto y el mapa lee eso.
+- **Los tests comunes no compilaban para iOS, y nadie se enteraba.** Kotlin/Native rechaza nombres
+  entre acentos graves que la JVM acepta —basta una coma—, y la CI solo ejecutaba los de JVM, así
+  que dos tests del repositorio de ajustes llevaban rotos desde que se escribieron sin que ningún
+  job se pusiera rojo. Renombrados, y la CI pasa a **compilarlos también para iOS**.
 - **Las invitaciones ya no se acumulan para siempre**
   ([spec 007](docs/specs/007-invite-cleanup/spec.md)). La limpieza que había solo actuaba al volver
   a compartir el mismo vehículo, así que una invitación de un vehículo que no se comparte dos veces
