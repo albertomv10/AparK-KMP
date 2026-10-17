@@ -2,7 +2,6 @@ package com.albertomedina.apark.presentation.components
 
 import android.Manifest
 import android.content.pm.PackageManager
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -12,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.albertomedina.apark.ui.theme.LocalIsDarkTheme
 import androidx.compose.ui.unit.Dp
 import androidx.core.content.ContextCompat
 import com.albertomedina.apark.domain.model.Vehicle
@@ -155,9 +155,10 @@ actual fun AparKMap(
 //    }
 
     val uiSettings = MapUiSettings(myLocationButtonEnabled = false, zoomControlsEnabled = false)
-    val isDarkMode = isSystemInDarkTheme()
+    // El tema de la app, no el del sistema: con el selector de Cuenta los dos pueden discrepar.
+    val isDarkMode = LocalIsDarkTheme.current
 
-    val mapProperties = remember(isDarkMode) {
+    val mapProperties = remember(isDarkMode, hasFine) {
         MapProperties(
             isMyLocationEnabled = hasFine,
             mapStyleOptions = if (isDarkMode) MapStyleOptions(darkMapStyleJson) else null

@@ -244,6 +244,17 @@ graphify path "A" "B" --undirected
   This is what scopes ViewModels to the navigation entry (see spec 006).
 - **The lifecycle version is pinned by Compose**: `lifecycle-viewmodel-navigation3` 2.10.0 targets
   `compose.runtime` 1.9.3. 2.11.0 would drag a Compose Multiplatform bump with it.
+- **In `composeResources/`, do NOT escape apostrophes.** Android's `res/values/` requires `\'`;
+  the Compose resources plugin does the opposite — it resolves `\n` into a real newline but copies
+  `\'` through verbatim, so the app displays `You don\'t have any vehicles yet`, backslash and all.
+  Every French string carried one for months, because nobody reads the app in French. Verify by
+  decoding what was actually baked, not by reading the XML:
+  `composeApp/build/**/preparedResources/**/strings.commonMain.cvr` is `kind|name|base64`.
+- **A `Scaffold` inside the tab shell must consume the insets the shell already applied.** The
+  shell pads its `NavDisplay` by the tab bar's height; a screen's own `Scaffold` then reserves room
+  for the system bars *again*, and the content floats up by that much. `Modifier.padding(p)` plus
+  `consumeWindowInsets(p)` is the fix. On Android the gesture inset is small enough to miss; on
+  iPhone the home indicator is ~34pt and it is obvious.
 - **`BackHandler` is not part of `compose.ui`** — `org.jetbrains.compose.ui:ui-backhandler` must be
   declared explicitly, with `@OptIn(ExperimentalComposeUiApi::class)`.
 - **Social sign-in errors carry a reason, not a string.** `SocialLoginFailure` has a

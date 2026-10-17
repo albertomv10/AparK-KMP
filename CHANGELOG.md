@@ -62,6 +62,13 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   a las bases de datos `(default)` y `apark-at`.
 
 ### Fixed
+- **Los apóstrofos salían con una barra invertida delante.** `composeResources` no es `res/` de
+  Android: su plugin sí convierte `\n` en salto de línea, pero `\'` lo copia tal cual, así que la
+  app mostraba `You don\'t have any vehicles yet`. Afectaba a **catorce** cadenas, trece de ellas
+  en francés, donde llevaban meses sin que nadie las leyera.
+- **El mapa no seguía al tema de la app.** Preguntaba por el del **sistema**, cosa que daba igual
+  mientras no hubo selector: desde que lo hay, con el móvil en oscuro y la app en claro el mapa se
+  quedaba negro. Ahora el tema publica cuál ha resuelto y el mapa lee eso.
 - **Los tests comunes no compilaban para iOS, y nadie se enteraba.** Kotlin/Native rechaza nombres
   entre acentos graves que la JVM acepta —basta una coma—, y la CI solo ejecutaba los de JVM, así
   que dos tests del repositorio de ajustes llevaban rotos desde que se escribieron sin que ningún

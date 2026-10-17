@@ -1,5 +1,7 @@
 package com.albertomedina.apark.presentation.navigation
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -80,8 +82,14 @@ fun TabShell(onSignedOut: () -> Unit) {
             }
         }
     ) { padding ->
+        // Las pantallas traen su propio Scaffold, que por defecto vuelve a reservar sitio para las
+        // barras del sistema — y ese sitio ya lo ha descontado este de fuera al colocar la barra de
+        // pestañas. Sin `consumeWindowInsets` se suman dos veces: en Android el inset de gestos es
+        // pequeño y apenas se nota, pero en iPhone el del indicador de inicio son ~34pt y el
+        // contenido sube de más.
+        val tabBarPadding = PaddingValues(bottom = padding.calculateBottomPadding())
         NavDisplay(
-            modifier = Modifier.padding(bottom = padding.calculateBottomPadding()),
+            modifier = Modifier.padding(tabBarPadding).consumeWindowInsets(tabBarPadding),
             backStack = stack,
             onBack = { stack.removeLastOrNull() },
             entryDecorators = listOf(

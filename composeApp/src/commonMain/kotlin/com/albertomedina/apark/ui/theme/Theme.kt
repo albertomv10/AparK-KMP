@@ -8,6 +8,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 private val lightScheme = lightColorScheme(
@@ -254,6 +255,15 @@ val unspecified_scheme = ColorFamily(
  * [themeMode] decide de dónde sale el tema. Con [ThemeMode.SYSTEM], que es el defecto, se comporta
  * exactamente como antes de que existieran las preferencias: sigue al sistema operativo.
  */
+/**
+ * Si el tema resuelto es oscuro.
+ *
+ * Existe porque `isSystemInDarkTheme()` responde por el **sistema**, y desde que hay un selector de
+ * tema en Cuenta eso puede no ser lo que la app está pintando: con el móvil en oscuro y la app en
+ * claro, quien pregunte al sistema se queda oscuro él solo. Esto responde por la **app**.
+ */
+val LocalIsDarkTheme = staticCompositionLocalOf { false }
+
 @Composable
 fun AparKTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -267,7 +277,10 @@ fun AparKTheme(
     val colorScheme = if (darkTheme) darkScheme else lightScheme
     val extraColors = if (darkTheme) extraDarkColors else extraLightColors
 
-    CompositionLocalProvider(LocalExtraColors provides extraColors) {
+    CompositionLocalProvider(
+        LocalExtraColors provides extraColors,
+        LocalIsDarkTheme provides darkTheme
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = AppTypography,

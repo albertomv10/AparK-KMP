@@ -135,7 +135,7 @@
     <string name="tab_account">Account</string>
 
     <!-- Vehicles -->
-    <string name="vehicles_empty">You don\'t have any vehicles yet</string>
+    <string name="vehicles_empty">You don't have any vehicles yet</string>
 
     <!-- Account -->
     <string name="account_theme">Theme</string>
@@ -143,5 +143,5 @@
     <string name="account_theme_light">Light</string>
     <string name="account_theme_dark">Dark</string>
     <string name="account_sign_out">Sign out</string>
-    <string name="error_sign_out">Couldn\'t sign out. Please try again</string>
+    <string name="error_sign_out">Couldn't sign out. Please try again</string>
 </resources>
