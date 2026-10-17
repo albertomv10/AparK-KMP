@@ -50,6 +50,10 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   `docs/specs/_template/` y este `CHANGELOG.md`.
 
 ### Changed
+- **El mapa de Android ya no enseña el hueco mientras se reconstruye.** Volver a su pestaña rehace
+  el `MapView` nativo, que es una View y se destruye al salir de la composición. Mientras dibuja su
+  primer fotograma hay un velo con un indicador de carga, que es lo que hacen las apps que tienen
+  el mismo problema. En iOS no ocurre, porque allí el estado del mapa vive en Swift.
 - **Cambiar de pestaña ya no desliza una pantalla sobre otra.** Deslizar lateralmente sugiere que
   se avanza, y entre pestañas no se avanza: son tres sitios al mismo nivel. Ahora es un fundido
   corto, y la navegación de dentro de cada pestaña conserva la transición propia de la plataforma.

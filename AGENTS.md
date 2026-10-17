@@ -255,6 +255,14 @@ graphify path "A" "B" --undirected
   for the system bars *again*, and the content floats up by that much. `Modifier.padding(p)` plus
   `consumeWindowInsets(p)` is the fix. On Android the gesture inset is small enough to miss; on
   iPhone the home indicator is ~34pt and it is obvious.
+- **Android rebuilds the map on every return to its tab; iOS does not, and that is not Compose.**
+  `GoogleMap` wraps a native `MapView` that is destroyed when it leaves composition, so coming back
+  reinitialises the GL surface and refetches tiles. On iOS the map's state lives in Swift, in
+  `MapLocationController.shared`, outside Compose entirely — which is why it looks untouched. The
+  same split shows in other apps, so it is a platform trait, not a bug here. The camera is **not**
+  the problem: a fresh composition has `isFirstLoad = true` and calls `move()`, an instant jump, so
+  hoisting the camera state would fix nothing. What is left is the blank first frame, and the fix
+  is to cover it — `onMapLoaded` drives a veil over the map.
 - **Switching tabs is not navigating forward.** `NavDisplay` animates on whatever its back stack
   shows, so swapping in another tab's stack looks like a push and slides sideways, suggesting a
   depth that is not there. The shell tells the two apart by *cause*, not by key: every push and pop
