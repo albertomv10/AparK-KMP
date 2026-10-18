@@ -164,6 +164,16 @@ android {
         }
         debug {
             applicationIdSuffix = ".debug"
+
+            // La dirección de los emuladores de Firebase, de `local.properties` o del entorno.
+            // Se declara SOLO aquí: en release el campo ni se genera, así que el código que lo
+            // lee no compila para esa variante y no hay despiste posible. Vacío = sin emuladores,
+            // que es lo normal. Ver `di/EmulatorConfig.kt` y `docs/FIREBASE.md`.
+            buildConfigField(
+                "String",
+                "EMULATOR_HOST",
+                "\"${signingSecret("APARK_EMULATOR_HOST") ?: ""}\""
+            )
         }
     }
     buildFeatures {

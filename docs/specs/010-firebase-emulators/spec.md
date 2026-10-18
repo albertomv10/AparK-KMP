@@ -63,9 +63,14 @@ hablar con ellos.
    vehículos sembrados por el script, idénticos a los de cualquier otro arranque.
 3. **Dado** que los emuladores **no** están activados, **cuando** se compila y ejecuta una debug
    normal, **entonces** la app habla con `apark-dev` exactamente igual que hoy.
-4. **Dado** un APK o IPA de **release**, **cuando** se inspecciona, **entonces** no contiene ninguna
-   referencia al código de conexión a emuladores — comprobado como se comprobó App Check, mirando
-   el binario y no el código fuente.
+4. **Dado** un APK o IPA de **release**, **cuando** se inspecciona, **entonces** no contiene la
+   dirección de ningún emulador ni forma de fijarla — comprobado mirando el binario y no el código
+   fuente, como se comprobó App Check.
+
+   > Redactado así tras el diseño. La versión original pedía que no hubiera **ninguna referencia**
+   > al código de emuladores, y eso no se puede cumplir: la llamada a `useEmulator` vive en código
+   > común, y en iOS no hay source sets por configuración. Lo que sí se garantiza —y es lo que
+   > importa— es que **nada en una build de release puede encenderlos**.
 5. **Dado** un emulador recién arrancado, **cuando** se para y se vuelve a arrancar, **entonces** el
    estado vuelve a ser el sembrado, sin rastro de la sesión anterior.
 6. **Dado** `docs/FIREBASE.md`, **cuando** alguien clona el repositorio de cero, **entonces**

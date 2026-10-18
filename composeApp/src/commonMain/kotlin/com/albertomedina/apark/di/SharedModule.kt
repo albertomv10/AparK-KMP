@@ -61,12 +61,28 @@ val sharedModule = module {
     // Development and production are separate Firebase projects, each with a single `(default)`
     // database, so which one the app talks to is decided by the `google-services.json` /
     // `GoogleService-Info.plist` of the build variant — not by anything at runtime.
-    single<FirebaseFirestore> { Firebase.firestore }
-    single<FirebaseAuth>{ Firebase.auth }
+    // `useEmulator` hay que llamarlo ANTES del primer uso del SDK —cambiarle los ajustes en
+    // caliente lanza—, y este es el único sitio donde se construyen: Koin los crea perezosamente,
+    // justo antes de que alguien los pida. Con `emulatorHost` a null, que es lo normal, esto es
+    // exactamente lo que había.
+    single<FirebaseFirestore> {
+        Firebase.firestore.apply {
+            emulatorHost?.let { useEmulator(it, EmulatorPorts.FIRESTORE) }
+        }
+    }
+    single<FirebaseAuth> {
+        Firebase.auth.apply {
+            emulatorHost?.let { useEmulator(it, EmulatorPorts.AUTH) }
+        }
+    }
 
     // The region is not optional: the callables are deployed in europe-west4, and without this
     // the SDK would call us-central1 and fail.
-    single<FirebaseFunctions> { Firebase.functions(region = "europe-west4") }
+    single<FirebaseFunctions> {
+        Firebase.functions(region = "europe-west4").apply {
+            emulatorHost?.let { useEmulator(it, EmulatorPorts.FUNCTIONS) }
+        }
+    }
 
     single<CrashReporter> { FirebaseCrashReporter() }
 
