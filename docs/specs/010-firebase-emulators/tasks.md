@@ -30,7 +30,9 @@
 - [x] **(1)** Login con el usuario sembrado hasta el mapa, en el simulador
 - [x] **(2)** Los datos son los sembrados: tres vehículos, estados y matrículas correctos
 - [x] **(6)** `docs/FIREBASE.md` explica cómo levantarlos desde cero
-- [ ] **(3)** Parar y rearrancar: el estado vuelve al sembrado
-- [ ] **(4)** Debug **sin** la propiedad: habla con `apark-dev` como siempre
-- [ ] **(5)** `APARK_EMULATOR` no aparece en el APK de release
-- [ ] Compartir y unirse contra el emulador de Functions, y el trigger de borrado
+- [x] **(3)** Parar y rearrancar: cero rastro, y tras sembrar el **mismo hash** (`6c9100a004e49422`)
+- [x] **(4)** Debug **sin** la propiedad: `EMULATOR_HOST = ""` → habla con `apark-dev` como siempre
+- [x] **(5)** Ni `EMULATOR_HOST` ni el valor `10.0.2.2` aparecen en el APK de release
+- [x] Compartir y unirse contra el emulador de Functions: código generado por `createVehicleInvite`,
+      usado por la otra cuenta, `memberIds` actualizado y la invitación marcada como usada
+- [x] De camino: el plugin de *secrets* metía las contraseñas de firma en el APK de debug

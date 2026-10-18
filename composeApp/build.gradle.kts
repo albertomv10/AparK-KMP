@@ -185,6 +185,20 @@ android {
     }
 }
 
+// El plugin de secrets copia **todas** las claves de `local.properties` a `BuildConfig`, de todas
+// las variantes. Eso metía la contraseña del almacén de firma, su contraseña de clave y su ruta en
+// el APK: en release las borraba R8 por no leerlas nadie —protección prestada, a un `keep` de
+// distancia—, pero **el APK de debug las llevaba en claro**.
+//
+// Aquí solo tiene que viajar `MAPS_API_KEY`, que el manifiesto necesita como marcador. Lo demás se
+// lee desde Gradle con `signingSecret()`, que no pasa por `BuildConfig`, o se declara a mano para
+// una sola variante, como `EMULATOR_HOST`.
+secrets {
+    ignoreList.add("RELEASE_.*")
+    ignoreList.add("APARK_.*")
+    ignoreList.add("sdk\\.dir")
+}
+
 dependencies {
 
     debugImplementation(compose.uiTooling)

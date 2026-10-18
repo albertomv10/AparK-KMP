@@ -223,6 +223,18 @@ graphify path "A" "B" --undirected
   — and before that property existed here it sat so close to the edge that the *same commit*
   passed on one branch and died with `OutOfMemoryError` on another. If it comes back, raise that
   one, not `org.gradle.jvmargs`: the Gradle daemon is what runs R8 for Android releases.
+- **The secrets plugin copies *every* `local.properties` key into `BuildConfig`, in every variant.**
+  That put the signing keystore passwords and path into the app: release got away with it only
+  because R8 drops constants nobody reads — borrowed protection, one `keep` rule from leaking —
+  while **the debug APK carried them in plain text**. `secrets { ignoreList }` now limits it to
+  `MAPS_API_KEY`, which the manifest genuinely needs. Anything else should reach Gradle through
+  `signingSecret()`, which never touches `BuildConfig`.
+- **The Functions emulator needs `@firebase/app`, which nothing declares.** Its runtime loads the
+  `firebase-functions/v2` barrel — the one our own code is careful *not* to import — which pulls in
+  the Realtime Database provider, whose `@firebase/database-compat` requires `@firebase/app` without
+  listing it as a dependency. Without it every callable dies with `Cannot find module '@firebase/app'`
+  and the emulator reports only "your function was killed". It is a devDependency of `functions/`
+  for that reason alone; deploys never needed it.
 - **`assembleRelease` produces an *unsigned* APK** — there is no `signingConfig`, and Play needs a
   signed AAB (`bundleRelease`).
 - **Kotlin `Boolean` crosses to Swift boxed** as `KotlinBoolean`: read it with `.boolValue`, and
