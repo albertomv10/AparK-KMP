@@ -200,6 +200,11 @@ graphify path "A" "B" --undirected
   release APK anyway**, with none of the project's keeps. Nothing fails loudly, and iOS has no R8,
   so testing releases on a real iPhone cannot catch it. Verify via
   `composeApp/build/outputs/mapping/release/mapping.txt`: the domain models must map to themselves.
+- **The iOS *release* link is the hungriest step of the whole build**, because Kotlin/Native runs
+  LTO there. It gets its own ceiling from `kotlin.native.jvmArgs`, separate from the Gradle daemon
+  — and before that property existed here it sat so close to the edge that the *same commit*
+  passed on one branch and died with `OutOfMemoryError` on another. If it comes back, raise that
+  one, not `org.gradle.jvmargs`: the Gradle daemon is what runs R8 for Android releases.
 - **`assembleRelease` produces an *unsigned* APK** — there is no `signingConfig`, and Play needs a
   signed AAB (`bundleRelease`).
 - **Kotlin `Boolean` crosses to Swift boxed** as `KotlinBoolean`: read it with `.boolValue`, and
