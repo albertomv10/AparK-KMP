@@ -1,7 +1,13 @@
 package com.albertomedina.apark.data.repository
 
+import com.albertomedina.apark.domain.auth.EmailLoginFailure
+import com.albertomedina.apark.domain.auth.EmailLoginReason
 import com.albertomedina.apark.domain.repository.AuthRepository
+import dev.gitlive.firebase.FirebaseNetworkException
+import dev.gitlive.firebase.FirebaseTooManyRequestsException
 import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.auth.FirebaseAuthInvalidCredentialsException
+import dev.gitlive.firebase.auth.FirebaseAuthInvalidUserException
 import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.auth.GoogleAuthProvider
 import dev.gitlive.firebase.auth.OAuthProvider
@@ -20,12 +26,34 @@ class FirebaseAuthRepository(
             if (isUserEmailVerified()) {
                 Result.success(Unit)
             } else {
-                val exception = Exception("Email_verification_required")
-                Result.failure(exception)
+                Result.failure(EmailLoginFailure(EmailLoginReason.EMAIL_NOT_VERIFIED))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(e.toEmailLoginFailure())
         }
+    }
+
+    /**
+     * Traduce la excepción de Firebase a un motivo, aquí y no en la UI: esta es la única capa que
+     * conoce el SDK. Se clasifica **por tipo**, nunca por el texto del mensaje, que cambia con el
+     * idioma del dispositivo y con la versión del SDK.
+     *
+     * El detalle se conserva para diagnóstico; quien lo reciba decide qué hacer con él, pero no se
+     * enseña.
+     */
+    private fun Throwable.toEmailLoginFailure(): EmailLoginFailure {
+        if (this is EmailLoginFailure) return this
+        val reason = when (this) {
+            // Credenciales mal, usuario inexistente o cuenta deshabilitada: para quien lo escribe
+            // son el mismo problema, y distinguirlos en pantalla además revelaría qué emails
+            // existen.
+            is FirebaseAuthInvalidCredentialsException,
+            is FirebaseAuthInvalidUserException -> EmailLoginReason.INVALID_CREDENTIALS
+            is FirebaseNetworkException -> EmailLoginReason.NETWORK
+            is FirebaseTooManyRequestsException -> EmailLoginReason.TOO_MANY_ATTEMPTS
+            else -> EmailLoginReason.UNKNOWN
+        }
+        return EmailLoginFailure(reason, detail = "${this::class.simpleName}: $message")
     }
 
     override suspend fun register(email: String, password: String): Result<Unit> {
