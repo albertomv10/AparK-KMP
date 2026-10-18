@@ -23,7 +23,16 @@ Play, so store requirements are treated as real constraints rather than someday-
 
 **Before writing code for a feature, write the spec.** Then the design, then the tasks. Plan mode
 *is* the design phase, and approving the plan equals approving `design.md`. Integrate to `main` via
-Pull Request — never push to `main` directly.
+Pull Request — never push to `main` directly, and merge with **Squash and merge**: one commit on
+`main` per spec.
+
+**Do not work in a worktree here.** One person, one session at a time, and the gitignored config a
+new worktree lacks means it will not even build. Work in the normal checkout, which is the one
+Android Studio has open. Say so if a session starts in a worktree anyway.
+
+**Commit what you can verify; wait for what only Alberto can.** Compiling is not verifying. Anything
+whose proof is visual, on-device, or behind the login belongs to him — write it, say so, and leave
+it uncommitted until he confirms. [`docs/PROCESS.md`](docs/PROCESS.md) has the table.
 
 ## Tooling
 
@@ -209,6 +218,11 @@ graphify path "A" "B" --undirected
   release APK anyway**, with none of the project's keeps. Nothing fails loudly, and iOS has no R8,
   so testing releases on a real iPhone cannot catch it. Verify via
   `composeApp/build/outputs/mapping/release/mapping.txt`: the domain models must map to themselves.
+- **The iOS *release* link is the hungriest step of the whole build**, because Kotlin/Native runs
+  LTO there. It gets its own ceiling from `kotlin.native.jvmArgs`, separate from the Gradle daemon
+  — and before that property existed here it sat so close to the edge that the *same commit*
+  passed on one branch and died with `OutOfMemoryError` on another. If it comes back, raise that
+  one, not `org.gradle.jvmargs`: the Gradle daemon is what runs R8 for Android releases.
 - **`assembleRelease` produces an *unsigned* APK** — there is no `signingConfig`, and Play needs a
   signed AAB (`bundleRelease`).
 - **Kotlin `Boolean` crosses to Swift boxed** as `KotlinBoolean`: read it with `.boolValue`, and
