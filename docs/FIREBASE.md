@@ -249,6 +249,17 @@ npm --prefix tools run emulators        # auth 9099 · firestore 8080 · functio
 npm --prefix tools run seed             # en otra terminal, una vez estén levantados
 ```
 
+**Páralos al terminar, con Ctrl+C.** No por la memoria que ocupan, sino porque un segundo
+`emulators:start` **no toma el relevo**: falla con «port taken» y se cierra. Si no lees el log con
+atención, crees que hablas con los emuladores nuevos y en realidad sigues contra los viejos, con los
+datos de antes — ya ha pasado. Los datos no son motivo para dejarlos vivos: son en memoria y
+`npm run seed` los reconstruye idénticos.
+
+```sh
+lsof -i :9099                               # ¿queda alguno vivo?
+pkill -f "firebase.*emulators:start"        # si se quedó huérfano
+```
+
 La siembra deja dos cuentas con la contraseña `Emulador1234` y tres vehículos, uno de ellos
 **compartido entre las dos**:
 
