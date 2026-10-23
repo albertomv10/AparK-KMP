@@ -144,4 +144,6 @@
     <string name="account_theme_dark">Sombre</string>
     <string name="account_sign_out">Se déconnecter</string>
     <string name="error_sign_out">Impossible de se déconnecter. Veuillez réessayer</string>
+    <string name="error_no_network">Pas de connexion. Vérifiez votre réseau et réessayez</string>
+    <string name="error_too_many_attempts">Trop de tentatives. Patientez un instant avant de réessayer</string>
 </resources>

@@ -144,4 +144,6 @@
     <string name="account_theme_dark">Oscuro</string>
     <string name="account_sign_out">Cerrar sesión</string>
     <string name="error_sign_out">No se pudo cerrar la sesión. Inténtalo de nuevo</string>
+    <string name="error_no_network">Sin conexión. Comprueba tu red e inténtalo de nuevo</string>
+    <string name="error_too_many_attempts">Demasiados intentos. Espera un momento antes de volver a probar</string>
 </resources>

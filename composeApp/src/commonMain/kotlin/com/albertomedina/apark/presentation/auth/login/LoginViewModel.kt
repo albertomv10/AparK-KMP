@@ -2,6 +2,8 @@ package com.albertomedina.apark.presentation.auth.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.albertomedina.apark.domain.auth.EmailLoginFailure
+import com.albertomedina.apark.domain.auth.EmailLoginReason
 import com.albertomedina.apark.domain.model.User
 import com.albertomedina.apark.domain.repository.UserRepository
 import com.albertomedina.apark.domain.usecase.LoginAppleUseCase
@@ -103,20 +105,39 @@ class LoginViewModel(
                 onSuccess = {
                     _uiState.update { it.copy(shouldNavigate = true) }
                 },
-                onFailure = { error ->
-                    val errorKey =
-                        if (error.message?.contains("Email_verification_required") == true) {
-                            _uiState.update { it.copy(shouldVerificate = true) }
-                            "error_verify_email"
-                        } else if (error.message?.contains("credential", ignoreCase = true) == true) {
-                            "error_invalid_credentials"
-                        } else {
-                            error.message ?: "Unknown error"
-                        }
-                    _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error(errorKey)) }
-                }
+                onFailure = { error -> onEmailLoginFailed(error) }
             )
         }
+    }
+
+    /**
+     * El fallo llega como motivo, no como texto. Antes se decidía mirando si el mensaje de Firebase
+     * *contenía* ciertas palabras, y lo que no encajaba se volcaba en pantalla tal cual: así es
+     * como un `FIRAuthErrorDomain Code=17995 ... SecItemAdd (-34018)` acabó ocupando media pantalla
+     * delante del usuario. Es el mismo criterio que ya seguía el login social.
+     */
+    private fun onEmailLoginFailed(error: Throwable) {
+        val failure = error as? EmailLoginFailure
+            ?: EmailLoginFailure(EmailLoginReason.UNKNOWN, detail = error.message)
+
+        if (failure.reason == EmailLoginReason.EMAIL_NOT_VERIFIED) {
+            _uiState.update { it.copy(shouldVerificate = true) }
+        }
+
+        // Solo lo que no sabemos clasificar: un email sin verificar o una contraseña mal escrita no
+        // son incidencias, y llenar Crashlytics con ellas esconde lo que sí lo es.
+        if (failure.reason == EmailLoginReason.UNKNOWN) {
+            crashReporter.recordFailure(EMAIL_LOGIN_CONTEXT, failure.detail)
+        }
+
+        val key = when (failure.reason) {
+            EmailLoginReason.INVALID_CREDENTIALS -> "error_invalid_credentials"
+            EmailLoginReason.EMAIL_NOT_VERIFIED -> "error_verify_email"
+            EmailLoginReason.NETWORK -> ERROR_NO_NETWORK_KEY
+            EmailLoginReason.TOO_MANY_ATTEMPTS -> ERROR_TOO_MANY_ATTEMPTS_KEY
+            EmailLoginReason.UNKNOWN -> ERROR_UNKNOWN_KEY
+        }
+        _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error(key)) }
     }
 
     /**
@@ -208,6 +229,10 @@ class LoginViewModel(
 
     companion object {
         const val SOCIAL_LOGIN_CONTEXT = "social_login_failed"
+        const val EMAIL_LOGIN_CONTEXT = "email_login_failed"
+        const val ERROR_NO_NETWORK_KEY = "error_no_network"
+        const val ERROR_TOO_MANY_ATTEMPTS_KEY = "error_too_many_attempts"
+        const val ERROR_UNKNOWN_KEY = "error_unknown"
         const val ERROR_GOOGLE_KEY = "error_google_login"
         const val ERROR_NO_ACCOUNTS_KEY = "error_social_no_accounts"
     }

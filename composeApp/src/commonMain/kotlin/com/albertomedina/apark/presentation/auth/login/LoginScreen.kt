@@ -104,8 +104,13 @@ fun LoginScreen(
         "error_google_login" -> stringResource(Res.string.error_google_login)
         "error_social_no_accounts" -> stringResource(Res.string.error_social_no_accounts)
         "error_apple_login" -> stringResource(Res.string.error_apple_login)
-        // Si no coincide con ninguna llave, asumimos que es un texto normal (ej. un error directo de Firebase)
-        else -> state.snackbarMessage?.message
+        "error_no_network" -> stringResource(Res.string.error_no_network)
+        "error_too_many_attempts" -> stringResource(Res.string.error_too_many_attempts)
+        // Antes esta rama enseñaba el mensaje tal cual, suponiendo que sería legible. No lo era:
+        // llegaban cosas como `FIRAuthErrorDomain Code=17995 ... SecItemAdd (-34018)`. El ViewModel
+        // ya solo emite llaves conocidas, así que esto es la red de seguridad, y lo que hace es
+        // decir algo que se entienda.
+        else -> stringResource(Res.string.error_unknown)
     }
 
     LaunchedEffect(state.snackbarMessage) {

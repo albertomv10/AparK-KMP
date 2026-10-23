@@ -318,6 +318,13 @@ graphify path "A" "B" --undirected
   curve, so it is worth keeping rather than hand-rolling a slide.
 - **`BackHandler` is not part of `compose.ui`** — `org.jetbrains.compose.ui:ui-backhandler` must be
   declared explicitly, with `@OptIn(ExperimentalComposeUiApi::class)`.
+- **gitlive loses the exception type for the two commonest login failures — on iOS only.** Its iOS
+  mapper turns an `NSError` into a typed exception by code, and the list omits `17009`
+  (wrong password) and `17011` (user not found), so both arrive as a plain `FirebaseAuthException`.
+  On Android the types are `typealias` to the native SDK and classify correctly. The repository
+  therefore falls back to the numeric code parsed from the message — a number that is part of the
+  API contract, unlike the prose it sits in, which is what the old `contains("credential")` check
+  was reading.
 - **Social sign-in errors carry a reason, not a string.** `SocialLoginFailure` has a
   `SocialLoginReason`: `CANCELLED` shows nothing, `NO_ACCOUNTS` is actionable, everything else gets
   one readable message. Its `detail` field is for diagnostics and **must never be displayed**.
