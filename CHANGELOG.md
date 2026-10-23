@@ -78,6 +78,11 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   a las bases de datos `(default)` y `apark-at`.
 
 ### Fixed
+- **El login ya no enseña el error crudo de Firebase.** Cuando fallaba el inicio de sesión con
+  email, la pantalla volcaba el `NSError` entero —medio pantallazo de `FIRAuthErrorDomain
+  Code=17995 ... SecItemAdd (-34018)`—, y no por descuido: la traducción de mensajes decía
+  explícitamente que lo que no reconociera se enseñara tal cual. Ahora el fallo llega como motivo y
+  no como texto, igual que ya hacía el login social, y el detalle técnico va a Crashlytics.
 - **Los listeners de Firestore ya no se reinician cada hora.** La Home observa el estado de auth
   para que los datos cambien con el usuario, pero `authStateChanges` emite también al refrescarse
   el token —cada hora aproximadamente—, no solo al entrar o salir. Como el `flatMapLatest` no
