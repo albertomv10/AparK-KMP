@@ -238,6 +238,56 @@ Arranca el emulador, pasa los tests y lo apaga. No toca ningún proyecto real. P
 **debe permitirse** como lo que **debe denegarse**, que es lo que de verdad demuestra algo: una regla
 probada solo por el lado bueno pasaría igual siendo `allow read: if true`.
 
+## Emuladores en local (spec 010)
+
+Para recorrer la app entera sin tocar ningún proyecto real, y para que el asistente pueda entrar por
+su cuenta —que es lo que esto resuelve de verdad—. Dos terminales:
+
+```sh
+npm --prefix functions run build        # el emulador de Functions ejecuta lo compilado
+npm --prefix tools run emulators        # auth 9099 · firestore 8080 · functions 5001
+npm --prefix tools run seed             # en otra terminal, una vez estén levantados
+```
+
+La siembra deja dos cuentas con la contraseña `Emulador1234` y tres vehículos, uno de ellos
+**compartido entre las dos**:
+
+| Cuenta | Qué tiene |
+|---|---|
+| `alberto@emulador.test` | los tres vehículos; es el dueño de todos |
+| `edu@emulador.test` | solo el compartido, del que **no** es dueño |
+
+Sembrar dos veces deja exactamente lo mismo: el script borra antes de escribir y usa marcas de
+tiempo fijas. Y se niega a arrancar si no ve `FIRESTORE_EMULATOR_HOST` y `FIREBASE_AUTH_EMULATOR_HOST`,
+para que no pueda escribir contra `apark-dev` por accidente.
+
+### Que la app los use
+
+La dirección va en los ficheros de configuración local, que ya están gitignorados. **El valor es el
+host**: sin él, la app habla con `apark-dev` como siempre.
+
+| Plataforma | Fichero | Valor |
+|---|---|---|
+| Android | `local.properties` → `APARK_EMULATOR_HOST` | `10.0.2.2` desde el emulador · la IP de tu Mac desde un móvil |
+| iOS | `iosApp/iosApp/Secrets.xcconfig` → `APARK_EMULATOR_HOST` | `127.0.0.1` desde el simulador · la IP de tu Mac desde un iPhone |
+
+Una build de **release no puede encenderlos**: en Android el `BuildConfig` que lo lee solo se genera
+para la variante debug, y en iOS el código que lo lee está bajo `#if DEBUG`.
+
+### Lo que los emuladores NO dan
+
+- **Google y Apple no funcionan**: los SDK nativos devuelven un token real que el emulador no
+  valida. Se entra con email y contraseña.
+- **Ni App Check, ni Play Integrity, ni App Attest.**
+- **Ni cómo se ve nada en un dispositivo de verdad.**
+
+### Si falla el llavero en el simulador
+
+`ERROR_KEYCHAIN_ERROR` / `SecItemAdd (-34018) A required entitlement isn't present` al iniciar
+sesión **no es un fallo de la app**: es una build hecha con `CODE_SIGNING_ALLOWED=NO`, que deja el
+binario sin el *entitlement* del llavero, de modo que Firebase autentica bien pero no puede guardar
+la sesión. Compila sin esa bandera.
+
 ## Limpieza pendiente en el proyecto de producción
 
 Nada de esto es urgente, y todo es destructivo, así que está sin tocar:

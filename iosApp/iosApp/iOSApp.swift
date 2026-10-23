@@ -40,6 +40,19 @@ struct iOSApp: App {
             assertionFailure("Firebase no trae clientID: revisa el GoogleService-Info.plist copiado")
         }
 
+        // Los emuladores de Firebase, antes de Koin, que es quien construye los SDK.
+        //
+        // Va bajo #if DEBUG a proposito: es lo que garantiza que una build de release no pueda
+        // encenderlos. La clave sigue existiendo en su Info.plist, pero no hay codigo compilado
+        // que la lea. Ver `di/EmulatorConfig.kt`.
+        #if DEBUG
+        if let host = Bundle.main.object(forInfoDictionaryKey: "AparkEmulatorHost") as? String,
+           !host.isEmpty {
+            EmulatorConfigKt.emulatorHost = host
+            print("AparK: emuladores de Firebase en \(host)")
+        }
+        #endif
+
         HelperKt.doInitKoinIos()
         
         //Google SignIn

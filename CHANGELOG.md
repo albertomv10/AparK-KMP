@@ -9,6 +9,13 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **Emuladores de Firebase en local** ([spec 010](docs/specs/010-firebase-emulators/spec.md)): una
+  build de debug puede hablar con los emuladores de Auth, Firestore y Functions de tu máquina en
+  lugar de con `apark-dev`, poniendo su dirección en `local.properties` o en `Secrets.xcconfig`. Un
+  script siembra dos cuentas y tres vehículos —uno compartido entre ambas—, iguales en cada
+  arranque. Sirve para probar casos incómodos sin ensuciar nada, y sobre todo para que el asistente
+  pueda **entrar en la app y mirar por sí mismo**, que hasta ahora no podía: todo lo que importa
+  está detrás del inicio de sesión. Una build de release no puede encenderlos.
 - **Pestañas que navegan de verdad** ([spec 009](docs/specs/009-tab-navigation/spec.md)): las tres
   pestañas de abajo dejan de ser decorado. La navegación pasa a **dos capas** —una pila de fuera
   con la autenticación, y un shell con **una pila por pestaña**—, así que cada pestaña recuerda por

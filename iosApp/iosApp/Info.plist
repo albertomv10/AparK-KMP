@@ -4,6 +4,11 @@
 <dict>
 	<key>GoogleMapsAPIKey</key>
 	<string>$(GOOGLE_MAPS_API_KEY)</string>
+	<!-- Direccion de los emuladores de Firebase, desde Secrets.xcconfig. La clave existe en los
+	     dos tipos de build, pero solo la lee codigo bajo #if DEBUG, asi que una release no puede
+	     encenderlos aunque el valor estuviera puesto. Ver docs/FIREBASE.md. -->
+	<key>AparkEmulatorHost</key>
+	<string>$(APARK_EMULATOR_HOST)</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<!-- Google Sign-In devuelve el control a la app por este esquema, y iOS lo lee del binario

@@ -3,6 +3,7 @@ package com.albertomedina.apark
 import android.app.Application
 import com.albertomedina.apark.data.settings.androidSettingsContext
 import com.albertomedina.apark.di.androidModule
+import com.albertomedina.apark.di.emulatorHost
 import com.albertomedina.apark.di.initKoin
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.ktx.appCheck
@@ -15,6 +16,10 @@ class AparkApp: Application() {
         // Antes de arrancar Koin: el DataStore se construye al resolverlo y necesita saber dónde
         // puede escribir. En iOS esa ruta la da el sistema y no hace falta nada equivalente.
         androidSettingsContext = applicationContext
+
+        // Antes de Koin, que es quien construye los SDK de Firebase y donde se aplica.
+        // De dónde sale lo decide el source set de la variante — ver [emulatorHostOrNull].
+        emulatorHost = emulatorHostOrNull()
 
         initAppCheck()
 

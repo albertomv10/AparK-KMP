@@ -7,7 +7,9 @@
   "scripts": {
     "migrate": "tsx migrate-member-ids.ts",
     "test:rules": "firebase emulators:exec --only firestore --project apark-rules-test --config ../firebase.json 'vitest run'",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "emulators": "firebase emulators:start --only auth,firestore,functions --project apark-dev --config ../firebase.json",
+    "seed": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 tsx seed-emulators.ts"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.0",

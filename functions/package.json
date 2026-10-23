@@ -17,6 +17,7 @@
     "firebase-functions": "^6.3.0"
   },
   "devDependencies": {
+    "@firebase/app": "^0.16.3",
     "typescript": "^5.7.3"
   }
 }
