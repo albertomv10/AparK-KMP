@@ -144,4 +144,6 @@
     <string name="account_theme_dark">Dark</string>
     <string name="account_sign_out">Sign out</string>
     <string name="error_sign_out">Couldn't sign out. Please try again</string>
+    <string name="error_no_network">No connection. Check your network and try again</string>
+    <string name="error_too_many_attempts">Too many attempts. Wait a moment before trying again</string>
 </resources>
