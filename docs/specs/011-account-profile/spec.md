@@ -1,7 +1,7 @@
 # Spec: la cuenta, editable
 
 - **ID**: 011-account-profile
-- **Estado**: Borrador
+- **Estado**: Aprobado — diseño en [design.md](design.md)
 - **Fecha**: 2026-10-26
 
 ## Problema / Por qué
@@ -45,9 +45,11 @@ operaciones reversibles, es más barato que estrenarla en la única que no tiene
 
 1. **Dado** un usuario con sesión iniciada, **cuando** cambia su nombre, **entonces** el nombre
    nuevo aparece en su cuenta y en las tarjetas de los vehículos que haya aparcado.
-2. **Dado** un usuario que pide cambiar email o contraseña, **cuando** lleva demasiado tiempo con
-   la sesión abierta, **entonces** se le pide su contraseña actual antes de seguir, y **no** se le
-   echa de la app.
+2. **Dado** un usuario que pide cambiar email o contraseña, **cuando** lo confirma, **entonces** se
+   le pide **siempre** su contraseña actual antes de seguir, y **no** se le echa de la app.
+   *(Antes decía «cuando lleva demasiado tiempo con la sesión abierta». Firebase no deja saber de
+   antemano si el login es lo bastante reciente, y la ventana es de minutos: pedirla siempre evita
+   un segundo paso por sorpresa. Ver [design.md](design.md).)*
 3. **Dado** que ha pedido cambiar su email, **cuando** confirma, **entonces** recibe un correo de
    verificación **en la dirección nueva**, y su email de acceso **no cambia hasta que lo abre**.
 4. **Dado** que introduce mal su contraseña actual al reautenticarse, **cuando** se le avisa,
@@ -56,27 +58,34 @@ operaciones reversibles, es más barato que estrenarla en la única que no tiene
    le ofrece cambiar email ni contraseña, y entiende por qué.
 6. **Dado** cualquier fallo de los anteriores, **cuando** se muestra, **entonces** no aparece
    ningún texto técnico de Firebase.
+7. **Dado** un miembro que no es dueño y ha cambiado su email, **cuando** vuelve a entrar,
+   **entonces** puede aparcar un vehículo compartido. *(Añadido al diseñar: hoy no podría, porque
+   al aparcar se firma con el email del documento `users`, que nadie actualiza, y la regla lo
+   compara con el del token.)*
+8. **Dado** que la sesión termina fuera de la app —el enlace de cambio de email se abrió, o la
+   contraseña se cambió en otro dispositivo—, **cuando** la app lo detecta, **entonces** lleva al
+   login en lugar de quedarse en unas pestañas que no responden. *(Añadido al diseñar: Firebase
+   revoca la sesión al cambiar el email o la contraseña.)*
 
-## Preguntas abiertas
+## Preguntas abiertas — resueltas
 
-- **¿Dónde vive el nombre, y qué hay que propagar al cambiarlo?** Hoy está en tres sitios: el
-  `displayName` de Firebase Auth, el campo `name` del documento `users`, y **copiado dentro de cada
-  `lastLocation.user`** de los vehículos que esa persona aparcó (`ParkedBy`, spec 008). Lo tercero
-  es una desnormalización deliberada, así que cambiar el nombre no es una escritura: es una
-  cascada. ¿Se reescriben los vehículos —y con qué reglas, si solo el dueño puede escribirlos—, se
-  deja el histórico como estaba, o lo hace una Cloud Function?
-- **¿Y el email?** Está en `users.email` además de en Auth, y la regla de aparcar compara
-  `request.resource.data.lastLocation.user.email == request.auth.token.email`. Si el email de Auth
-  cambia y el documento no, ¿sigue pudiendo aparcar?
-- **La reautenticación, ¿pantalla o diálogo?** Un diálogo mantiene el contexto y es lo que hacen la
-  mayoría de apps; una pantalla se presta mejor a reutilizarse desde el borrado de cuenta.
-- **¿Qué se le enseña a quien entró con Google o Apple?** Ocultar las opciones sin más deja la
-  pantalla distinta sin explicación. ¿Se enseñan deshabilitadas con el motivo, o se indica de dónde
-  viene su identidad?
-- **¿Se permite cambiar el nombre a cualquiera?** Es el único dato de los tres que sí tiene sentido
-  para todos, incluidos los de Google y Apple.
-- **El email pendiente de verificar** (criterio 3) es un estado que la app no tiene hoy. ¿Se enseña
-  en algún sitio, o se asume que el correo basta?
+Todas se cerraron en la fase de diseño; el razonamiento completo está en [design.md](design.md).
+
+- **¿Dónde vive el nombre, y qué hay que propagar al cambiarlo?** → La fuente de la verdad es
+  `users/{uid}.name`, y es lo único que escribe el cliente. Un trigger de servidor,
+  `propagateUserProfile`, lo copia a `lastLocation.user` de los vehículos que esa persona aparcó y
+  al `displayName` de Auth. Con el Admin SDK, las reglas de vehículos no se tocan.
+- **¿Y el email?** → Hoy, quien no es dueño y cambia su email **no puede volver a aparcar**. La
+  regla se queda como está, y cambia el cliente: firma con el email de Auth, sincroniza
+  `users.email` al entrar en la app, y el mismo trigger propaga el cambio a las tarjetas.
+- **La reautenticación, ¿pantalla o diálogo?** → Ninguna de las dos: es un campo «contraseña
+  actual» dentro del propio formulario, y se pide siempre. Lo que 1.4 reutilizará es
+  `AuthRepository.reauthenticate()` y el componente `PasswordField`.
+- **¿Qué se le enseña a quien entró con Google o Apple?** → Su nombre, editable, y una fila que
+  explica que su email y su contraseña se gestionan en la cuenta de Google o de Apple.
+- **¿Se permite cambiar el nombre a cualquiera?** → Sí, también a quien entró con Google o Apple.
+- **El email pendiente de verificar** → Un aviso claro al enviarlo, y nada más: Firebase no expone
+  el email pendiente, así que no hay nada fiable que enseñar después.
 
 ## Fuera de alcance
 
