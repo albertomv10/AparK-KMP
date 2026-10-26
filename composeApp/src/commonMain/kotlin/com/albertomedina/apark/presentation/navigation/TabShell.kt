@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,11 +30,14 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.ui.defaultPopTransitionSpec
 import androidx.navigation3.ui.defaultTransitionSpec
 import com.albertomedina.apark.presentation.account.AccountScreen
+import com.albertomedina.apark.presentation.account.ChangeEmailScreen
+import com.albertomedina.apark.presentation.account.ChangePasswordScreen
 import com.albertomedina.apark.presentation.addvehicle.AddVehicleScreen
 import com.albertomedina.apark.presentation.components.AparkBottomNavigationBar
 import com.albertomedina.apark.presentation.home.HomeScreen
 import com.albertomedina.apark.presentation.vehicledetail.VehicleDetailScreen
 import com.albertomedina.apark.presentation.vehicles.VehiclesScreen
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * La app con pestañas: **una pila de navegación por pestaña**, y al `NavDisplay` se le pasa la de la
@@ -50,7 +55,17 @@ import com.albertomedina.apark.presentation.vehicles.VehiclesScreen
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun TabShell(onSignedOut: () -> Unit) {
+fun TabShell(
+    onSignedOut: () -> Unit,
+    session: SessionViewModel = koinViewModel()
+) {
+    // La única salida: el botón de cerrar sesión, una sesión revocada o una cuenta deshabilitada
+    // pasan todos por aquí. Ver `SessionViewModel`.
+    val signedOut by session.signedOut.collectAsState()
+    LaunchedEffect(signedOut) {
+        if (signedOut) onSignedOut()
+    }
+
     // Tres llamadas separadas y no un bucle: `rememberNavBackStack` no acepta clave y se apoya en la
     // posición en la composición, de modo que en un bucle las tres compartirían posición y
     // colisionarían al restaurar.
@@ -147,7 +162,16 @@ fun TabShell(onSignedOut: () -> Unit) {
                         )
                     }
                     is Account -> NavEntry(key) {
-                        AccountScreen(onSignedOut = onSignedOut)
+                        AccountScreen(
+                            onNavigateToChangeEmail = { push(ChangeEmail) },
+                            onNavigateToChangePassword = { push(ChangePassword) }
+                        )
+                    }
+                    is ChangeEmail -> NavEntry(key) {
+                        ChangeEmailScreen(onBack = { pop() })
+                    }
+                    is ChangePassword -> NavEntry(key) {
+                        ChangePasswordScreen(onBack = { pop() })
                     }
                     is VehicleDetail -> NavEntry(key) {
                         VehicleDetailScreen(

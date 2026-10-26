@@ -78,11 +78,14 @@ fun RegisterScreen(
         }
     }
 
+    // El ViewModel emite llaves, no textos: se traducen aquí, que es donde hay recursos.
+    val snackbarText = state.snackbarMessage?.let { getErrorMessage(it.message) }
+
     LaunchedEffect(state.snackbarMessage) {
         state.snackbarMessage?.let { msg ->
             activeSnackbarMessage = msg
             snackbarHostState.showSnackbar(
-                message = msg.message,
+                message = snackbarText ?: msg.message,
                 actionLabel = msg.actionLabel,
                 withDismissAction = true,
                 duration = SnackbarDuration.Long

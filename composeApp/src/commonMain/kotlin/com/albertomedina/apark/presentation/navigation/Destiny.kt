@@ -54,6 +54,20 @@ data object AddVehicle : Destiny {
     override val showsTabBar: Boolean get() = false
 }
 
+/**
+ * Cambiar el email o la contraseña: tareas con principio y fin, y con teclado, así que sin barra.
+ * Una pantalla y no un diálogo porque la contraseña lleva tres campos (spec 011).
+ */
+@Serializable
+data object ChangeEmail : Destiny {
+    override val showsTabBar: Boolean get() = false
+}
+
+@Serializable
+data object ChangePassword : Destiny {
+    override val showsTabBar: Boolean get() = false
+}
+
 /** Serialización de polimorfismo abierto, necesaria para guardar y restaurar las pilas. */
 internal val navigationConfig = SavedStateConfiguration {
     serializersModule = SerializersModule {
@@ -69,6 +83,8 @@ internal val navigationConfig = SavedStateConfiguration {
             subclass(Account::class, Account.serializer())
             subclass(AddVehicle::class, AddVehicle.serializer())
             subclass(VehicleDetail::class, VehicleDetail.serializer())
+            subclass(ChangeEmail::class, ChangeEmail.serializer())
+            subclass(ChangePassword::class, ChangePassword.serializer())
         }
     }
 }

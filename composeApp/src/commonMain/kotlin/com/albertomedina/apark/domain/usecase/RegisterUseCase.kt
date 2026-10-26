@@ -1,5 +1,7 @@
 package com.albertomedina.apark.domain.usecase
 
+import com.albertomedina.apark.domain.auth.AuthFailure
+import com.albertomedina.apark.domain.auth.AuthFailureReason
 import com.albertomedina.apark.domain.repository.AuthRepository
 
 class RegisterUseCase(
@@ -10,7 +12,7 @@ class RegisterUseCase(
 
     suspend operator fun invoke(email: String, password: String): Result<Unit> {
         if (!email.matches(emailRegex)) {
-            return Result.failure(Exception("Formato de email inválido")) // Mensaje genérico o usar Resources
+            return Result.failure(AuthFailure(AuthFailureReason.INVALID_EMAIL))
         }
         return authRepository.register(email, password)
     }

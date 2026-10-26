@@ -13,4 +13,16 @@ interface UserRepository {
      * no-op, not a failure.
      */
     suspend fun moveUserVehicle(userId: String, vehicleId: String, offset: Int): Result<Unit>
+
+    /**
+     * The name other members see on the cards of the vehicles this person parked. Only this field
+     * is written: the copies inside the vehicles are the `propagateUserProfile` function's job.
+     */
+    suspend fun updateName(userId: String, name: String): Result<Unit>
+
+    /**
+     * Brings the stored email in line with the account's after it changed in Auth. Does nothing if
+     * it already matches, or if the document does not exist yet.
+     */
+    suspend fun syncEmail(userId: String, email: String): Result<Unit>
 }
