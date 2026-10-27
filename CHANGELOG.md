@@ -9,6 +9,14 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **La cuenta, editable** ([spec 011](docs/specs/011-account-profile/spec.md)): desde *Cuenta* se
+  cambia el **nombre** —el que ven los demás miembros en las tarjetas—, el **email** y la
+  **contraseña**. Los dos últimos piden siempre la contraseña actual, porque Firebase exige un login
+  reciente y no deja saber de antemano si lo es. Cambiar el email manda un enlace a la dirección
+  nueva y no cambia nada hasta que se abre; entonces Firebase cierra la sesión, y la app vuelve al
+  login. Quien entró con Google o Apple puede cambiar su nombre, y se le explica por qué no ve lo
+  demás. Las copias del nombre que llevan los vehículos las mantiene una función nueva,
+  `propagateUserProfile`: el cliente solo escribe `users/{uid}.name`.
 - **Emuladores de Firebase en local** ([spec 010](docs/specs/010-firebase-emulators/spec.md)): una
   build de debug puede hablar con los emuladores de Auth, Firestore y Functions de tu máquina en
   lugar de con `apark-dev`, poniendo su dirección en `local.properties` o en `Secrets.xcconfig`. Un
@@ -78,6 +86,16 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   a las bases de datos `(default)` y `apark-at`.
 
 ### Fixed
+- **Un miembro que cambiaba de email ya no se quedaba sin poder aparcar.** Al aparcar, la app
+  firmaba con el email del documento `users`, que nadie actualizaba, mientras la regla lo compara
+  con el del token; el dueño no lo notaba, pero un miembro compartido recibía PERMISSION_DENIED
+  para siempre. Ahora firma con el email del token, y el documento se pone al día al entrar.
+- **La app ya no se queda colgada cuando la sesión termina por su cuenta.** Solo salía al login el
+  botón de cerrar sesión; una sesión revocada —por cambiar el email o la contraseña en otro
+  sitio— dejaba unas pestañas en las que todo fallaba. Ahora hay una única salida, que escucha el
+  estado de la sesión.
+- **El registro ya no enseña el error crudo de Firebase**, el mismo arreglo que el login: «Ese email
+  ya tiene una cuenta» aparece en su campo.
 - **El login ya no enseña el error crudo de Firebase.** Cuando fallaba el inicio de sesión con
   email, la pantalla volcaba el `NSError` entero —medio pantallazo de `FIRAuthErrorDomain
   Code=17995 ... SecItemAdd (-34018)`—, y no por descuido: la traducción de mensajes decía

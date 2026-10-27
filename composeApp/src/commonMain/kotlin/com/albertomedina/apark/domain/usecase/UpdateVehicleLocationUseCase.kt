@@ -37,7 +37,13 @@ class UpdateVehicleLocationUseCase(
                     user = Vehicle.ParkedBy(
                         uid = userId,
                         name = userProfile.name,
-                        email = userProfile.email
+                        // El del token, ni el del documento ni el del perfil: es el que la regla de
+                        // aparcar compara. El del documento se queda atrás cuando el email cambia
+                        // fuera de la app, y con él un miembro que no es dueño no podía volver a
+                        // aparcar (spec 011). El del perfil se adelanta al token tras un `reload`.
+                        email = authRepository.tokenEmail()
+                            ?: authRepository.getUserEmail()
+                            ?: userProfile.email
                     ),
                     timestamp = if (location.timestamp == 0L) Clock.System.now().toEpochMilliseconds() else location.timestamp
                 )

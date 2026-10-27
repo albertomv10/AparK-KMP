@@ -1,5 +1,6 @@
 package com.albertomedina.apark.domain.repository
 
+import com.albertomedina.apark.domain.auth.SignInProvider
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.Flow
 
@@ -70,4 +71,38 @@ interface AuthRepository {
      * @return A Result containing Unit on success, or an error on failure.
      */
     suspend fun resetPassword(email: String): Result<Unit>
+
+    /** How the current user signed in, which decides what they can change from the app. */
+    fun signInProvider(): SignInProvider
+
+    /**
+     * Proves again that the person holding the phone knows the password. Firebase demands a recent
+     * sign-in before changing the email or the password — and, in 1.4, before deleting the account.
+     * Fails with [com.albertomedina.apark.domain.auth.AuthFailureReason.INVALID_CREDENTIALS] when
+     * the password is wrong.
+     */
+    suspend fun reauthenticate(currentPassword: String): Result<Unit>
+
+    /**
+     * Sends a verification link to [newEmail]. The sign-in email **does not change** until that
+     * link is opened, and opening it ends every session of the account.
+     */
+    suspend fun requestEmailChange(newEmail: String): Result<Unit>
+
+    /** Changes the password. This device keeps its session; the others lose theirs. */
+    suspend fun changePassword(newPassword: String): Result<Unit>
+
+    /**
+     * Refreshes the current user from the server, **and its ID token with it**, so that
+     * [getUserEmail] and [tokenEmail] cannot disagree afterwards. A revoked session fails with
+     * [com.albertomedina.apark.domain.auth.AuthFailureReason.SESSION_EXPIRED].
+     */
+    suspend fun reloadUser(): Result<Unit>
+
+    /**
+     * The email inside the current ID token — exactly what the security rules see as
+     * `request.auth.token.email`. It can differ from [getUserEmail] for a while after the email
+     * changes, because refreshing the profile does not refresh the token.
+     */
+    suspend fun tokenEmail(): String?
 }

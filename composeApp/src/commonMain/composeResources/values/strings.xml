@@ -146,4 +146,41 @@
     <string name="error_sign_out">No se pudo cerrar la sesión. Inténtalo de nuevo</string>
     <string name="error_no_network">Sin conexión. Comprueba tu red e inténtalo de nuevo</string>
     <string name="error_too_many_attempts">Demasiados intentos. Espera un momento antes de volver a probar</string>
+
+    <!-- Cuenta editable (spec 011) -->
+    <string name="save">Guardar</string>
+    <string name="done">Entendido</string>
+    <string name="back">Volver</string>
+    <string name="account_name_placeholder">Añade tu nombre</string>
+    <string name="account_edit_name">Cambiar el nombre</string>
+    <string name="account_name_dialog_title">Tu nombre</string>
+    <string name="account_name_dialog_hint">Es el que ven los demás miembros de tus vehículos cuando aparcas.</string>
+    <string name="account_name_label">Nombre</string>
+    <string name="account_access">Acceso</string>
+    <string name="account_change_email">Email</string>
+    <string name="account_change_password">Contraseña</string>
+    <string name="account_managed_by_google">Has entrado con Google. Tu email y tu contraseña se gestionan en tu cuenta de Google.</string>
+    <string name="account_managed_by_apple">Has entrado con Apple. Tu email y tu contraseña se gestionan en tu cuenta de Apple.</string>
+    <string name="current_password_label">Contraseña actual</string>
+    <string name="change_email_title">Cambiar el email</string>
+    <string name="change_email_intro">Te enviaremos un enlace a la dirección nueva. Tu email no cambia hasta que lo abras.</string>
+    <string name="change_email_new_label">Email nuevo</string>
+    <string name="change_email_submit">Enviar enlace</string>
+    <string name="change_email_sent_title">Revisa tu correo</string>
+    <string name="change_email_sent_body">Te hemos enviado un enlace a %1$s. Tu email no cambia hasta que lo abras, y después tendrás que volver a entrar con el nuevo.</string>
+    <string name="change_password_title">Cambiar la contraseña</string>
+    <string name="change_password_new_label">Contraseña nueva</string>
+    <string name="change_password_confirm_label">Repite la contraseña nueva</string>
+    <string name="change_password_submit">Cambiar la contraseña</string>
+    <string name="change_password_done_title">Contraseña cambiada</string>
+    <string name="change_password_done_body">La próxima vez que entres, usa la nueva. En tus otros dispositivos tendrás que volver a entrar.</string>
+    <string name="error_email_in_use">Ese email ya tiene una cuenta</string>
+    <string name="error_weak_password">Esa contraseña es demasiado débil</string>
+    <string name="error_wrong_current_password">Esa no es tu contraseña actual</string>
+    <string name="error_same_email">Ese ya es tu email</string>
+    <string name="error_same_password">La nueva tiene que ser distinta de la actual</string>
+    <string name="error_session_expired">Tu sesión ha terminado. Vuelve a entrar</string>
+    <string name="error_name_empty">Escribe un nombre</string>
+    <string name="error_name_too_long">Como mucho 40 caracteres</string>
+    <string name="error_save_name">No se pudo guardar el nombre. Inténtalo de nuevo</string>
 </resources>

@@ -15,6 +15,8 @@ import com.albertomedina.apark.domain.repository.InviteRepository
 import com.albertomedina.apark.domain.repository.LocationRepository
 import com.albertomedina.apark.domain.repository.UserRepository
 import com.albertomedina.apark.domain.repository.VehicleRepository
+import com.albertomedina.apark.domain.usecase.ChangeEmailUseCase
+import com.albertomedina.apark.domain.usecase.ChangePasswordUseCase
 import com.albertomedina.apark.domain.usecase.CreateVehicleInviteUseCase
 import com.albertomedina.apark.domain.usecase.CreateVehicleUseCase
 import com.albertomedina.apark.domain.usecase.DeleteVehicleUseCase
@@ -23,14 +25,16 @@ import com.albertomedina.apark.domain.usecase.GetLastVehicleLocationUseCase
 import com.albertomedina.apark.domain.usecase.GetUserUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleByIdUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
+import com.albertomedina.apark.domain.usecase.JoinVehicleWithCodeUseCase
 import com.albertomedina.apark.domain.usecase.LoginAppleUseCase
 import com.albertomedina.apark.domain.usecase.LoginGoogleUseCase
-import com.albertomedina.apark.domain.usecase.JoinVehicleWithCodeUseCase
 import com.albertomedina.apark.domain.usecase.LoginUseCase
 import com.albertomedina.apark.domain.usecase.MoveVehicleUseCase
 import com.albertomedina.apark.domain.usecase.RegisterUseCase
 import com.albertomedina.apark.domain.usecase.RemoveUserFromVehicleUseCase
 import com.albertomedina.apark.domain.usecase.SignOutUseCase
+import com.albertomedina.apark.domain.usecase.SyncUserProfileUseCase
+import com.albertomedina.apark.domain.usecase.UpdateUserNameUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleLocationUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleUseCase
 import com.albertomedina.apark.presentation.auth.login.LoginViewModel
@@ -40,6 +44,9 @@ import com.albertomedina.apark.presentation.auth.verification.EmailVerificationV
 import com.albertomedina.apark.presentation.addvehicle.AddVehicleViewModel
 import com.albertomedina.apark.presentation.home.HomeViewModel
 import com.albertomedina.apark.presentation.account.AccountViewModel
+import com.albertomedina.apark.presentation.account.ChangeEmailViewModel
+import com.albertomedina.apark.presentation.account.ChangePasswordViewModel
+import com.albertomedina.apark.presentation.navigation.SessionViewModel
 import com.albertomedina.apark.presentation.splash.SplashViewModel
 import com.albertomedina.apark.presentation.vehicles.VehiclesViewModel
 import com.albertomedina.apark.presentation.vehicledetail.VehicleDetailViewModel
@@ -132,6 +139,10 @@ val sharedModule = module {
 
     // User
     factory { GetUserUseCase(repository = get()) }
+    factory { UpdateUserNameUseCase(authRepository = get(), userRepository = get()) }
+    factory { SyncUserProfileUseCase(authRepository = get(), userRepository = get()) }
+    factory { ChangeEmailUseCase(authRepository = get()) }
+    factory { ChangePasswordUseCase(authRepository = get()) }
 
     // Location
     factory { GetCurrentLocationUseCase(repository = get()) }
@@ -148,8 +159,33 @@ val sharedModule = module {
     viewModel {
         AccountViewModel(
             authRepository = get(),
+            getUserUseCase = get(),
+            updateUserNameUseCase = get(),
+            syncUserProfileUseCase = get(),
             signOutUseCase = get(),
             settingsRepository = get()
+        )
+    }
+
+    viewModel {
+        ChangeEmailViewModel(
+            authRepository = get(),
+            changeEmailUseCase = get(),
+            crashReporter = get()
+        )
+    }
+
+    viewModel {
+        ChangePasswordViewModel(
+            changePasswordUseCase = get(),
+            crashReporter = get()
+        )
+    }
+
+    viewModel {
+        SessionViewModel(
+            authRepository = get(),
+            syncUserProfileUseCase = get()
         )
     }
 
@@ -165,7 +201,8 @@ val sharedModule = module {
 
     viewModel {
         RegisterViewModel(
-            registerUseCase = get()
+            registerUseCase = get(),
+            crashReporter = get()
         )
     }
 
