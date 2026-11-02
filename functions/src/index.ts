@@ -1,12 +1,13 @@
 import { initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
-import { onDocumentDeleted, FirestoreEvent, QueryDocumentSnapshot } from "firebase-functions/v2/firestore";
+import { onDocumentDeleted, onDocumentUpdated, FirestoreEvent, QueryDocumentSnapshot } from "firebase-functions/v2/firestore";
 // Imported from its own entry point rather than the `firebase-functions/v2` barrel: that barrel
 // pulls in every provider, including Realtime Database, whose transitive @firebase/app peer
 // dependency npm does not install — which breaks the deploy-time analysis of this codebase.
 import * as logger from "firebase-functions/logger";
 import { onCall } from "firebase-functions/v2/https";
 import { createInviteHandler, joinWithCodeHandler } from "./invites";
+import { propagateUserProfileHandler } from "./profile";
 
 initializeApp();
 
@@ -127,3 +128,8 @@ export const cleanupVehicleReferences = onDocumentDeleted(
 
 export const createVehicleInvite = onCall({ region: REGION }, createInviteHandler);
 export const joinVehicleWithCode = onCall({ region: REGION }, joinWithCodeHandler);
+
+export const propagateUserProfile = onDocumentUpdated(
+    { document: "users/{uid}", region: REGION },
+    propagateUserProfileHandler
+);

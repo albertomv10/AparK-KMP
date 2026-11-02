@@ -7,4 +7,6 @@ object FirestoreConstants {
     const val LAST_LOCATION_FIELD = "lastLocation"
     const val CARS_FIELD = "userVehicles"
     const val UPDATED_AT_FIELD = "updatedAt"
+    const val NAME_FIELD = "name"
+    const val EMAIL_FIELD = "email"
 }

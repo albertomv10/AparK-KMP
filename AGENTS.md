@@ -125,7 +125,7 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 | `domain.usecase` | One `operator fun invoke()` each |
 | `presentation.splash` · `presentation.auth.*` | Splash, login, register, verification, reset |
 | `presentation.home` | Map + vehicle carousel + edit mode |
-| `presentation.vehicles` · `presentation.account` | The vehicle list, and email + theme + sign out |
+| `presentation.vehicles` · `presentation.account` | The vehicle list, and the account: name, email, password, theme, sign out |
 | `presentation.addvehicle` · `presentation.vehicledetail` | Create/join, and the detail placeholder |
 | `presentation.components` | Shared composables: map, buttons, dialog, permission handlers |
 | `presentation.navigation` | Navigation 3 setup |
@@ -135,7 +135,7 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 
 | Collection | Document ID | Key fields |
 |------------|-------------|------------|
-| `users` | `FirebaseAuth.uid` | `email`, `name`, `userVehicles: List<String>` — **an ordering hint only**, never the source of the list |
+| `users` | `FirebaseAuth.uid` | `email`, `name` — **the only copy the client writes**; `userVehicles: List<String>` — **an ordering hint only**, never the source of the list |
 | `vehicles` | Auto-generated | `name`, `licensePlate`, `ownerId`, `memberIds: List<String>` (owner included), `lastLocation`, `createdAt`, `updatedAt` |
 | `invites` | The 8-character code | `vehicleId`, `createdBy`, `expiresAt`, `usedBy` — clients are denied all access |
 
@@ -151,6 +151,12 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 `functions/` is the only server-side code (TypeScript, Node 22): one `onDocumentDeleted` trigger on
 `vehicles` doing two independent cleanups under `Promise.all`, plus two callables for sharing that
 exist because the rules deny clients any access to `invites` at all.
+
+`propagateUserProfile` (spec 011) is an `onDocumentUpdated` trigger on `users/{uid}`. The client
+writes the name **only there**; the function copies it into `lastLocation.user` of every vehicle that
+person parked last — one transaction per vehicle, re-checking who parked — and into the Auth
+`displayName`. It copies the email only if it matches the account's, because `users` is writable by
+its owner. Most writes to `users` are reorders, and those return at the first check.
 
 ```sh
 npm --prefix functions run build
@@ -261,6 +267,23 @@ graphify path "A" "B" --undirected
 
 ### App code
 
+- **The session has one exit.** `SessionViewModel`, scoped to `TabShell`, watches `authStateChanges`
+  and goes to the login on `null`, whatever caused it. The sign-out button does not navigate. Firebase
+  **revokes the session when the email or the password changes** — the email one happens outside the
+  app, when the link is opened — and before this the app stayed on tabs where everything failed. When
+  an operation on the current user comes back as a dead session, `FirebaseAuthRepository` signs out
+  itself, which is what triggers the exit.
+- **Parking signs `ParkedBy.email` with the email in the ID token** (`tokenEmail()`), not the one in
+  `users` nor the profile's. The rule compares it with `request.auth.token.email`; the document lags
+  behind after an email change, and **`reload()` updates the profile but not the token** — which is
+  why `reloadUser()` also forces a token refresh.
+- **The Auth emulator does not revoke the session on an email change**, real Firebase does. To test
+  how the app reacts, set `validSince` by hand (`accounts:update` with `Bearer owner`). The link
+  itself comes from `GET :9099/emulator/v1/projects/apark-dev/oobCodes`.
+- **`AuthFailure`'s reason depends on the operation.** On Android a badly formatted email arrives as
+  `InvalidCredentials`, like a wrong password, and a revoked session as `InvalidUser`, like an unknown
+  account at login; on iOS gitlive types 17021 (*token expired*) as `InvalidCredentials`. That is why
+  `toAuthFailure()` takes the operation, and checks iOS codes before types.
 - **Auth data leak (fixed)**: `HomeViewModel` observes `authStateChanges` + `flatMapLatest` so
   vehicle data switches with the user. Never load once in `init`. `flatMapLatest` needs
   `@OptIn(ExperimentalCoroutinesApi::class)`.

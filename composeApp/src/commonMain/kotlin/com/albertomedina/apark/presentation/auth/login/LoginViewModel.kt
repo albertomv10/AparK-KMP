@@ -2,8 +2,8 @@ package com.albertomedina.apark.presentation.auth.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.albertomedina.apark.domain.auth.EmailLoginFailure
-import com.albertomedina.apark.domain.auth.EmailLoginReason
+import com.albertomedina.apark.domain.auth.AuthFailure
+import com.albertomedina.apark.domain.auth.AuthFailureReason
 import com.albertomedina.apark.domain.model.User
 import com.albertomedina.apark.domain.repository.UserRepository
 import com.albertomedina.apark.domain.usecase.LoginAppleUseCase
@@ -117,25 +117,32 @@ class LoginViewModel(
      * delante del usuario. Es el mismo criterio que ya seguía el login social.
      */
     private fun onEmailLoginFailed(error: Throwable) {
-        val failure = error as? EmailLoginFailure
-            ?: EmailLoginFailure(EmailLoginReason.UNKNOWN, detail = error.message)
+        val failure = error as? AuthFailure
+            ?: AuthFailure(AuthFailureReason.UNKNOWN, detail = error.message)
 
-        if (failure.reason == EmailLoginReason.EMAIL_NOT_VERIFIED) {
+        if (failure.reason == AuthFailureReason.EMAIL_NOT_VERIFIED) {
             _uiState.update { it.copy(shouldVerificate = true) }
         }
 
         // Solo lo que no sabemos clasificar: un email sin verificar o una contraseña mal escrita no
         // son incidencias, y llenar Crashlytics con ellas esconde lo que sí lo es.
-        if (failure.reason == EmailLoginReason.UNKNOWN) {
+        if (failure.reason == AuthFailureReason.UNKNOWN) {
             crashReporter.recordFailure(EMAIL_LOGIN_CONTEXT, failure.detail)
         }
 
         val key = when (failure.reason) {
-            EmailLoginReason.INVALID_CREDENTIALS -> "error_invalid_credentials"
-            EmailLoginReason.EMAIL_NOT_VERIFIED -> "error_verify_email"
-            EmailLoginReason.NETWORK -> ERROR_NO_NETWORK_KEY
-            EmailLoginReason.TOO_MANY_ATTEMPTS -> ERROR_TOO_MANY_ATTEMPTS_KEY
-            EmailLoginReason.UNKNOWN -> ERROR_UNKNOWN_KEY
+            AuthFailureReason.INVALID_CREDENTIALS -> "error_invalid_credentials"
+            AuthFailureReason.EMAIL_NOT_VERIFIED -> "error_verify_email"
+            AuthFailureReason.INVALID_EMAIL -> "error_invalid_email"
+            AuthFailureReason.NETWORK -> ERROR_NO_NETWORK_KEY
+            AuthFailureReason.TOO_MANY_ATTEMPTS -> ERROR_TOO_MANY_ATTEMPTS_KEY
+            // Ninguno puede salir de un login, pero el `when` los nombra para que un motivo nuevo
+            // obligue a decidir qué se enseña en vez de caer en silencio en el genérico.
+            AuthFailureReason.EMAIL_ALREADY_IN_USE,
+            AuthFailureReason.WEAK_PASSWORD,
+            AuthFailureReason.REQUIRES_RECENT_LOGIN,
+            AuthFailureReason.SESSION_EXPIRED,
+            AuthFailureReason.UNKNOWN -> ERROR_UNKNOWN_KEY
         }
         _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error(key)) }
     }

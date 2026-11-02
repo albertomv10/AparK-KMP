@@ -2,6 +2,9 @@ package com.albertomedina.apark.presentation.auth.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.albertomedina.apark.domain.auth.AuthFailure
+import com.albertomedina.apark.domain.auth.AuthFailureReason
+import com.albertomedina.apark.domain.logging.CrashReporter
 import com.albertomedina.apark.domain.usecase.RegisterUseCase
 import com.albertomedina.apark.utils.SnackbarMessage
 import com.albertomedina.apark.utils.validateConfirmPassword
@@ -14,7 +17,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class RegisterViewModel(
-    private val registerUseCase: RegisterUseCase
+    private val registerUseCase: RegisterUseCase,
+    private val crashReporter: CrashReporter
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RegisterUiState())
@@ -77,11 +81,48 @@ class RegisterViewModel(
                 onSuccess = {
                     _uiState.update { it.copy(shouldNavigateToVerify = true) }
                 },
-                onFailure = { error ->
-                    _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error(error.message ?: "Unknown Error")) }
-                }
+                onFailure = { error -> onRegisterFailed(error) }
             )
         }
+    }
+
+    /**
+     * El mismo arreglo que el PR #34 hizo en el login: antes se volcaba `error.message` en el
+     * snackbar, que es el texto de Firebase tal cual. Lo que es de un campo concreto se enseña en
+     * ese campo; lo demás, en el snackbar con un texto legible.
+     */
+    private fun onRegisterFailed(error: Throwable) {
+        val failure = error as? AuthFailure
+            ?: AuthFailure(AuthFailureReason.UNKNOWN, detail = error.message)
+
+        if (failure.reason == AuthFailureReason.UNKNOWN) {
+            crashReporter.recordFailure(REGISTER_CONTEXT, failure.detail)
+        }
+
+        when (failure.reason) {
+            AuthFailureReason.EMAIL_ALREADY_IN_USE ->
+                _uiState.update { it.copy(emailError = "error_email_in_use") }
+            AuthFailureReason.INVALID_EMAIL ->
+                _uiState.update { it.copy(emailError = "error_invalid_email") }
+            AuthFailureReason.WEAK_PASSWORD ->
+                _uiState.update { it.copy(passwordError = "error_weak_password") }
+            AuthFailureReason.NETWORK ->
+                _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_no_network")) }
+            AuthFailureReason.TOO_MANY_ATTEMPTS ->
+                _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_too_many_attempts")) }
+            // Ninguno de estos puede salir de un registro; se nombran para que un motivo nuevo
+            // obligue a decidir.
+            AuthFailureReason.INVALID_CREDENTIALS,
+            AuthFailureReason.EMAIL_NOT_VERIFIED,
+            AuthFailureReason.REQUIRES_RECENT_LOGIN,
+            AuthFailureReason.SESSION_EXPIRED,
+            AuthFailureReason.UNKNOWN ->
+                _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_unknown")) }
+        }
+    }
+
+    companion object {
+        const val REGISTER_CONTEXT = "register_failed"
     }
 
 
