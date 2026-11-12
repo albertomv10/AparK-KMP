@@ -51,4 +51,5 @@
 - [x] **(7)** Tras entrar con el email nuevo, un miembro que no es dueño aparca el compartido
 - [x] **(6)** Ningún texto técnico en ninguno de los fallos, registro incluido
 - [ ] Desplegar reglas y función en `apark-dev` — **cuando Alberto dé el visto bueno**
-- [ ] **(5)** Cuenta de Google o Apple — **Alberto**, en dispositivo: los emuladores no las aceptan
+- [x] **(5)** Cuenta de Google o Apple — confirmado por Alberto en dispositivo, junto con el correo
+      real de `apark-dev` y Android: los emuladores no aceptan esos logins
