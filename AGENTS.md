@@ -142,9 +142,6 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 > [spec 008](docs/specs/008-vehicle-membership-model/spec.md) shipped this shape.
 > [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md) describes where the rest is going — the subcollections
 > for incidents, maintenance and reminders are not built yet.
->
-> **Production documents still carry a dead `sharedUsers` field**: the cleanup is the last step of
-> that migration and waits until every installed app has updated.
 
 ## Backend — Cloud Functions
 

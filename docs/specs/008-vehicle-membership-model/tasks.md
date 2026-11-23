@@ -69,9 +69,13 @@ saltárselo rompe cosas.
 - [ ] Actualizar los dos dispositivos contra producción
 
 ## Paso operativo 3 — limpieza
-- [ ] `--drop-shared-users` contra `apark-dev`
-- [ ] Comprobar que la app sigue funcionando
-- [ ] Repetir contra producción
+- [x] `--drop-shared-users` contra `apark-dev`: ningún vehículo conserva el campo
+- [x] Comprobar que la app sigue funcionando
+- [x] Repetir contra producción — **2026-11-23**, sin el script: no había credenciales de
+      aplicación en el equipo, y generar una clave de cuenta de servicio es lo que
+      [`FIREBASE.md`](../../FIREBASE.md) desaconseja. Se quitó campo a campo desde el servidor MCP
+      de Firebase, con la sesión de la CLI, tras comprobar que cada `sharedUsers` estaba contenido
+      en su `memberIds`. Eran 4 vehículos.
 
 ## Documentación
 - [ ] Anotar en la [spec 004](../004-stale-cache-cards/spec.md) que queda **mitigada**, no cerrada
