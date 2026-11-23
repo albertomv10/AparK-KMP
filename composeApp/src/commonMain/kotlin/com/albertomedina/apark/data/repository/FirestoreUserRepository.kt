@@ -43,7 +43,11 @@ class FirestoreUserRepository(
                 val reordered = vehicleIds.toMutableList().apply {
                     add(to, removeAt(from))
                 }
-                update(userRef, FirestoreConstants.CARS_FIELD to reordered)
+                update(
+                    userRef,
+                    FirestoreConstants.CARS_FIELD to reordered,
+                    FirestoreConstants.UPDATED_AT_FIELD to Clock.System.now().toEpochMilliseconds()
+                )
             }
 
             Result.success(Unit)
@@ -88,7 +92,11 @@ class FirestoreUserRepository(
             val snapshot = docRef.get()
 
             if (!snapshot.exists) {
-                docRef.set<User>(user)
+                // Las fechas las pone quien crea el documento, y este es el único sitio que lo
+                // hace: quien llama pasa un `User` recién construido, con las dos a 0, y así
+                // llegaban a Firestore.
+                val now = Clock.System.now().toEpochMilliseconds()
+                docRef.set<User>(user.copy(createdAt = now, updatedAt = now))
             }
         } catch (e: Exception) {
             println("Firestore: Error al crear usuario -> ${e.message}")
