@@ -125,6 +125,15 @@ token en lugar del email del documento.
 
 ## Riesgos
 
+- **Entre abrir el enlace y volver a entrar, `users.email` sigue con el email viejo** (visto en
+  `apark-dev` tras publicar la spec). Al abrir el enlace, Firebase cambia el email de Auth y revoca
+  la sesión, y una sesión revocada ya no puede escribir: el documento se pone al día cuando la
+  persona vuelve a entrar. Mientras tanto no se rompe nada. Las reglas miran el email del token, no
+  el del documento, y lo único que lo usa es la tarjeta de quien no tiene nombre, que enseñaría el
+  email viejo ese rato. Hacerlo en el servidor en el mismo instante no tiene atajo: Firebase no
+  avisa a ninguna función cuando cambia el email de una cuenta (sus triggers de Auth son solo de
+  alta y de baja). Haría falta una página propia para los enlaces de Firebase, en Hosting y con
+  una función detrás, y no compensa por un desfase que no tiene consecuencias.
 - **Protección contra la enumeración de emails**: si el proyecto la tiene activa,
   `verifyBeforeUpdateEmail` hacia un email que ya existe puede responder con éxito sin enviar nada,
   en vez de *email en uso*. El mensaje de éxito no promete más de lo que se sabe.

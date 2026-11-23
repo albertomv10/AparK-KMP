@@ -86,6 +86,12 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   a las bases de datos `(default)` y `apark-at`.
 
 ### Fixed
+- **Los correos de Firebase llegan en el idioma de la app**, y no en inglés. Verificar la cuenta,
+  recuperar la contraseña y confirmar un email nuevo salen en el idioma en que se está viendo la
+  app: la app nunca se lo decía al SDK, y sin eso Firebase usa el inglés.
+- **Los usuarios nuevos nacen con `createdAt` y `updatedAt`.** Se guardaban a 0, porque quien crea el
+  documento le pasaba un `User` recién construido. Reordenar los vehículos ahora también pone al
+  día `updatedAt`.
 - **Un miembro que cambiaba de email ya no se quedaba sin poder aparcar.** Al aparcar, la app
   firmaba con el email del documento `users`, que nadie actualizaba, mientras la regla lo compara
   con el del token; el dueño no lo notaba, pero un miembro compartido recibía PERMISSION_DENIED
