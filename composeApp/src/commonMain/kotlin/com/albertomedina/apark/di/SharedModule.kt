@@ -50,6 +50,7 @@ import com.albertomedina.apark.presentation.home.HomeViewModel
 import com.albertomedina.apark.presentation.account.AccountViewModel
 import com.albertomedina.apark.presentation.account.ChangeEmailViewModel
 import com.albertomedina.apark.presentation.account.ChangePasswordViewModel
+import com.albertomedina.apark.presentation.account.DeleteAccountViewModel
 import com.albertomedina.apark.presentation.navigation.SessionViewModel
 import com.albertomedina.apark.presentation.splash.SplashViewModel
 import com.albertomedina.apark.presentation.vehicles.VehiclesViewModel
@@ -185,6 +186,16 @@ val sharedModule = module {
     viewModel {
         ChangePasswordViewModel(
             changePasswordUseCase = get(),
+            crashReporter = get()
+        )
+    }
+
+    viewModel {
+        DeleteAccountViewModel(
+            authRepository = get(),
+            getAccountDeletionImpactUseCase = get(),
+            deleteAccountUseCase = get(),
+            signOutUseCase = get(),
             crashReporter = get()
         )
     }

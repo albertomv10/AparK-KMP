@@ -32,6 +32,7 @@ import androidx.navigation3.ui.defaultTransitionSpec
 import com.albertomedina.apark.presentation.account.AccountScreen
 import com.albertomedina.apark.presentation.account.ChangeEmailScreen
 import com.albertomedina.apark.presentation.account.ChangePasswordScreen
+import com.albertomedina.apark.presentation.account.DeleteAccountScreen
 import com.albertomedina.apark.presentation.addvehicle.AddVehicleScreen
 import com.albertomedina.apark.presentation.components.AparkBottomNavigationBar
 import com.albertomedina.apark.presentation.home.HomeScreen
@@ -164,7 +165,8 @@ fun TabShell(
                     is Account -> NavEntry(key) {
                         AccountScreen(
                             onNavigateToChangeEmail = { push(ChangeEmail) },
-                            onNavigateToChangePassword = { push(ChangePassword) }
+                            onNavigateToChangePassword = { push(ChangePassword) },
+                            onNavigateToDeleteAccount = { push(DeleteAccount) }
                         )
                     }
                     is ChangeEmail -> NavEntry(key) {
@@ -172,6 +174,9 @@ fun TabShell(
                     }
                     is ChangePassword -> NavEntry(key) {
                         ChangePasswordScreen(onBack = { pop() })
+                    }
+                    is DeleteAccount -> NavEntry(key) {
+                        DeleteAccountScreen(onBack = { pop() })
                     }
                     is VehicleDetail -> NavEntry(key) {
                         VehicleDetailScreen(

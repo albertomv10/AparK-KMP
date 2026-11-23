@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -18,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -48,7 +50,8 @@ import org.koin.compose.viewmodel.koinViewModel
 fun AccountScreen(
     viewModel: AccountViewModel = koinViewModel(),
     onNavigateToChangeEmail: () -> Unit,
-    onNavigateToChangePassword: () -> Unit
+    onNavigateToChangePassword: () -> Unit,
+    onNavigateToDeleteAccount: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -180,21 +183,11 @@ fun AccountScreen(
             if (state.isSigningOut) {
                 Box(Modifier.fillMaxWidth().padding(24.dp), Alignment.Center) { CircularProgressIndicator() }
             } else {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .selectable(
-                            selected = false,
-                            onClick = { viewModel.onEvent(AccountEvent.SignOutClicked) },
-                            role = Role.Button
-                        )
-                        .padding(24.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                    Spacer(Modifier.width(16.dp))
-                    Text(stringResource(Res.string.account_sign_out), color = MaterialTheme.colorScheme.error)
-                }
+                DestructiveRow(
+                    icon = Icons.AutoMirrored.Filled.Logout,
+                    text = stringResource(Res.string.account_sign_out),
+                    onClick = { viewModel.onEvent(AccountEvent.SignOutClicked) }
+                )
             }
 
             if (state.error) {
@@ -205,6 +198,15 @@ fun AccountScreen(
                     modifier = Modifier.padding(horizontal = 24.dp)
                 )
             }
+
+            // Lo último de la pantalla, y debajo de cerrar sesión: es lo que menos se usa y lo que
+            // no tiene vuelta atrás. Lleva a su propia pantalla, que explica qué se pierde antes de
+            // pedir nada (spec 012).
+            DestructiveRow(
+                icon = Icons.Outlined.DeleteForever,
+                text = stringResource(Res.string.account_delete),
+                onClick = onNavigateToDeleteAccount
+            )
         }
     }
 }
@@ -217,6 +219,22 @@ private fun SectionTitle(text: String) {
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(start = 24.dp, top = 20.dp, bottom = 4.dp)
     )
+}
+
+/** Una acción que saca de algo, la sesión o la cuenta: en rojo, con su icono, sin flecha. */
+@Composable
+private fun DestructiveRow(icon: ImageVector, text: String, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .selectable(selected = false, onClick = onClick, role = Role.Button)
+            .padding(24.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+        Spacer(Modifier.width(16.dp))
+        Text(text, color = MaterialTheme.colorScheme.error)
+    }
 }
 
 /** Una fila que lleva a otra pantalla: el valor actual debajo, y la flecha a la derecha. */

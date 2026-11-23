@@ -68,6 +68,12 @@ data object ChangePassword : Destiny {
     override val showsTabBar: Boolean get() = false
 }
 
+/** Eliminar la cuenta (spec 012): una lista que leer y una confirmación, sin barra, como las dos de arriba. */
+@Serializable
+data object DeleteAccount : Destiny {
+    override val showsTabBar: Boolean get() = false
+}
+
 /** Serialización de polimorfismo abierto, necesaria para guardar y restaurar las pilas. */
 internal val navigationConfig = SavedStateConfiguration {
     serializersModule = SerializersModule {
@@ -85,6 +91,7 @@ internal val navigationConfig = SavedStateConfiguration {
             subclass(VehicleDetail::class, VehicleDetail.serializer())
             subclass(ChangeEmail::class, ChangeEmail.serializer())
             subclass(ChangePassword::class, ChangePassword.serializer())
+            subclass(DeleteAccount::class, DeleteAccount.serializer())
         }
     }
 }

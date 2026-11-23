@@ -26,6 +26,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -75,12 +76,17 @@ internal fun AccountFormScaffold(
 
 /** El botón de enviar, que se convierte en un indicador mientras la petición está en marcha. */
 @Composable
-internal fun ColumnScope.SubmitButton(text: String, isSubmitting: Boolean, onClick: () -> Unit) {
+internal fun ColumnScope.SubmitButton(
+    text: String,
+    isSubmitting: Boolean,
+    color: Color = MaterialTheme.colorScheme.primary,
+    onClick: () -> Unit
+) {
     Spacer(Modifier.height(8.dp))
     if (isSubmitting) {
         CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
     } else {
-        StandardAparKButton(onClick = onClick) { Text(text) }
+        StandardAparKButton(onClick = onClick, color = color) { Text(text) }
     }
 }
 

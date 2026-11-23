@@ -183,4 +183,22 @@
     <string name="error_name_empty">Saisissez un nom</string>
     <string name="error_name_too_long">40 caractères maximum</string>
     <string name="error_save_name">Impossible d'enregistrer le nom. Réessayez</string>
+
+    <!-- Eliminar la cuenta (spec 012) -->
+    <string name="account_delete">Supprimer le compte</string>
+    <string name="delete_account_title">Supprimer le compte</string>
+    <string name="delete_account_intro">Votre compte et vos données seront supprimés. C'est irréversible.</string>
+    <string name="delete_account_deleted_header">Seront supprimés</string>
+    <string name="delete_account_handed_over_header">Passeront au membre le plus ancien</string>
+    <string name="delete_account_left_header">Vous quitterez</string>
+    <string name="delete_account_no_vehicles">Vous n'avez aucun véhicule.</string>
+    <string name="delete_account_password_hint">Saisissez votre mot de passe pour confirmer.</string>
+    <string name="delete_account_google_hint">Reconnectez-vous avec votre compte Google pour confirmer.</string>
+    <string name="delete_account_google_button">Confirmer avec Google</string>
+    <string name="delete_account_apple_unavailable">Les comptes Apple ne peuvent pas encore être supprimés depuis l'app.</string>
+    <string name="delete_account_submit">Supprimer le compte</string>
+    <string name="delete_account_done_title">Compte supprimé</string>
+    <string name="delete_account_done_body">Votre compte et vos données ont été supprimés.</string>
+    <string name="error_wrong_account">Ce n'est pas le compte Google avec lequel vous vous êtes connecté</string>
+    <string name="error_reauth_again">Trop de temps s'est écoulé. Confirmez à nouveau</string>
 </resources>

@@ -387,9 +387,6 @@ fun VehicleCard(
                     val userName = lastLocation.user?.name?.takeIf { it.isNotBlank() }
                     val userEmail = lastLocation.user?.email?.takeIf { it.isNotBlank() }
 
-                    val displayName = userName ?: userEmail ?: ""
-                    val updatedBy = stringResource(Res.string.home_parked_by, displayName)
-
                     DynamicTimeText(
                         timestamp = lastLocation.timestamp,
                         text = Res.string.home_last_time,
@@ -397,13 +394,19 @@ fun VehicleCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Text(
-                        text = updatedBy,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    // Quien aparcó puede no tener nombre ni email: si borró su cuenta, el servidor
+                    // deja la ubicación y la hora pero quita quién fue (spec 012). Mejor ninguna
+                    // línea que «Aparcado por » con el hueco vacío.
+                    val displayName = userName ?: userEmail
+                    if (displayName != null) {
+                        Text(
+                            text = stringResource(Res.string.home_parked_by, displayName),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
             if (isLoading && isSpecificLoading){
