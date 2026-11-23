@@ -171,16 +171,26 @@ llegó ahí; y la narrativa duradera no vive en `git log`, sino en `docs/specs/`
 
 ### 7. Tras mergear, sincronizar y limpiar
 
+GitHub borra la rama remota al mergear el PR: el repositorio tiene activado *Automatically delete
+head branches*. En local queda la tuya:
+
 ```sh
 git checkout main
 git pull origin main
-git branch -d feature/delete-vehicle
 git fetch --prune
+gh pr view feature/delete-vehicle --json state,headRefOid   # MERGED, y la punta que se mergeó
+git rev-parse feature/delete-vehicle                         # tiene que ser esa misma punta
+git branch -D feature/delete-vehicle
 ```
 
-`git branch -d` (minúscula) solo borra la rama si está realmente mergeada: es una red de
-seguridad. Si se niega, es señal de que algo no se integró como esperabas — investiga antes
-de forzar con `-D`.
+**Con squash, `git branch -d` se niega siempre**, y no es una señal de alarma. El squash mete en
+`main` un commit nuevo con el contenido de la rama, no los commits de la rama, así que para git
+la rama nunca parece mergeada. La comprobación que sí vale es la de arriba: el PR está mergeado, y
+la rama no tiene nada después de lo que se mergeó. Si la rama va por delante, **hay trabajo que
+no llegó a `main`** — y no se borra hasta rescatarlo.
+
+Pasó de verdad: un commit que añadía `.mcp.json` se subió a la rama de un PR **después** de
+mergearlo, y estuvo tres meses fuera de `main` mientras `AGENTS.md` lo daba por existente.
 
 ---
 
