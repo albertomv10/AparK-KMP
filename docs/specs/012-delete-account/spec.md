@@ -1,7 +1,7 @@
 # Spec: eliminar la cuenta
 
 - **ID**: 012-delete-account
-- **Estado**: Borrador
+- **Estado**: Aprobado — diseño en [design.md](design.md)
 - **Fecha**: 2026-11-23
 
 ## Problema / Por qué
@@ -66,46 +66,35 @@ puede borrar el cliente:
 5. **Dado** cualquier vehículo que haya aparcado, **cuando** borra la cuenta, **entonces** ningún
    otro miembro sigue viendo su nombre ni su email en la tarjeta.
 6. **Dado** que entró con Apple, **cuando** borra la cuenta, **entonces** se revoca su acceso con
-   Apple, como exige la App Store.
+   Apple, como exige la App Store. *(Aplazado: hoy nadie puede entrar con Apple, porque falta el
+   entitlement, que exige la cuenta de pago de Apple Developer, y no hay ningún usuario de Apple. Se
+   cumplirá al activar ese inicio de sesión. Es requisito para publicar en iOS. Ver
+   [design.md](design.md).)*
 7. **Dado** un fallo a mitad del borrado, **cuando** se vuelve a intentar, **entonces** termina el
-   trabajo sin duplicar nada. En ningún caso queda una cuenta con la que se pueda entrar sin sus
-   datos.
+   trabajo sin duplicar nada, y nunca quedan datos suyos sin una cuenta desde la que reclamarlos.
+   *(Antes decía «ninguna cuenta con la que entrar sin sus datos». Al borrar la cuenta de Auth la
+   última, un fallo intermedio deja justo eso hasta que se reintenta. El orden contrario sería peor:
+   datos huérfanos que la persona ya no puede pedir que se borren.)*
 8. **Dado** que se borró la cuenta, **cuando** alguien se registra después con el mismo email,
    **entonces** empieza de cero, sin heredar nada.
 9. **Dado** cualquier fallo, **cuando** se muestra, **entonces** el mensaje es legible y no aparece
    ningún texto técnico.
 
-## Preguntas abiertas
+## Preguntas abiertas — resueltas
 
-1. **¿Qué pasa con un vehículo compartido del que es dueño?**
-   - **Borrarlo para todos**: es lo más simple, pero los demás pierden el vehículo sin haber hecho
-     nada.
-   - **Pasar la propiedad automáticamente** a otro miembro. Habría que decidir a cuál. El orden de
-     `memberIds` refleja más o menos quién entró antes, porque unirse añade al final, pero ese campo
-     no se pensó para eso.
-   - **Obligar a transferirla antes** de poder borrar la cuenta. Necesita la pantalla de miembros y
-     transferencia (punto 2.4 del roadmap), que no existe. El diálogo de borrar vehículo ya le dice a
-     la gente que la transfiera, y no hay dónde hacerlo.
-2. **Las copias de su nombre y su email en `lastLocation.user`**: ¿se anonimizan, dejando la
-   ubicación con un «cuenta eliminada», o se borra la última ubicación entera? Ninguna de las dos
-   la puede hacer el cliente en vehículos ajenos.
-3. **¿Callable o trigger de borrado de Auth?**
-   - Una **callable** hace todo el borrado cuando la app la llama: es lo que dice
-     [`DATA-MODEL.md`](../../DATA-MODEL.md).
-   - Un **trigger** que salte al borrarse el usuario de Auth haría la misma limpieza **también
-     cuando se borra desde la consola**. Hace unos días se borraron 11 usuarios de producción desde
-     la consola, y sus datos se habrían limpiado solos.
-4. **Reautenticar a quien entró con Google o Apple**: hay que volver a lanzar su inicio de sesión
-   desde la pantalla de borrado. Con Apple, además, ese inicio de sesión es el que da el código para
-   revocar el token (criterio 6).
-5. **¿Pantalla o diálogo?** La confirmación tiene que enseñar una lista de consecuencias y, para
-   cuentas con contraseña, un campo. Las pantallas de cambiar email y contraseña ya siguen ese
-   patrón.
-6. **El enlace web que pide Google Play**: además del borrado dentro de la app, Play pide un enlace
-   desde el que solicitar el borrado sin tener la app instalada. ¿Una página en Firebase Hosting, un
-   formulario, un email?
-7. **Los ajustes del dispositivo** (el tema): ¿se borran con la cuenta, o se quedan, como
-   preferencia del móvil y no de la persona?
+Todas se cerraron en el diseño. El razonamiento completo está en [design.md](design.md).
+
+1. **Vehículo compartido del que es dueño** → **pasa al miembro más antiguo**: el primero de
+   `memberIds` que queda tras quitarle a él.
+2. **Su nombre y su email en tarjetas ajenas** → **se anonimizan**: se borra quién aparcó y se
+   conservan la ubicación y la hora.
+3. **¿Callable o trigger?** → **Callable `deleteAccount` en `europe-west4`.** Un trigger de borrado
+   de Auth solo podría vivir en `us-central1`, fuera de la UE. Borrar desde la consola deja los datos,
+   y queda documentado.
+4. **Reautenticar con Google o Apple** → **Google, ahora; Apple, cuando haya cuenta de pago.**
+5. **¿Pantalla o diálogo?** → **Pantalla completa**, con el patrón de cambiar email y contraseña.
+6. **El enlace web de Google Play** → **fuera de esta spec**: va con la política de privacidad.
+7. **Los ajustes del dispositivo** → **se quedan**: el tema es del móvil, no de la persona.
 
 ## Fuera de alcance
 
