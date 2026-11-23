@@ -53,6 +53,7 @@ class ChangeCredentialsUseCaseTest {
         override fun signInProvider(): SignInProvider = error("no usado")
         override suspend fun reloadUser() = error("no usado")
         override suspend fun tokenEmail(): String? = error("no usado")
+        override suspend fun reauthenticateWithGoogle(idToken: String, accessToken: String?) = error("no usado")
     }
 
     private val wrongPassword = Result.failure<Unit>(AuthFailure(AuthFailureReason.INVALID_CREDENTIALS))

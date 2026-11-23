@@ -49,6 +49,12 @@ enum class AuthFailureReason {
     /** Demasiados intentos seguidos; Firebase bloquea temporalmente. */
     TOO_MANY_ATTEMPTS,
 
+    /**
+     * Al reautenticar con Google se eligió **otra** cuenta. No es una sesión caducada: la sesión
+     * sigue siendo buena, y confundirlo la cerraría (spec 012).
+     */
+    WRONG_ACCOUNT,
+
     /** Cualquier otra cosa. Mensaje genérico, y el detalle a Crashlytics. */
     UNKNOWN
 }

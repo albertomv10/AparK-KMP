@@ -1,5 +1,9 @@
 package com.albertomedina.apark.di
 
+import com.albertomedina.apark.domain.repository.AccountRepository
+import com.albertomedina.apark.data.repository.FirebaseAccountRepository
+import com.albertomedina.apark.domain.usecase.GetAccountDeletionImpactUseCase
+import com.albertomedina.apark.domain.usecase.DeleteAccountUseCase
 import com.albertomedina.apark.data.logging.FirebaseCrashReporter
 import com.albertomedina.apark.data.settings.DataStoreSettingsRepository
 import com.albertomedina.apark.data.settings.createSettingsDataStore
@@ -102,6 +106,7 @@ val sharedModule = module {
 
     single<AuthRepository> { FirebaseAuthRepository(firebaseAuth = get()) }
     single<InviteRepository> { FirebaseInviteRepository(functions = get()) }
+    single<AccountRepository> { FirebaseAccountRepository(functions = get()) }
 
     single<LocationRepository> {
         LocationRepositoryImpl(
@@ -143,6 +148,8 @@ val sharedModule = module {
     factory { SyncUserProfileUseCase(authRepository = get(), userRepository = get()) }
     factory { ChangeEmailUseCase(authRepository = get()) }
     factory { ChangePasswordUseCase(authRepository = get()) }
+    factory { GetAccountDeletionImpactUseCase(authRepository = get(), getVehicleListUseCase = get()) }
+    factory { DeleteAccountUseCase(authRepository = get(), accountRepository = get()) }
 
     // Location
     factory { GetCurrentLocationUseCase(repository = get()) }
