@@ -4,6 +4,7 @@ import com.albertomedina.apark.domain.auth.AuthFailure
 import com.albertomedina.apark.domain.auth.AuthFailureReason
 import com.albertomedina.apark.domain.auth.SignInProvider
 import com.albertomedina.apark.domain.repository.AuthRepository
+import com.albertomedina.apark.utils.appLanguage
 import dev.gitlive.firebase.FirebaseNetworkException
 import dev.gitlive.firebase.FirebaseTooManyRequestsException
 import dev.gitlive.firebase.auth.EmailAuthProvider
@@ -146,6 +147,16 @@ class FirebaseAuthRepository(
         Result.failure(failure)
     }
 
+    /**
+     * Los correos de Firebase —verificar la cuenta, recuperar la contraseña, confirmar un email
+     * nuevo— salen en el idioma que diga el SDK, y si nadie se lo dice, en inglés. Se le dice justo
+     * antes de cada envío y no una vez al arrancar, porque el idioma puede cambiar con la app
+     * abierta. El texto lo pone la plantilla del proyecto en ese idioma.
+     */
+    private fun useAppLanguage() {
+        firebaseAuth.languageCode = appLanguage()
+    }
+
     override suspend fun register(email: String, password: String): Result<Unit> {
         return try {
             firebaseAuth.createUserWithEmailAndPassword(email, password)
@@ -185,6 +196,7 @@ class FirebaseAuthRepository(
                 // Opción B (Si no cambias interfaz): No podemos ejecutarlo aquí.
 
                 // *Asumo que cambiarás la interfaz a suspend, mira la nota abajo*
+                useAppLanguage()
                 user.sendEmailVerification()
                 Result.success(Unit)
             } else {
@@ -248,6 +260,7 @@ class FirebaseAuthRepository(
 
     override suspend fun resetPassword(email: String): Result<Unit> {
         return try {
+            useAppLanguage()
             firebaseAuth.sendPasswordResetEmail(email)
             println("AuthRepository: Email de restablecimiento enviado a: $email")
             Result.success(Unit)
@@ -267,7 +280,10 @@ class FirebaseAuthRepository(
         }
 
     override suspend fun requestEmailChange(newEmail: String): Result<Unit> =
-        onCurrentUser(AuthOperation.CHANGE_EMAIL) { it.verifyBeforeUpdateEmail(newEmail) }
+        onCurrentUser(AuthOperation.CHANGE_EMAIL) {
+            useAppLanguage()
+            it.verifyBeforeUpdateEmail(newEmail)
+        }
 
     override suspend fun changePassword(newPassword: String): Result<Unit> =
         onCurrentUser(AuthOperation.CHANGE_PASSWORD) { it.updatePassword(newPassword) }
