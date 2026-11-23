@@ -85,6 +85,13 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   `sharedUsers` vacío, `lastLocation` nulo), con accesos defensivos `get()`. Desplegada
   a las bases de datos `(default)` y `apark-at`.
 
+### Removed
+- **La base de datos `apark-at` de producción**, de cuando desarrollo y producción compartían
+  proyecto. Solo tenía datos de prueba.
+- **El campo `sharedUsers` de los vehículos**, sustituido por `memberIds` en la
+  [spec 008](docs/specs/008-vehicle-membership-model/spec.md). Era el último paso de esa migración,
+  y con él se va la vía de respaldo que todavía lo leía en la función de limpieza de vehículos.
+
 ### Fixed
 - **Los correos de Firebase llegan en el idioma de la app**, y no en inglés. Verificar la cuenta,
   recuperar la contraseña y confirmar un email nuevo salen en el idioma en que se está viendo la

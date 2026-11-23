@@ -319,7 +319,11 @@ Nada de esto es urgente, y todo es destructivo, así que está sin tocar:
    misma clave de API**, así que merece comprobarse que borrar una no toca la de release antes de
    hacerlo a lo bruto.
 
-3. **La base `apark-at`** queda huérfana.
+3. ~~**La base `apark-at`** queda huérfana.~~ **Eliminada el 2026-11-23.** Tenía protección contra
+   borrado, que se quita antes con
+   `firestore:databases:update apark-at --delete-protection DISABLED -P prod`. Solo contenía datos de
+   prueba: 4 usuarios, 6 vehículos y una colección `connectivity_test`.
 
-4. **Los usuarios de prueba siguen en el pool de Auth de producción.** La separación no los mueve
-   retroactivamente: las cuentas con las que se probaba antes conviven con las reales.
+4. ~~**Los usuarios de prueba siguen en el pool de Auth de producción.**~~ **Limpiados el
+   2026-11-23**: se borraron los 11 usuarios de Auth sin documento en `users` de `(default)`, tras
+   comprobar que ninguno era miembro de un vehículo.

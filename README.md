@@ -94,17 +94,22 @@ código Kotlin compila para iOS sin abrir Xcode:
 
 ## Bases de datos
 
-El proyecto usa **dos bases de datos Firestore** en el mismo proyecto de Firebase:
+Desarrollo y producción son **dos proyectos de Firebase separados**, cada uno con su base
+`(default)`:
 
-- Compilaciones **debug** → `apark-at`
-- Compilaciones **release** → `(default)`
+- Compilaciones **debug** → `apark-dev`
+- Compilaciones **release** → `apark-617fd`
 
-La selección es automática según `AppConfig.isDebug` (ver `SharedModule.kt`). Las reglas de
-seguridad viven en [`firestore.rules`](firestore.rules) y se despliegan a **ambas**:
+Lo decide el fichero de configuración que va dentro de cada build, no nada en tiempo de ejecución.
+Las reglas viven en [`firestore.rules`](firestore.rules) y se despliegan a cada proyecto por
+separado; `default` apunta a desarrollo a propósito:
 
 ```sh
-npx firebase-tools@latest deploy --only firestore:rules
+npx firebase-tools@latest deploy --only firestore:rules           # apark-dev
+npx firebase-tools@latest deploy --only firestore:rules -P prod   # producción, nombrada
 ```
+
+Los detalles, y cómo montar un proyecto desde cero, en [`docs/FIREBASE.md`](docs/FIREBASE.md).
 
 ---
 
