@@ -43,11 +43,10 @@ async function removeVehicleFromMembers(
         return;
     }
 
-    // `memberIds` already holds every member, owner included. The fallback covers vehicles
-    // written before spec 008 that the migration has not reached yet.
+    // `memberIds` holds every member, owner included. Spec 008 migrated every vehicle in both
+    // projects, and the old `sharedUsers` field it used to fall back on was dropped from all of them.
     const stored: string[] = vehicle.memberIds ?? [];
-    const legacy: string[] = [vehicle.ownerId ?? "", ...(vehicle.sharedUsers ?? [])];
-    const memberIds = [...new Set(stored.length > 0 ? stored : legacy)].filter((id) => id.length > 0);
+    const memberIds = [...new Set(stored)].filter((id) => id.length > 0);
 
     if (memberIds.length === 0) {
         logger.info("Vehicle had no members", { vehicleId });
