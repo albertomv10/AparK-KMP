@@ -44,7 +44,7 @@ según el proveedor: con la contraseña, o volviendo a pasar por Google.
 | `domain/repository/AccountRepository.kt` · `data/repository/FirebaseAccountRepository.kt` | Llamar a la callable y traducir sus errores |
 | `domain/repository/AuthRepository.kt` · `data/repository/FirebaseAuthRepository.kt` | `reauthenticateWithGoogle`, y el *user mismatch* |
 | `domain/auth/AuthFailure.kt` | `WRONG_ACCOUNT` |
-| `data/auth/AuthErrorCode.kt` (`expect`/`actual`) | El código de error nativo de Android, que no se ve desde `commonMain` |
+| `data/repository/NativeAuthErrorCode.kt` (`expect`/`actual`) | El código de error nativo de Android, que no se ve desde `commonMain` |
 | `domain/usecase/` | `GetAccountDeletionImpact`, `DeleteAccount` |
 | `presentation/account/` | `DeleteAccountScreen` y su ViewModel, y la fila en *Cuenta* |
 | `presentation/navigation/Destiny.kt` · `TabShell.kt` | El destino `DeleteAccount`, sin barra |

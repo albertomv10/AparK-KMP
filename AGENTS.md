@@ -125,7 +125,7 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 | `domain.usecase` | One `operator fun invoke()` each |
 | `presentation.splash` · `presentation.auth.*` | Splash, login, register, verification, reset |
 | `presentation.home` | Map + vehicle carousel + edit mode |
-| `presentation.vehicles` · `presentation.account` | The vehicle list, and the account: name, email, password, theme, sign out |
+| `presentation.vehicles` · `presentation.account` | The vehicle list, and the account: name, email, password, theme, sign out, delete |
 | `presentation.addvehicle` · `presentation.vehicledetail` | Create/join, and the detail placeholder |
 | `presentation.components` | Shared composables: map, buttons, dialog, permission handlers |
 | `presentation.navigation` | Navigation 3 setup |
@@ -154,6 +154,17 @@ writes the name **only there**; the function copies it into `lastLocation.user` 
 person parked last — one transaction per vehicle, re-checking who parked — and into the Auth
 `displayName`. It copies the email only if it matches the account's, because `users` is writable by
 its owner. Most writes to `users` are reorders, and those return at the first check.
+
+`deleteAccount` (spec 012) is a callable, and the only way an account is meant to disappear. It
+refuses unless the ID token's `auth_time` is under five minutes old — it does not trust the client to
+have re-authenticated — and answers that as `{status: "requires-recent-login"}`, not as an error,
+for the same reason `joinVehicleWithCode` does: gitlive cannot read an `HttpsError` code from common
+code. Then, each step idempotent: the vehicles where the person is a member (one transaction each,
+re-read before deciding — deleted if they were alone, otherwise they leave, ownership passes to the
+first remaining member, and their copy in `lastLocation.user` becomes `null`), the vehicles they
+parked last but no longer belong to (anonymised), their invites, `users/{uid}`, and **the Auth
+account last**, so a failure halfway leaves something to retry from. The decision per vehicle is the
+pure `planVehicle`, tested in `tools/test/account.test.ts`.
 
 ```sh
 npm --prefix functions run build
@@ -281,6 +292,13 @@ graphify path "A" "B" --undirected
   `InvalidCredentials`, like a wrong password, and a revoked session as `InvalidUser`, like an unknown
   account at login; on iOS gitlive types 17021 (*token expired*) as `InvalidCredentials`. That is why
   `toAuthFailure()` takes the operation, and checks iOS codes before types.
+- **Re-authenticating with the wrong Google account must not end the session.** Firebase answers
+  *user mismatch*, and on Android that arrives as `InvalidUser` — the same type as a revoked session,
+  which `FirebaseAuthRepository` answers by signing out. It is told apart only by the native
+  `errorCode` (`ERROR_USER_MISMATCH`), which common code cannot see, hence the small
+  `nativeAuthErrorCode()` `expect`/`actual`; on iOS it is code 17024. Both are checked **before**
+  anything that means "account gone", and map to `WRONG_ACCOUNT`. Untestable in the emulators, which
+  do not validate real Google tokens.
 - **Auth data leak (fixed)**: `HomeViewModel` observes `authStateChanges` + `flatMapLatest` so
   vehicle data switches with the user. Never load once in `init`. `flatMapLatest` needs
   `@OptIn(ExperimentalCoroutinesApi::class)`.
@@ -379,6 +397,12 @@ graphify path "A" "B" --undirected
 - `ComposeAppCommonTest.kt` is still a placeholder, though real tests now exist beside it
   (`commonTest/.../settings/`) and in `tools/test/`.
 - Hardcoded Spanish string: the GPS-denied snackbar in `HomeScreen.kt`.
+- **Deleting an account with Apple sign-in is not implemented**, and neither is Apple sign-in itself:
+  the iOS target has no entitlements, and that one needs the paid Apple Developer account. When it
+  is switched on, account deletion must re-authenticate with Apple **and revoke the token** — App
+  Store review checks both. See [spec 012](docs/specs/012-delete-account/spec.md), criterion 6.
+- **Deleting a user from the Firebase console leaves their data behind**: there is no Auth trigger,
+  only the callable. See [`docs/FIREBASE.md`](docs/FIREBASE.md).
 
 **Not a bug**: `AppleSignInButton`'s Android `actual` has an empty body, so the button is not
 composed at all outside iOS. That is deliberate — the platform decides whether the button exists.

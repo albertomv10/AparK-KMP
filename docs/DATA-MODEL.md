@@ -80,7 +80,7 @@ Este es el paso que decide el diseño. **Cliente:**
 | S2 | Notificar al resto cuando alguien aparca | trigger |
 | S3 | Notificar cambios de incidencia | trigger |
 | S4 | **Buscar vencimientos próximos en todos los vehículos** | programado |
-| S5 | Cascada al borrar una cuenta | callable |
+| S5 | Cascada al borrar una cuenta | callable — hecho en la [spec 012](specs/012-delete-account/spec.md) |
 
 > **S4 es el que rompe los diseños ingenuos.** Obliga a una *consulta de grupo de colección* sobre
 > `reminders`. Lo que lo hace fácil es que corre con el Admin SDK, que **se salta las reglas**: no
