@@ -70,8 +70,10 @@ según el proveedor: con la contraseña, o volviendo a pasar por Google.
   4. **`users/{uid}`**: se borra.
   5. **La cuenta de Auth**, con `getAuth().deleteUser(uid)`. Un `user-not-found` cuenta como hecho.
 - **Login reciente**: antes de tocar nada, si `request.auth.token.auth_time` tiene más de 5
-  minutos, la callable responde `failed-precondition`. El servidor no se fía de que el cliente haya
-  reautenticado.
+  minutos, la callable devuelve `{status: "requires-recent-login"}` y no toca nada. El servidor no se
+  fía de que el cliente haya reautenticado. Va como estado y no como error, igual que hace
+  `joinVehicleWithCode` con sus desenlaces esperados, porque gitlive no deja leer el código de un
+  `HttpsError` desde el código común.
 
 ## Decisiones y alternativas consideradas
 

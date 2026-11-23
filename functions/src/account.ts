@@ -20,6 +20,8 @@ const BATCH_LIMIT = 400;
  */
 export const RECENT_LOGIN_SECONDS = 5 * 60;
 
+export type DeleteAccountStatus = "deleted" | "requires-recent-login";
+
 export function isRecentLogin(authTimeSeconds: unknown, nowSeconds: number): boolean {
     return typeof authTimeSeconds === "number" && nowSeconds - authTimeSeconds <= RECENT_LOGIN_SECONDS;
 }
@@ -134,14 +136,18 @@ async function deleteInvitesCreatedBy(uid: string): Promise<number> {
  * deny it `invites` altogether. The Auth account goes **last**, so a failure halfway leaves an
  * account the person can still sign into and retry from — never data with nobody left to claim it.
  * Every step is idempotent, so a retry only finishes what is missing.
+ *
+ * A stale sign-in is an expected outcome, not a failure, so it comes back as a status — the same
+ * convention as `joinVehicleWithCode`. The client cannot read an `HttpsError`'s code from common
+ * code anyway: gitlive does not expose it there.
  */
-export async function deleteAccountHandler(request: CallableRequest): Promise<{ status: string }> {
+export async function deleteAccountHandler(request: CallableRequest): Promise<{ status: DeleteAccountStatus }> {
     const uid = request.auth?.uid;
     if (!uid) {
         throw new HttpsError("unauthenticated", "You must be signed in.");
     }
     if (!isRecentLogin(request.auth?.token.auth_time, Math.floor(Date.now() / 1000))) {
-        throw new HttpsError("failed-precondition", "requires-recent-login");
+        return { status: "requires-recent-login" };
     }
 
     const counts: Record<string, number> = { none: 0, anonymize: 0, delete: 0, leave: 0 };
