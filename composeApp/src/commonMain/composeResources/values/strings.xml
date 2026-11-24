@@ -8,6 +8,7 @@
     <string name="show_password">Mostrar contraseña</string>
     <string name="hide_password">Ocultar contraseña</string>
     <string name="undo">Deshacer</string>
+    <string name="open_settings">Ajustes</string>
 
     <!-- Login -->
     <string name="login_welcome">Bienvenido/a</string>
@@ -79,7 +80,7 @@
     <string name="error_verify_email">Verifica tu email antes de entrar</string>
     <string name="error_invalid_credentials">Las credenciales son incorrectas. Verifica tu email y contraseña.</string>
     <string name="error_location_save">Error al guardar tu ubicación</string>
-    <string name="error_gps_permissions">Error de GPS. Comprueba los permisos</string>
+    <string name="error_gps_permissions">Permisos de GPS denegados. Ve a ajustes para activarlos.</string>
     <string name="error_undo_failed">No se pudo deshacer la acción</string>
     <string name="error_google_login">No se pudo iniciar sesión con Google. Inténtalo de nuevo.</string>
     <string name="error_apple_login">No se pudo iniciar sesión con Apple. Inténtalo de nuevo.</string>

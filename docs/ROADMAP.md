@@ -1,7 +1,8 @@
 # AparK — Roadmap y revisión de arquitectura
 
-- **Fecha**: 2026-08-07
-- **Estado**: Propuesta para acordar
+- **Fecha**: 2026-08-07 · **Última revisión**: 2026-11-24
+- **Estado**: Acordado. Lo hecho se marca en las tablas de la parte 4, y el detalle está en el
+  [CHANGELOG](../CHANGELOG.md)
 
 Este documento responde a dos preguntas a la vez, porque no son separables:
 
@@ -15,7 +16,11 @@ y ese es el criterio principal para ponerlos primero.
 
 ## Parte 1 — Dónde estamos
 
-Lo que la app hace hoy, de verdad:
+> **Foto a 2026-08-07**, que es de cuando se escribió la revisión, y se deja así a propósito: es
+> el punto de partida de todo lo demás. Lo que ha cambiado desde entonces está en las tablas de la
+> parte 4 y en el CHANGELOG.
+
+Lo que la app hacía entonces, de verdad:
 
 | Área | Estado |
 |------|--------|
@@ -270,7 +275,9 @@ Esto no es opinión: son motivos de rechazo.
    cliente no puede hacer casi nada de eso, así que es una callable.
    **Hecho en la [spec 012](specs/012-delete-account/spec.md)**, salvo para las cuentas de Apple,
    que esperan a la cuenta de pago de Apple Developer junto con el propio inicio de sesión.
-2. **Política de privacidad publicada, con URL.** Manejas ubicación, que es dato sensible.
+2. **Política de privacidad publicada, con URL.** Manejas ubicación, que es dato sensible. Google
+   Play pide además **una página web para borrar la cuenta**, aparte del botón de la app. Con el
+   repo público, las dos pueden vivir gratis en GitHub Pages.
 3. **Data Safety (Play) y las etiquetas de privacidad (App Store)**, declarando ubicación, email
    y lo que recojan Crashlytics/Analytics si los añades.
 4. **Cuenta de demostración para la revisión de Apple**, porque la app requiere login para
@@ -279,6 +286,16 @@ Esto no es opinión: son motivos de rechazo.
    TestFlight, de ella depende **activar la exigencia de App Check**: iOS atestigua con App Attest,
    que exige la membresía de pago. Y como la exigencia es **por servicio y no por plataforma**, no
    se puede encender solo para Android sin dejar fuera a los iPhone.
+6. **Una prueba cerrada en Google Play antes de producción**, si la cuenta de desarrollador es
+   personal y se creó después del 13 de noviembre de 2023: **al menos 12 testers apuntados sin
+   interrupción durante 14 días** ([ayuda de Play Console](https://support.google.com/googleplay/android-developer/answer/14151465)).
+   Son dos semanas de calendario que no se pueden acelerar, así que hay que empezarlas antes de
+   necesitarlas.
+
+> **Decisión del 2026-11-24: las tiendas esperan.** La app tiene que completar más fases antes de
+> abrirla a más gente, así que la política de privacidad, la prueba cerrada y la cuenta de pago de
+> Apple se dejan para cuando esté más pulida. Cuando toque, **Android primero**: iOS depende entero
+> de la cuenta de Apple.
 
 ---
 
@@ -295,14 +312,14 @@ Ninguna se ve en la pantalla, y todas hacen que lo siguiente cueste menos.*
 | # | Qué | Tamaño | Estado | Por qué ahora |
 |---|-----|--------|--------|---------------|
 | 0.1 | **Mover `proguard-rules.pro` a `composeApp/`** | S | ✅ hecho | Verificado roto. La build de la tienda es la única que lo sufre |
-| 0.2 | **Modelo de pertenencia `memberIds` + query única** (§2.1) | M | [spec 008](specs/008-vehicle-membership-model/spec.md) | Retira 3 parches, desbloquea todas las subcolecciones |
-| 0.3 | **`createdAt`/`updatedAt`, quitar `inviteCode`, arreglar la fuga de `lastLocation.user`** (§2.3) | S | va en la spec 008 | Misma migración que 0.2 |
+| 0.2 | **Modelo de pertenencia `memberIds` + query única** (§2.1) | M | ✅ [spec 008](specs/008-vehicle-membership-model/spec.md) | Retira 3 parches, desbloquea todas las subcolecciones |
+| 0.3 | **`createdAt`/`updatedAt`, quitar `inviteCode`, arreglar la fuga de `lastLocation.user`** (§2.3) | S | ✅ en la spec 008 | Misma migración que 0.2 |
 | 0.4 | **Persistencia local (DataStore)** (§2.5) | S | ✅ hecho | Bloquea tema, idioma, widget y notificaciones |
-| 0.5 | **Crashlytics** + un log mínimo compartido | S | | Lo que más devuelve por lo que cuesta. **Subido de prioridad**: ver abajo |
+| 0.5 | **Crashlytics** + un log mínimo compartido | S | ✅ hecho | Lo que más devuelve por lo que cuesta. **Subido de prioridad**: ver abajo |
 | 0.6 | **CI en GitHub Actions**: Android + iOS (Xcode) + functions | S | ✅ hecho | A partir de aquí cada PR se valida solo |
 | 0.7 | **Firma y `bundleRelease`** | S | ✅ hecho | Sin esto no hay subida posible |
 | 0.8 | **App Check** (§2.6) | M | ✅ código; **exigencia bloqueada por la cuenta de Apple** | Antes de tener usuarios, no después |
-| 0.9 | **Separar proyectos Firebase dev/prod** (§2.4) | M | acordado | Hoy media tarde; después, una migración |
+| 0.9 | **Separar proyectos Firebase dev/prod** (§2.4) | M | ✅ hecho: `apark-dev` y `apark-617fd` | Hoy media tarde; después, una migración |
 
 > **Por qué 0.5 subió de prioridad.** Diagnosticar por qué fallaba el login con Google en Android
 > costó una tarde, y no por lo difícil del fallo —era una configuración de OAuth— sino porque **la
@@ -322,14 +339,14 @@ Ninguna se ve en la pantalla, y todas hacen que lo siguiente cueste menos.*
 *Por qué aquí: contiene el bloqueante de tienda (borrar cuenta), y la navegación real es
 prerequisito de cualquier pantalla nueva — hoy las tres pestañas no llevan a ningún sitio.*
 
-| # | Qué | Tamaño |
-|---|-----|--------|
-| 1.1 | **Navegación real de las 3 pestañas** (un backstack por pestaña en Navigation 3) | M |
-| 1.2 | **Pantalla de perfil**: nombre, cambiar email, cambiar contraseña, cerrar sesión | M |
-| 1.3 | **Foto de perfil** → estrena **Firebase Storage** (pieza nueva: reglas, subida, recorte, caché) | M |
-| 1.4 | **Eliminar cuenta** — callable + cascada. **Bloqueante de tienda** — ✅ [spec 012](specs/012-delete-account/spec.md), salvo Apple | M |
-| 1.5 | **Ajustes**: tema (claro/oscuro/sistema) e idioma | S |
-| 1.6 | **Sacar a recursos las cadenas incrustadas** (el snackbar de GPS y "Logout" en `HomeScreen`) | S |
+| # | Qué | Tamaño | Estado |
+|---|-----|--------|--------|
+| 1.1 | **Navegación real de las 3 pestañas** (un backstack por pestaña en Navigation 3) | M | ✅ [spec 009](specs/009-tab-navigation/spec.md) |
+| 1.2 | **Pantalla de perfil**: nombre, cambiar email, cambiar contraseña, cerrar sesión | M | ✅ [spec 011](specs/011-account-profile/spec.md) |
+| 1.3 | **Foto de perfil** → estrena **Firebase Storage** (pieza nueva: reglas, subida, recorte, caché) | M | Aplazada el 2026-11-24: ver la parte 5 |
+| 1.4 | **Eliminar cuenta** — callable + cascada. **Bloqueante de tienda** | M | ✅ [spec 012](specs/012-delete-account/spec.md), salvo Apple |
+| 1.5 | **Ajustes**: tema (claro/oscuro/sistema) e idioma | S | ✅ el tema. El selector de idioma, aplazado el 2026-11-24: la app sigue el idioma del sistema |
+| 1.6 | **Sacar a recursos las cadenas incrustadas** (el snackbar de GPS y "Logout" en `HomeScreen`) | S | ✅ hecho: el snackbar, el botón de Apple y cuatro descripciones de accesibilidad. "Logout" ya no existía |
 
 ### Fase 2 — El vehículo como entidad rica
 
@@ -434,9 +451,10 @@ defecto**. Eso es un ajuste que hay que diseñar en la fase 1, aunque no se use 
    [spec 008](specs/008-vehicle-membership-model/spec.md).
 2. ~~**¿Se separan los proyectos de Firebase (0.9)?**~~ → **Sí, acordado el 2026-08-07**, y **antes
    que la 008**, para tener dónde ensayar su migración.
-3. **¿La foto de perfil entra en la fase 1?** Estrena Firebase Storage, que es un servicio nuevo
-   con sus propias reglas y sus propios costes. Es la única pieza de la fase 1 que se puede
-   posponer sin arrastrar nada.
+3. ~~**¿La foto de perfil entra en la fase 1?**~~ → **No: aplazada el 2026-11-24.** Estrena
+   Firebase Storage, que es un servicio nuevo con sus propias reglas y sus propios costes, y era la
+   única pieza de la fase 1 que se podía posponer sin arrastrar nada. Lo mismo con el selector de
+   idioma: la app sigue el del sistema. Con eso la fase 1 queda cerrada, y se sigue por la 2.
 4. **¿Las ubicaciones predeterminadas van por vehículo?** (§3.4)
 5. **¿Se pide el entitlement de CarPlay ya**, aunque no se vaya a tocar hasta dentro de meses?
 

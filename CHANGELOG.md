@@ -110,6 +110,15 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   y con él se va la vía de respaldo que todavía lo leía en la función de limpieza de vehículos.
 
 ### Fixed
+- **No queda ningún texto en castellano escrito a fuego.** El aviso de permiso de ubicación
+  denegado y su botón «Ajustes», y el texto del botón «Continuar con Apple», salían en castellano
+  con la app en inglés o en francés; ahora van en los tres idiomas. El aviso de permiso, además,
+  tiene prioridad sobre el de «deshacer»: si llegaba con este todavía en pantalla, salía con el
+  botón «Deshacer», que en realidad abría los ajustes.
+- **Los lectores de pantalla ya no leen dos veces los botones de Google y Apple.** Sus iconos son
+  decorativos, porque el texto del botón ya dice qué es, y la animación de verificar el email no
+  cuenta nada. Los cuatro tenían una descripción escrita a fuego, en castellano o en inglés; ahora
+  TalkBack y VoiceOver los saltan.
 - **El CI de iOS ya no falla a ratos con `OutOfMemoryError` al enlazar Release.** El compilador de
   Kotlin/Native corre dentro del daemon de Gradle, así que el techo que cuenta es el de ese daemon,
   y estaba en 4 GB, justo en el límite de lo que pide el LTO. La propiedad que se añadió en octubre

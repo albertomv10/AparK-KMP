@@ -92,23 +92,27 @@ fun HomeScreen(
     }
 
     val undoLabel = stringResource(Res.string.undo)
+    val settingsLabel = stringResource(Res.string.open_settings)
 
     LaunchedEffect(state.snackbarMessage) {
         state.snackbarMessage?.let { msg ->
             activeSnackbarMessage = msg
             
-            // Si hay datos para deshacer, mostramos el Snackbar con acción
-            val result = if (state.locationUpdateSuccessData != null) {
+            // El permiso va primero: si llega mientras sigue en pantalla el aviso de «aparcado»,
+            // los datos para deshacer todavía están puestos, y con el orden al revés el aviso de
+            // GPS salía con el botón «Deshacer»... que abría los ajustes.
+            val result = if (msg.message == "error_gps_permissions") {
                 snackbarHostState.showSnackbar(
                     message = translatedText ?: msg.message,
-                    actionLabel = undoLabel,
+                    actionLabel = settingsLabel,
                     withDismissAction = false,
                     duration = SnackbarDuration.Long
                 )
-            }else if (msg.message == "error_gps_permissions") {
+            } else if (state.locationUpdateSuccessData != null) {
+                // Si hay datos para deshacer, mostramos el Snackbar con acción
                 snackbarHostState.showSnackbar(
-                    message = "Permisos de GPS denegados. Ve a ajustes para activarlos.",
-                    actionLabel = "Ajustes",
+                    message = translatedText ?: msg.message,
+                    actionLabel = undoLabel,
                     withDismissAction = false,
                     duration = SnackbarDuration.Long
                 )
