@@ -1,7 +1,7 @@
 # Spec: detalle del vehículo, miembros y propiedad
 
 - **ID**: 014-vehicle-detail-members
-- **Estado**: Borrador
+- **Estado**: Aprobado — diseño en [design.md](design.md)
 - **Fecha**: 2026-11-24
 
 ## Problema / Por qué
@@ -92,38 +92,28 @@ no es miembro, que dejaría el vehículo con un dueño que no puede ni verlo.
 10. **Dado** cualquier idioma de los tres, **cuando** se usa la pantalla, **entonces** todo está
     traducido, y las acciones tienen descripción para los lectores de pantalla.
 
-## Preguntas abiertas
+## Preguntas abiertas — resueltas
 
-1. **¿De dónde salen los nombres de los miembros?** Es la decisión de fondo.
-   - **(a) El mapa `members`** que propone [`DATA-MODEL.md`](../../DATA-MODEL.md): `{uid: {name}}`
-     dentro del vehículo, mantenido solo por el servidor. Se pinta con el documento que ya se ha
-     leído, y en tiempo real. A cambio, hay que migrar los vehículos existentes, y que unirse con
-     código, `propagateUserProfile` y `deleteAccount` lo mantengan al día. La
-     [spec 008](../008-vehicle-membership-model/design.md) lo aplazó porque «no hay pantalla que
-     muestre miembros»: esta es esa pantalla.
-   - **(b) Una callable `getVehicleMembers`** que lee los `users` con el Admin SDK. No hay migración
-     ni nada que sincronizar, y los nombres salen siempre frescos. Cuesta una llamada cada vez que se
-     abre el detalle, y no es en tiempo real. DATA-MODEL marca la lectura de miembros (R7) como de
-     frecuencia baja y sin tiempo real.
-   - **(c) Abrir las reglas de `users`** a quien comparte un vehículo: descartable, porque ese
-     documento lleva `userVehicles`, los ids de todos tus vehículos.
-2. **¿Ven los demás miembros tu email?** La tarjeta ya enseña el email de quien aparcó cuando no
-   tiene nombre. ¿La lista también, o solo el nombre, y «Miembro sin nombre» si no lo tiene?
-3. **¿Quitar y pasar la propiedad desde el cliente, con reglas más estrictas, o con callables?**
-   DATA-MODEL dice que los datos de autorización los escribe el servidor. La spec 008 dejó
-   «salirse» en el cliente porque la regla demuestra que solo te quitas a ti, y aquí se podría hacer
-   lo mismo.
-4. **¿Borrar el vehículo y salirse se quedan también en el modo edición del mapa**, o pasan a vivir
-   solo en el detalle?
-5. **¿Entra editar el vehículo** (2.2: nombre y matrícula)? `UpdateVehicleUseCase` existe y nadie
-   lo llama, y el detalle es el sitio natural para ello.
-6. **¿La ubicación del detalle lleva un mapa pequeño**, o texto con «Ver en el mapa», que lleve a la
-   pestaña del mapa centrada en ese vehículo?
-7. **Si quitan a alguien que fue el último en aparcar**, su nombre sigue en la tarjeta. ¿Se deja,
-   porque es un dato de lo que pasó, o se anonimiza como hace `deleteAccount`?
+Todas se cerraron en el diseño. El razonamiento completo está en [design.md](design.md).
+
+1. **¿De dónde salen los nombres?** → **Una callable, `getVehicleMembers`.** El mapa `members` sigue
+   aplazado: no hay migración ni nada que mantener sincronizado, a cambio de que los nombres no sean
+   en tiempo real.
+2. **¿Ven los demás tu email?** → **Solo si no tienes nombre**, como hace ya «Aparcado por». Registrarse
+   solo pide email y contraseña, así que hay muchas cuentas sin nombre. Lo resuelve el servidor, que
+   devuelve una sola etiqueta y no los dos datos.
+3. **¿Quitar y pasar la propiedad desde el cliente o con callables?** → **Desde el cliente**, con
+   reglas que lo demuestran, como «salirse» en la spec 008.
+4. **¿Borrar y salirse siguen en el modo edición del mapa?** → **Sí**, y además en el detalle.
+5. **¿Entra editar el vehículo (2.2)?** → **No: va en una spec aparte.**
+6. **¿Mapa pequeño o «Ver en el mapa»?** → **Texto y «Ver en el mapa»**, que lleva a la pestaña del
+   mapa con ese vehículo seleccionado.
+7. **¿Se anonimiza a quien quitan si fue el último en aparcar?** → **No**: es lo que pasó, y esa
+   persona sigue existiendo.
 
 ## Fuera de alcance
 
+- Editar el nombre y la matrícula (2.2): spec aparte.
 - Notificar al quitado y al nuevo dueño: fase 4.
 - Marca, modelo y demás datos del vehículo: 2.1 y 2.5.
 - Incidencias, ITV y mantenimiento: fase 3, aunque la pantalla debe dejarles sitio.
