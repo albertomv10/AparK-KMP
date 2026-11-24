@@ -9,6 +9,7 @@ import com.albertomedina.apark.data.settings.DataStoreSettingsRepository
 import com.albertomedina.apark.data.settings.createSettingsDataStore
 import com.albertomedina.apark.data.repository.FirebaseAuthRepository
 import com.albertomedina.apark.data.repository.FirebaseInviteRepository
+import com.albertomedina.apark.data.repository.FirebaseMemberRepository
 import com.albertomedina.apark.data.repository.FirestoreUserRepository
 import com.albertomedina.apark.data.repository.FirestoreVehicleRepository
 import com.albertomedina.apark.data.repository.LocationRepositoryImpl
@@ -17,6 +18,7 @@ import com.albertomedina.apark.domain.settings.SettingsRepository
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.repository.InviteRepository
 import com.albertomedina.apark.domain.repository.LocationRepository
+import com.albertomedina.apark.domain.repository.MemberRepository
 import com.albertomedina.apark.domain.repository.UserRepository
 import com.albertomedina.apark.domain.repository.VehicleRepository
 import com.albertomedina.apark.domain.usecase.ChangeEmailUseCase
@@ -36,6 +38,9 @@ import com.albertomedina.apark.domain.usecase.LoginUseCase
 import com.albertomedina.apark.domain.usecase.MoveVehicleUseCase
 import com.albertomedina.apark.domain.usecase.RegisterUseCase
 import com.albertomedina.apark.domain.usecase.RemoveUserFromVehicleUseCase
+import com.albertomedina.apark.domain.usecase.GetVehicleMembersUseCase
+import com.albertomedina.apark.domain.usecase.RemoveVehicleMemberUseCase
+import com.albertomedina.apark.domain.usecase.TransferVehicleOwnershipUseCase
 import com.albertomedina.apark.domain.usecase.SignOutUseCase
 import com.albertomedina.apark.domain.usecase.SyncUserProfileUseCase
 import com.albertomedina.apark.domain.usecase.UpdateUserNameUseCase
@@ -108,6 +113,7 @@ val sharedModule = module {
     single<AuthRepository> { FirebaseAuthRepository(firebaseAuth = get()) }
     single<InviteRepository> { FirebaseInviteRepository(functions = get()) }
     single<AccountRepository> { FirebaseAccountRepository(functions = get()) }
+    single<MemberRepository> { FirebaseMemberRepository(functions = get()) }
 
     single<LocationRepository> {
         LocationRepositoryImpl(
@@ -127,6 +133,9 @@ val sharedModule = module {
     factory { GetVehicleByIdUseCase(repository = get()) }
     factory { UpdateVehicleUseCase(repository = get()) }
     factory { RemoveUserFromVehicleUseCase(repository = get()) }
+    factory { RemoveVehicleMemberUseCase(vehicleRepository = get()) }
+    factory { TransferVehicleOwnershipUseCase(vehicleRepository = get()) }
+    factory { GetVehicleMembersUseCase(memberRepository = get()) }
     factory { GetLastVehicleLocationUseCase(repository = get()) }
     factory { UpdateVehicleLocationUseCase(
         vehicleRepository = get(),
