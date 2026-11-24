@@ -119,6 +119,12 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   decorativos, porque el texto del botón ya dice qué es, y la animación de verificar el email no
   cuenta nada. Los cuatro tenían una descripción escrita a fuego, en castellano o en inglés; ahora
   TalkBack y VoiceOver los saltan.
+- **El CI de iOS ya no falla a ratos con `OutOfMemoryError` al enlazar Release.** El compilador de
+  Kotlin/Native corre dentro del daemon de Gradle, así que el techo que cuenta es el de ese daemon,
+  y estaba en 4 GB, justo en el límite de lo que pide el LTO. La propiedad que se añadió en octubre
+  para «darle memoria propia», `kotlin.native.jvmArgs`, no se aplica en ese modo: no hizo nada
+  nunca. Sale, y el daemon pasa a 6 GB, que es lo que mostró una medición del recolector para que
+  el pico no necesite compactaciones de emergencia.
 - **Los correos de Firebase llegan en el idioma de la app**, y no en inglés. Verificar la cuenta,
   recuperar la contraseña y confirmar un email nuevo salen en el idioma en que se está viendo la
   app: la app nunca se lo decía al SDK, y sin eso Firebase usa el inglés.
