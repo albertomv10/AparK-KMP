@@ -210,6 +210,69 @@ describe("gestión de miembros (spec 014)", () => {
     });
 });
 
+describe("datos del vehículo (spec 015)", () => {
+    const fresh = { name: "Octavia", ownerId: STRANGER, memberIds: [STRANGER], lastLocation: null };
+    const data = {
+        type: "car",
+        powertrain: "hybrid",
+        fuel: "petrol",
+        make: "Škoda",
+        model: "Octavia",
+        color: "red",
+        emissionsLabel: "eco",
+    };
+    const create = (extra: Record<string, unknown>) =>
+        setDoc(doc(as(STRANGER, "x@apark.test"), "vehicles", "v_data"), { ...fresh, ...extra });
+    const ownerUpdate = (extra: Record<string, unknown>) =>
+        updateDoc(doc(as(OWNER, OWNER_EMAIL), "vehicles", VEHICLE), extra);
+
+    it("se crea con todos sus datos", async () => {
+        await assertSucceeds(create(data));
+    });
+
+    it("se crea con los datos vacíos: «sin dato» es la cadena vacía", async () => {
+        await assertSucceeds(create({ type: "", powertrain: "", fuel: "", make: "", model: "", color: "", emissionsLabel: "" }));
+    });
+
+    it("NO se crea con un código que no existe", async () => {
+        await assertFails(create({ ...data, type: "submarine" }));
+        await assertFails(create({ ...data, fuel: "Diésel" }));
+        await assertFails(create({ ...data, emissionsLabel: "A" }));
+    });
+
+    it("NO se crea con una marca o un modelo de más de 40", async () => {
+        await assertFails(create({ ...data, make: "x".repeat(41) }));
+        await assertFails(create({ ...data, model: "x".repeat(41) }));
+    });
+
+    it("el dueño edita los datos", async () => {
+        await assertSucceeds(ownerUpdate({ ...data, name: "Coche nuevo", licensePlate: "1234 ABC" }));
+    });
+
+    it("el dueño NO pone un color fuera de la paleta", async () => {
+        await assertFails(ownerUpdate({ color: "granate" }));
+    });
+
+    it("el dueño NO deja el nombre vacío ni lo pasa de 60", async () => {
+        await assertFails(ownerUpdate({ name: "" }));
+        await assertFails(ownerUpdate({ name: "x".repeat(61) }));
+    });
+
+    it("un miembro NO edita los datos", async () => {
+        await assertFails(updateDoc(doc(as(MEMBER, MEMBER_EMAIL), "vehicles", VEHICLE), { type: "car" }));
+    });
+
+    it("un valor antiguo inválido no impide aparcar ni editar otro campo: solo se valida lo que cambia", async () => {
+        await env.withSecurityRulesDisabled(async (context) => {
+            await updateDoc(doc(context.firestore(), "vehicles", VEHICLE), { color: "granate metalizado" });
+        });
+        await assertSucceeds(
+            ownerUpdate({ lastLocation: { latitude: 1, longitude: 2, timestamp: 3, user: { uid: OWNER, name: "", email: OWNER_EMAIL } } })
+        );
+        await assertSucceeds(ownerUpdate({ type: "van" }));
+    });
+});
+
 describe("borrado", () => {
     it("el dueño borra", async () => {
         const { deleteDoc } = await import("firebase/firestore");
