@@ -116,6 +116,7 @@ class RegisterViewModel(
             AuthFailureReason.EMAIL_NOT_VERIFIED,
             AuthFailureReason.REQUIRES_RECENT_LOGIN,
             AuthFailureReason.SESSION_EXPIRED,
+            AuthFailureReason.WRONG_ACCOUNT,
             AuthFailureReason.UNKNOWN ->
                 _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_unknown")) }
         }

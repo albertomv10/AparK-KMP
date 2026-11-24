@@ -84,6 +84,13 @@ interface AuthRepository {
     suspend fun reauthenticate(currentPassword: String): Result<Unit>
 
     /**
+     * The same proof for an account that signed in with Google, from a fresh Google sign-in. Picking
+     * a different Google account fails with
+     * [com.albertomedina.apark.domain.auth.AuthFailureReason.WRONG_ACCOUNT].
+     */
+    suspend fun reauthenticateWithGoogle(idToken: String, accessToken: String?): Result<Unit>
+
+    /**
      * Sends a verification link to [newEmail]. The sign-in email **does not change** until that
      * link is opened, and opening it ends every session of the account.
      */

@@ -86,6 +86,11 @@ class FirebaseAuthRepository(
         if (this is AuthFailure) return this
         val code = firebaseAuthErrorCode()
         val reason = when {
+            // Antes que la cuenta perdida: en Android llega como `InvalidUser`, y tomarlo por una
+            // sesión caducada la cerraría solo por haber elegido otra cuenta de Google. En iOS es el
+            // 17024, userMismatch.
+            code == 17024L || nativeAuthErrorCode() == "ERROR_USER_MISMATCH" -> AuthFailureReason.WRONG_ACCOUNT
+
             // Al entrar, cuenta inexistente o deshabilitada es lo mismo que credenciales mal para
             // quien lo escribe, y distinguirlo en pantalla revelaria que emails existen.
             this is FirebaseAuthInvalidUserException || code in ACCOUNT_GONE_CODES ->
@@ -277,6 +282,11 @@ class FirebaseAuthRepository(
         onCurrentUser(AuthOperation.REAUTHENTICATE) { user ->
             val email = user.email ?: throw AuthFailure(AuthFailureReason.SESSION_EXPIRED)
             user.reauthenticate(EmailAuthProvider.credential(email, currentPassword))
+        }
+
+    override suspend fun reauthenticateWithGoogle(idToken: String, accessToken: String?): Result<Unit> =
+        onCurrentUser(AuthOperation.REAUTHENTICATE) { user ->
+            user.reauthenticate(GoogleAuthProvider.credential(idToken, accessToken))
         }
 
     override suspend fun requestEmailChange(newEmail: String): Result<Unit> =

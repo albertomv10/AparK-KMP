@@ -299,6 +299,28 @@ sesión **no es un fallo de la app**: es una build hecha con `CODE_SIGNING_ALLOW
 binario sin el *entitlement* del llavero, de modo que Firebase autentica bien pero no puede guardar
 la sesión. Compila sin esa bandera.
 
+## Borrar una cuenta (spec 012)
+
+**Las cuentas se borran desde la app, no desde la consola.** Lo hace la callable `deleteAccount`:
+limpia todo lo que la cuenta dejó en Firestore y borra la de Auth lo último. Borrar un usuario desde
+*Authentication* en la consola **solo borra la cuenta**, porque no hay ningún trigger de Auth que
+reaccione: el único posible vive en `us-central1`, fuera de la UE (ver
+[el diseño](specs/012-delete-account/design.md)). Lo que se queda:
+
+- `users/{uid}`.
+- Su `uid` en `memberIds` de los vehículos que compartía, y como `ownerId` de los que eran suyos —
+  incluidos los compartidos, que se quedan con un dueño que ya no existe.
+- Su nombre y su email en `lastLocation.user` de los vehículos que aparcó el último.
+- Las invitaciones que creó, hasta que las borre la política TTL.
+
+La callable tampoco sirve para arreglarlo después, porque exige el token de la propia persona con un
+login reciente. Si alguna vez hace falta borrar a alguien a mano —que lo pida por email, por
+ejemplo—, lo limpio es **hacer en Firestore lo mismo que `planVehicle`** (en
+`functions/src/account.ts`) para cada vehículo con su `uid` en `memberIds`, `ownerId` o
+`lastLocation.user.uid`; borrar sus `invites` y `users/{uid}`; y solo entonces la cuenta de Auth.
+Los 11 usuarios que se borraron de producción el 2026-11-23 no dejaron nada porque ya no tenían
+documento ni vehículos: se comprobó antes.
+
 ## Limpieza pendiente en el proyecto de producción
 
 Nada de esto es urgente, y todo es destructivo, así que está sin tocar:

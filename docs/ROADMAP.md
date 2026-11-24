@@ -268,6 +268,8 @@ Esto no es opinión: son motivos de rechazo.
    una pantalla, es backend**: hay que borrar los vehículos de los que eres dueño (con su cascada),
    salirte de los compartidos, borrar tu documento de usuario y borrar el usuario de Auth. El
    cliente no puede hacer casi nada de eso, así que es una callable.
+   **Hecho en la [spec 012](specs/012-delete-account/spec.md)**, salvo para las cuentas de Apple,
+   que esperan a la cuenta de pago de Apple Developer junto con el propio inicio de sesión.
 2. **Política de privacidad publicada, con URL.** Manejas ubicación, que es dato sensible.
 3. **Data Safety (Play) y las etiquetas de privacidad (App Store)**, declarando ubicación, email
    y lo que recojan Crashlytics/Analytics si los añades.
@@ -325,7 +327,7 @@ prerequisito de cualquier pantalla nueva — hoy las tres pestañas no llevan a 
 | 1.1 | **Navegación real de las 3 pestañas** (un backstack por pestaña en Navigation 3) | M |
 | 1.2 | **Pantalla de perfil**: nombre, cambiar email, cambiar contraseña, cerrar sesión | M |
 | 1.3 | **Foto de perfil** → estrena **Firebase Storage** (pieza nueva: reglas, subida, recorte, caché) | M |
-| 1.4 | **Eliminar cuenta** — callable + cascada. **Bloqueante de tienda** | M |
+| 1.4 | **Eliminar cuenta** — callable + cascada. **Bloqueante de tienda** — ✅ [spec 012](specs/012-delete-account/spec.md), salvo Apple | M |
 | 1.5 | **Ajustes**: tema (claro/oscuro/sistema) e idioma | S |
 | 1.6 | **Sacar a recursos las cadenas incrustadas** (el snackbar de GPS y "Logout" en `HomeScreen`) | S |
 

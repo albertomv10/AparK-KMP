@@ -18,6 +18,7 @@ internal fun Throwable.generalAccountErrorKey(crashReporter: CrashReporter, cont
         AuthFailureReason.TOO_MANY_ATTEMPTS -> "error_too_many_attempts"
         // El repositorio ya ha cerrado la sesión, y la app va camino del login.
         AuthFailureReason.SESSION_EXPIRED -> "error_session_expired"
+        AuthFailureReason.WRONG_ACCOUNT -> "error_wrong_account"
         // Ninguno debería llegar aquí: o los resuelve el formulario en su campo, o no pueden salir
         // de un cambio de cuenta. Si llegan, se quiere saber.
         AuthFailureReason.INVALID_CREDENTIALS,

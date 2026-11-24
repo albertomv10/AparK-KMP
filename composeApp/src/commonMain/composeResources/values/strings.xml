@@ -183,4 +183,22 @@
     <string name="error_name_empty">Escribe un nombre</string>
     <string name="error_name_too_long">Como mucho 40 caracteres</string>
     <string name="error_save_name">No se pudo guardar el nombre. Inténtalo de nuevo</string>
+
+    <!-- Eliminar la cuenta (spec 012) -->
+    <string name="account_delete">Eliminar cuenta</string>
+    <string name="delete_account_title">Eliminar la cuenta</string>
+    <string name="delete_account_intro">Se borrarán tu cuenta y tus datos, y no se puede deshacer.</string>
+    <string name="delete_account_deleted_header">Se borrarán</string>
+    <string name="delete_account_handed_over_header">Pasarán al miembro que lleva más tiempo</string>
+    <string name="delete_account_left_header">Dejarás de ser miembro de</string>
+    <string name="delete_account_no_vehicles">No tienes vehículos.</string>
+    <string name="delete_account_password_hint">Escribe tu contraseña para confirmar.</string>
+    <string name="delete_account_google_hint">Vuelve a entrar con tu cuenta de Google para confirmar.</string>
+    <string name="delete_account_google_button">Confirmar con Google</string>
+    <string name="delete_account_apple_unavailable">Las cuentas de Apple todavía no se pueden eliminar desde la app.</string>
+    <string name="delete_account_submit">Eliminar la cuenta</string>
+    <string name="delete_account_done_title">Cuenta eliminada</string>
+    <string name="delete_account_done_body">Tu cuenta y tus datos se han eliminado.</string>
+    <string name="error_wrong_account">Esa no es la cuenta de Google con la que entraste</string>
+    <string name="error_reauth_again">Ha pasado demasiado tiempo. Vuelve a confirmar</string>
 </resources>

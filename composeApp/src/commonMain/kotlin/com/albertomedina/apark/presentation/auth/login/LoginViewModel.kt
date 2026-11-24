@@ -142,6 +142,7 @@ class LoginViewModel(
             AuthFailureReason.WEAK_PASSWORD,
             AuthFailureReason.REQUIRES_RECENT_LOGIN,
             AuthFailureReason.SESSION_EXPIRED,
+            AuthFailureReason.WRONG_ACCOUNT,
             AuthFailureReason.UNKNOWN -> ERROR_UNKNOWN_KEY
         }
         _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error(key)) }

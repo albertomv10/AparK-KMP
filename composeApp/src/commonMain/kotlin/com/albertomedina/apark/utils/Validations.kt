@@ -3,6 +3,10 @@ package com.albertomedina.apark.utils
 import androidx.compose.runtime.Composable
 import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.error_email_in_use
+import apark.composeapp.generated.resources.error_social_no_accounts
+import apark.composeapp.generated.resources.error_google_login
+import apark.composeapp.generated.resources.error_reauth_again
+import apark.composeapp.generated.resources.error_wrong_account
 import apark.composeapp.generated.resources.error_empty_email
 import apark.composeapp.generated.resources.error_empty_password
 import apark.composeapp.generated.resources.error_invalid_email
@@ -66,6 +70,10 @@ fun getErrorMessage(key: String): String {
         "error_save_name" -> stringResource(Res.string.error_save_name)
         "error_no_network" -> stringResource(Res.string.error_no_network)
         "error_too_many_attempts" -> stringResource(Res.string.error_too_many_attempts)
+        "error_wrong_account" -> stringResource(Res.string.error_wrong_account)
+        "error_reauth_again" -> stringResource(Res.string.error_reauth_again)
+        "error_google_login" -> stringResource(Res.string.error_google_login)
+        "error_social_no_accounts" -> stringResource(Res.string.error_social_no_accounts)
         // Antes devolvía la llave tal cual, y una llave en pantalla es un texto técnico más. Los
         // ViewModels solo emiten llaves de esta lista; esto es la red por si alguna se escapa.
         else -> stringResource(Res.string.error_unknown)

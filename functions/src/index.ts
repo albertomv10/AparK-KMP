@@ -8,6 +8,7 @@ import * as logger from "firebase-functions/logger";
 import { onCall } from "firebase-functions/v2/https";
 import { createInviteHandler, joinWithCodeHandler } from "./invites";
 import { propagateUserProfileHandler } from "./profile";
+import { deleteAccountHandler } from "./account";
 
 initializeApp();
 
@@ -132,3 +133,5 @@ export const propagateUserProfile = onDocumentUpdated(
     { document: "users/{uid}", region: REGION },
     propagateUserProfileHandler
 );
+
+export const deleteAccount = onCall({ region: REGION }, deleteAccountHandler);

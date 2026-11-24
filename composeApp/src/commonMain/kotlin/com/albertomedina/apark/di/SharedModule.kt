@@ -1,5 +1,9 @@
 package com.albertomedina.apark.di
 
+import com.albertomedina.apark.domain.repository.AccountRepository
+import com.albertomedina.apark.data.repository.FirebaseAccountRepository
+import com.albertomedina.apark.domain.usecase.GetAccountDeletionImpactUseCase
+import com.albertomedina.apark.domain.usecase.DeleteAccountUseCase
 import com.albertomedina.apark.data.logging.FirebaseCrashReporter
 import com.albertomedina.apark.data.settings.DataStoreSettingsRepository
 import com.albertomedina.apark.data.settings.createSettingsDataStore
@@ -46,6 +50,7 @@ import com.albertomedina.apark.presentation.home.HomeViewModel
 import com.albertomedina.apark.presentation.account.AccountViewModel
 import com.albertomedina.apark.presentation.account.ChangeEmailViewModel
 import com.albertomedina.apark.presentation.account.ChangePasswordViewModel
+import com.albertomedina.apark.presentation.account.DeleteAccountViewModel
 import com.albertomedina.apark.presentation.navigation.SessionViewModel
 import com.albertomedina.apark.presentation.splash.SplashViewModel
 import com.albertomedina.apark.presentation.vehicles.VehiclesViewModel
@@ -102,6 +107,7 @@ val sharedModule = module {
 
     single<AuthRepository> { FirebaseAuthRepository(firebaseAuth = get()) }
     single<InviteRepository> { FirebaseInviteRepository(functions = get()) }
+    single<AccountRepository> { FirebaseAccountRepository(functions = get()) }
 
     single<LocationRepository> {
         LocationRepositoryImpl(
@@ -143,6 +149,8 @@ val sharedModule = module {
     factory { SyncUserProfileUseCase(authRepository = get(), userRepository = get()) }
     factory { ChangeEmailUseCase(authRepository = get()) }
     factory { ChangePasswordUseCase(authRepository = get()) }
+    factory { GetAccountDeletionImpactUseCase(authRepository = get(), getVehicleListUseCase = get()) }
+    factory { DeleteAccountUseCase(authRepository = get(), accountRepository = get()) }
 
     // Location
     factory { GetCurrentLocationUseCase(repository = get()) }
@@ -178,6 +186,16 @@ val sharedModule = module {
     viewModel {
         ChangePasswordViewModel(
             changePasswordUseCase = get(),
+            crashReporter = get()
+        )
+    }
+
+    viewModel {
+        DeleteAccountViewModel(
+            authRepository = get(),
+            getAccountDeletionImpactUseCase = get(),
+            deleteAccountUseCase = get(),
+            signOutUseCase = get(),
             crashReporter = get()
         )
     }

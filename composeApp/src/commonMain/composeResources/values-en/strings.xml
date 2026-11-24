@@ -183,4 +183,22 @@
     <string name="error_name_empty">Enter a name</string>
     <string name="error_name_too_long">40 characters at most</string>
     <string name="error_save_name">Could not save the name. Try again</string>
+
+    <!-- Eliminar la cuenta (spec 012) -->
+    <string name="account_delete">Delete account</string>
+    <string name="delete_account_title">Delete account</string>
+    <string name="delete_account_intro">Your account and your data will be deleted. This cannot be undone.</string>
+    <string name="delete_account_deleted_header">Will be deleted</string>
+    <string name="delete_account_handed_over_header">Will pass to the longest-standing member</string>
+    <string name="delete_account_left_header">You will leave</string>
+    <string name="delete_account_no_vehicles">You have no vehicles.</string>
+    <string name="delete_account_password_hint">Enter your password to confirm.</string>
+    <string name="delete_account_google_hint">Sign in with your Google account again to confirm.</string>
+    <string name="delete_account_google_button">Confirm with Google</string>
+    <string name="delete_account_apple_unavailable">Apple accounts cannot be deleted from the app yet.</string>
+    <string name="delete_account_submit">Delete account</string>
+    <string name="delete_account_done_title">Account deleted</string>
+    <string name="delete_account_done_body">Your account and your data have been deleted.</string>
+    <string name="error_wrong_account">That is not the Google account you signed in with</string>
+    <string name="error_reauth_again">Too much time has passed. Confirm again</string>
 </resources>

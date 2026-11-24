@@ -9,6 +9,15 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **Eliminar la cuenta** ([spec 012](docs/specs/012-delete-account/spec.md)), el último bloqueante
+  de tienda de la fase 1: desde *Cuenta*, debajo de cerrar sesión. Antes de pedir nada, la pantalla
+  enseña qué vehículos se borrarán, cuáles pasarán al miembro que lleva más tiempo y de cuáles
+  saldrás. Después pide la contraseña, o volver a pasar por Google. El trabajo lo hace una callable
+  nueva, `deleteAccount`, que comprueba que el login es reciente, limpia Firestore —vehículos,
+  invitaciones, el documento del usuario— y borra la cuenta de Auth lo último, para que un fallo a
+  medias se pueda reintentar. En las tarjetas de los demás se conserva dónde quedó el vehículo, pero
+  no quién lo aparcó, y la línea «Aparcado por» desaparece en vez de quedarse vacía. Las cuentas de
+  Apple esperan a la cuenta de pago de Apple Developer.
 - **La cuenta, editable** ([spec 011](docs/specs/011-account-profile/spec.md)): desde *Cuenta* se
   cambia el **nombre** —el que ven los demás miembros en las tarjetas—, el **email** y la
   **contraseña**. Los dos últimos piden siempre la contraseña actual, porque Firebase exige un login
