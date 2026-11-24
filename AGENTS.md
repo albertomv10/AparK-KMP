@@ -237,11 +237,25 @@ graphify path "A" "B" --undirected
   release APK anyway**, with none of the project's keeps. Nothing fails loudly, and iOS has no R8,
   so testing releases on a real iPhone cannot catch it. Verify via
   `composeApp/build/outputs/mapping/release/mapping.txt`: the domain models must map to themselves.
-- **The iOS *release* link is the hungriest step of the whole build**, because Kotlin/Native runs
-  LTO there. It gets its own ceiling from `kotlin.native.jvmArgs`, separate from the Gradle daemon
-  — and before that property existed here it sat so close to the edge that the *same commit*
-  passed on one branch and died with `OutOfMemoryError` on another. If it comes back, raise that
-  one, not `org.gradle.jvmargs`: the Gradle daemon is what runs R8 for Android releases.
+- **The iOS *release* link is the hungriest step of the whole build, and it runs inside the Gradle
+  daemon.** Kotlin/Native runs LTO there (`DevirtualizationAnalysis`): about 3 GB of live data plus
+  bursts of huge temporary arrays. The compiler runs **in-process** by default, so its ceiling is
+  `org.gradle.jvmargs`. **`kotlin.native.jvmArgs` is ignored in that mode** — the plugin only checks
+  it for `-ea` — and applies only with `kotlin.native.disableCompilerDaemon=true`. It sat in
+  `gradle.properties` for a month as "the fix" for an `OutOfMemoryError` while the daemon stayed at
+  4 GB, until the same error came back. Measured with compile and link in one daemon and the JVM
+  capped at 3 CPUs like the CI runner (`-XX:ActiveProcessorCount=3`): at 4 GB the heap filled to
+  4093 MB and survived only on emergency full compactions, at 5 GB it still needed one, at 6 GB
+  none, peaking at 5.6 GB. Hence `-Xmx6144M`. If it fails again, **measure before raising it**: run
+  the link with `-Xlog:gc:file=…` and look for `Pause Full`, which is the heap running out of room.
+- **In CI that link is also slow, and that part is CPU, not memory.** On GitHub's macOS runner
+  (Apple M1 virtual, 3 CPUs, 7 GB), the Kotlin phase of the Release build took 20 minutes in
+  [PR #43](https://github.com/albertomv10/AparK-KMP/pull/43), with free memory never under 32 % and
+  swap at zero until the last three minutes. The same step has taken 5, 13 and 24 minutes on that
+  same kind of machine, so the spread is the host, not the build: a bigger heap prevents the crash,
+  it does not buy speed. The measuring script lives in that PR; if you measure again, trust the
+  system's free-memory percentage, because summing `ps` RSS counts shared memory once per process —
+  it reported 11 GB on a 7 GB machine.
 - **The secrets plugin copies *every* `local.properties` key into `BuildConfig`, in every variant.**
   That put the signing keystore passwords and path into the app: release got away with it only
   because R8 drops constants nobody reads — borrowed protection, one `keep` rule from leaking —
