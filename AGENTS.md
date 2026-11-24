@@ -120,13 +120,13 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 | `data.repository` | Firestore, Auth, invite and location implementations |
 | `data.location` | Platform location source |
 | `data.util` | Firestore constants |
-| `domain.model` | `User`, `Vehicle` (with nested `LocationModel`), `VehicleInvite`, `JoinResult` |
+| `domain.model` | `User`, `Vehicle` (with nested `LocationModel`), `VehicleMember`, `VehicleInvite`, `JoinResult` |
 | `domain.repository` | Repository interfaces |
 | `domain.usecase` | One `operator fun invoke()` each |
 | `presentation.splash` · `presentation.auth.*` | Splash, login, register, verification, reset |
 | `presentation.home` | Map + vehicle carousel + edit mode |
 | `presentation.vehicles` · `presentation.account` | The vehicle list, and the account: name, email, password, theme, sign out, delete |
-| `presentation.addvehicle` · `presentation.vehicledetail` | Create/join, and the detail placeholder |
+| `presentation.addvehicle` · `presentation.vehicledetail` | Create/join, and the detail: where it is, its members, transfer and remove |
 | `presentation.components` | Shared composables: map, buttons, dialog, permission handlers |
 | `presentation.navigation` | Navigation 3 setup |
 | `di` · `ui.theme` · `utils` | Koin modules, Material 3 theme, helpers |
@@ -170,6 +170,25 @@ pure `planVehicle`, tested in `tools/test/account.test.ts`.
   installs `tools/` alone, so `firebase-functions` does not resolve there; locally it does, because
   `functions/node_modules` exists, and the test passes on your machine and fails in CI. That is why
   `planVehicle` and `isRecentLogin` live in `accountPlan.ts`, apart from the handler in `account.ts`.
+
+`getVehicleMembers` (spec 014) returns a vehicle's members with **one label each** — their name, or
+their email if they never set one — because nobody can read anybody else's `users/{uid}`: it carries
+`userVehicles`. It is called when the detail opens and again whenever `memberIds` or `ownerId`
+change, so names are not live. The `members` map that `DATA-MODEL.md` proposes is still deferred:
+it would need a migration and six places keeping it in sync. Not being a member comes back as
+`{status: "not-member"}`. `memberList` lives in `membersPlan.ts`, with no imports, for the reason
+above.
+
+- **The owner may transfer ownership and remove members from the client, and the rules prove the
+  limits** (spec 014): `ownerId` must stay inside `memberIds`, and `memberIds` may only shrink
+  (`hasOnly(resource.data.memberIds)`) — members get in only through an invite code. Removing
+  someone else is `removeMember`, which touches only the vehicle; `removeUserFromVehicle` also
+  removes the id from the caller's own `users`, and used on another person the whole batch fails.
+- **The detail screen reads its vehicle from the list query, not from the document.** A listener on
+  `vehicles/{id}` answers PERMISSION_DENIED the moment you are removed; the `memberIds` query simply
+  stops returning it, which is what lets the screen say "you no longer have access" instead of
+  failing. `getVehicleById` was removed for that reason, and nothing should bring a by-id read back
+  without handling it.
 
 ```sh
 npm --prefix functions run build
@@ -405,9 +424,6 @@ graphify path "A" "B" --undirected
 
 > The full picture and the order to tackle it: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
-- **The vehicle-detail screen is a placeholder**: name plus a share button for the owner.
-- **No transfer-ownership UI**: `transferVehicleOwnership` exists but nothing calls it, even though
-  the delete dialog points users at it.
 - **`UpdateVehicleUseCase` is wired into Koin but nothing calls it**, so `Vehicle.model` and
   `Vehicle.color` are never written.
 - **App Check sends tokens but enforcement is off**, and cannot be turned on until there is a paid
