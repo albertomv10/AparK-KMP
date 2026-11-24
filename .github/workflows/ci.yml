@@ -115,6 +115,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Diagnóstico: el mismo enlace de Kotlin en Release ha tardado de 5 a 24 minutos según la
+      # máquina. El runner tiene 7 GB, y Gradle (4 GB) más Kotlin/Native (4,6 GB) no caben a la
+      # vez: si tira de swap, aquí se ve. El resumen sale en el último paso.
+      - name: Empezar a registrar la memoria
+        run: .github/scripts/memory-monitor.sh start
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -173,6 +179,10 @@ jobs:
             -destination 'generic/platform=iOS Simulator' \
             -clonedSourcePackagesDirPath "$HOME/spm-packages" \
             build CODE_SIGNING_ALLOWED=NO
+
+      - name: Memoria durante el job
+        if: always()
+        run: .github/scripts/memory-monitor.sh report
 
   functions:
     name: Cloud Functions
