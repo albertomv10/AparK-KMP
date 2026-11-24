@@ -353,9 +353,9 @@ prerequisito de cualquier pantalla nueva — hoy las tres pestañas no llevan a 
 | # | Qué | Tamaño |
 |---|-----|--------|
 | 2.1 | **Datos del vehículo**: marca, modelo, tipo, año, combustible | M |
-| 2.2 | **Editar vehículo** — `UpdateVehicleUseCase` ya existe y no lo llama nadie | S |
-| 2.3 | **Pantalla de detalle de verdad** (hoy es un nombre y un botón) | M |
-| 2.4 | **Gestión de miembros + transferir propiedad** — `transferVehicleOwnership` ya existe sin UI, y el diálogo de borrado **ya se la sugiere al usuario** | M |
+| 2.2 | **Editar vehículo** — `UpdateVehicleUseCase` ya existe y no lo llama nadie. Spec aparte, decidido el 2026-11-24 | S |
+| 2.3 | **Pantalla de detalle de verdad** — ✅ [spec 014](specs/014-vehicle-detail-members/spec.md) | M |
+| 2.4 | **Gestión de miembros + transferir propiedad** — ✅ [spec 014](specs/014-vehicle-detail-members/spec.md) | M |
 | 2.5 | **Desplegables de marca/modelo** | S–M |
 
 Sobre 2.5, la recomendación es **no usar una API**: un **JSON estático curado** en

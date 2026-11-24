@@ -157,6 +157,12 @@ invites/{code}                        # el cliente no lo toca: solo Cloud Functi
 
 El precio es mantener los dos sincronizados, y por eso (decisión 3) los escribe solo el servidor.
 
+> **Estado, 2026-11-24**: el mapa `members` **sigue sin existir**. La primera pantalla que enseña
+> miembros, la [spec 014](specs/014-vehicle-detail-members/design.md), los pide a una callable,
+> `getVehicleMembers`, que lee los `users` con el Admin SDK. R7 es de frecuencia baja y no necesita
+> tiempo real, y el mapa habría pedido una migración y mantenerlo desde seis sitios. Lo que sí resolvió
+> el mapa en su día, «aparcado por Marta» sin leer N usuarios, ya lo hace `lastLocation.user`.
+
 ### 2. El orden vive en el usuario, y **no** es la fuente de la lista
 
 `vehicleOrder` es una **pista**. La lista sale de la consulta; los ids que sobran se ignoran y los

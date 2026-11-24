@@ -202,4 +202,28 @@
     <string name="delete_account_done_body">Votre compte et vos données ont été supprimés.</string>
     <string name="error_wrong_account">Ce n'est pas le compte Google avec lequel vous vous êtes connecté</string>
     <string name="error_reauth_again">Trop de temps s'est écoulé. Confirmez à nouveau</string>
+
+    <!-- Detalle del vehículo, miembros y propiedad (spec 014) -->
+    <string name="vehicle_detail_location_title">Où il se trouve</string>
+    <string name="vehicle_detail_show_on_map">Voir sur la carte</string>
+    <string name="vehicle_detail_members_title">Membres</string>
+    <string name="vehicle_detail_member_owner">Propriétaire</string>
+    <string name="vehicle_detail_member_you">Toi</string>
+    <string name="vehicle_detail_member_unnamed">Membre sans nom</string>
+    <string name="vehicle_detail_member_options">Options pour %1$s</string>
+    <string name="vehicle_detail_make_owner">Rendre propriétaire</string>
+    <string name="vehicle_detail_remove_member">Retirer du véhicule</string>
+    <string name="vehicle_detail_members_error">Impossible de charger les membres</string>
+    <string name="retry">Réessayer</string>
+    <string name="vehicle_detail_transfer_title">Transférer la propriété à %1$s ?</string>
+    <string name="vehicle_detail_transfer_message">%1$s pourra partager %2$s, retirer d'autres membres et le supprimer. Tu resteras membre, mais tu ne pourras plus rien faire de tout cela.</string>
+    <string name="vehicle_detail_transfer_confirm">Transférer la propriété</string>
+    <string name="vehicle_detail_remove_title">Retirer %1$s ?</string>
+    <string name="vehicle_detail_remove_message">%1$s ne verra plus %2$s. Cette personne pourra revenir si tu lui partages un nouveau code.</string>
+    <string name="vehicle_detail_remove_confirm">Retirer</string>
+    <string name="vehicle_detail_member_removed">Membre retiré</string>
+    <string name="vehicle_detail_owner_transferred">Propriété transférée</string>
+    <string name="vehicle_detail_gone">Tu n'as plus accès à ce véhicule</string>
+    <string name="vehicle_detail_gone_hint">On t'a peut-être retiré de ce véhicule, ou il a été supprimé.</string>
+    <string name="vehicle_detail_load_error">Impossible de charger le véhicule</string>
 </resources>

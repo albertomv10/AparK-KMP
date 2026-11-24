@@ -9,6 +9,15 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **El detalle del vehículo, de verdad** ([spec 014](docs/specs/014-vehicle-detail-members/spec.md)):
+  dónde está aparcado, quién lo dejó y cuándo, con un botón para verlo en el mapa, y **con quién se
+  comparte**, marcando al dueño. El dueño puede **quitar** a un miembro y **pasarle la propiedad**,
+  que era lo que el diálogo de borrar pedía sin que existiera dónde. El resto puede **salirse**
+  desde aquí también. Si te quitan o lo borran mientras lo miras, la pantalla lo dice en vez de
+  fallar, y si te pasan la propiedad, las acciones de dueño aparecen solas. Los nombres los da una
+  función nueva, `getVehicleMembers`, porque nadie puede leer el perfil de otro; quien no tiene
+  nombre sale con su email, como en «Aparcado por». Las reglas ahora solo dejan pasar la propiedad a
+  un miembro, y el dueño ya no puede añadir a nadie: se entra solo con un código.
 - **Eliminar la cuenta** ([spec 012](docs/specs/012-delete-account/spec.md)), el último bloqueante
   de tienda de la fase 1: desde *Cuenta*, debajo de cerrar sesión. Antes de pedir nada, la pantalla
   enseña qué vehículos se borrarán, cuáles pasarán al miembro que lleva más tiempo y de cuáles
