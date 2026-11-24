@@ -65,6 +65,13 @@ service cloud.firestore {
           // unreadable to the very person who still owns and can delete it.
           request.auth.uid == resource.data.ownerId
           && request.auth.uid in request.resource.data.memberIds
+          // Ownership only goes to someone who is already a member: otherwise the vehicle would
+          // end up with an owner who cannot even read it (spec 014).
+          && request.resource.data.ownerId in request.resource.data.memberIds
+          // The owner may remove members but never add them. Joining goes through an invite code
+          // and `joinVehicleWithCode`, which uses the Admin SDK; that is what gives an invitation
+          // any meaning (spec 014).
+          && request.resource.data.memberIds.hasOnly(resource.data.memberIds)
         )
         ||
         (

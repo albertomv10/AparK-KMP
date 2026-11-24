@@ -1,8 +1,9 @@
 import { getAuth } from "firebase-admin/auth";
 import { DocumentReference, getFirestore } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
-import { CallableRequest, HttpsError } from "firebase-functions/v2/https";
+import { CallableRequest } from "firebase-functions/v2/https";
 import { isRecentLogin, planVehicle, VehiclePlan } from "./accountPlan";
+import { requireUid } from "./requireUid";
 
 const VEHICLES_COLLECTION = "vehicles";
 const USERS_COLLECTION = "users";
@@ -92,10 +93,7 @@ async function deleteInvitesCreatedBy(uid: string): Promise<number> {
  * code anyway: gitlive does not expose it there.
  */
 export async function deleteAccountHandler(request: CallableRequest): Promise<{ status: DeleteAccountStatus }> {
-    const uid = request.auth?.uid;
-    if (!uid) {
-        throw new HttpsError("unauthenticated", "You must be signed in.");
-    }
+    const uid = requireUid(request);
     if (!isRecentLogin(request.auth?.token.auth_time, Math.floor(Date.now() / 1000))) {
         return { status: "requires-recent-login" };
     }

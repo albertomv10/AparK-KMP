@@ -1,6 +1,7 @@
 import { randomInt } from "crypto";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 import { CallableRequest, HttpsError } from "firebase-functions/v2/https";
+import { requireUid } from "./requireUid";
 
 const INVITES_COLLECTION = "invites";
 const VEHICLES_COLLECTION = "vehicles";
@@ -26,14 +27,6 @@ function generateCode(): string {
 function normalizeCode(raw: unknown): string {
     if (typeof raw !== "string") return "";
     return raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
-}
-
-function requireUid(request: CallableRequest): string {
-    const uid = request.auth?.uid;
-    if (!uid) {
-        throw new HttpsError("unauthenticated", "You must be signed in.");
-    }
-    return uid;
 }
 
 /**
