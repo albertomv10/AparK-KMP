@@ -74,6 +74,14 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   `docs/specs/_template/` y este `CHANGELOG.md`.
 
 ### Changed
+- **La CI de iOS, de 14–35 minutos a la mitad, y a cero cuando no toca la app.** Casi todo el tiempo
+  era enlazar el framework de Kotlin, una vez para Debug y otra para Release, en la misma máquina y
+  una detrás de otra. Ahora van en paralelo en dos máquinas, y validan lo mismo que antes. Un job
+  previo mira qué cambia el PR y salta iOS si todo es documentación, `functions/`, `tools/` o
+  configuración de Firebase; ante cualquier fichero que no esté en esa lista, compila. Y los
+  paquetes de Swift (~1,3 GB) se guardan en caché en vez de bajarse en cada ejecución. La variación
+  entre 14 y 35 minutos no era del código: en las ejecuciones lentas todo iba 2,5 veces más
+  despacio, también lo que no tiene nada que ver con Kotlin, así que es la máquina que toca.
 - **El mapa de Android ya no enseña el hueco mientras se reconstruye.** Volver a su pestaña rehace
   el `MapView` nativo, que es una View y se destruye al salir de la composición. Mientras dibuja su
   primer fotograma hay un velo con un indicador de carga, que es lo que hacen las apps que tienen
