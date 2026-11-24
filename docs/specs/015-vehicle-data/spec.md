@@ -1,7 +1,7 @@
 # Spec: datos del vehículo y editarlo
 
 - **ID**: 015-vehicle-data
-- **Estado**: Borrador
+- **Estado**: Aprobado — diseño en [design.md](design.md)
 - **Fecha**: 2026-11-24
 
 ## Problema / Por qué
@@ -77,19 +77,20 @@ Esta spec lo convierte en pantallas.
 11. **Dado** que la lista de marcas y modelos viene de json-car-list, **cuando** se publica la app,
     **entonces** la acompaña su aviso de licencia MIT con la atribución.
 
-## Preguntas abiertas
+## Preguntas abiertas — resueltas
 
-1. **¿Pantalla completa o diálogo para editar?** Son nueve campos, y dos con buscador.
-2. **¿Se piden estos datos al crear el vehículo, o solo al editarlo?** Crearlo ahora pide nombre y
-   matrícula. Pedir más alarga el alta, y no pedirlo deja vehículos sin datos que nadie completa.
-3. **¿El tipo cambia también el marcador del mapa?** Un icono por tipo en el mapa toca la parte nativa
-   de las dos plataformas (`AparKMap` es `expect`/`actual`). En la tarjeta es solo Compose.
-4. **¿Dónde se ven el tipo y el color?** En la tarjeta del mapa, en la lista de *Vehículos*, en el
-   detalle, o en todos.
-5. **Las motos: ¿marcas con sus modelos, o solo las marcas?** No hay lista abierta de motos; la
-   haríamos nosotros. Con solo las marcas, el modelo se escribe a mano.
-6. **¿Dónde se ve la licencia de json-car-list dentro de la app?** Una pantalla de «Licencias» en
-   *Cuenta*, o solo el aviso junto a los datos en el repositorio.
+Todas se cerraron en el diseño. El razonamiento completo está en [design.md](design.md).
+
+1. **¿Pantalla o diálogo?** → **Pantalla completa**, sin barra de pestañas.
+2. **¿Datos al crear?** → **Sí, opcionales.** **Primero la marca y el modelo**, y el nombre se rellena
+   solo con «Marca Modelo», que sigue siendo editable. En el detalle, si un vehículo no tiene datos,
+   el dueño ve «Añade los datos del vehículo».
+3. **¿El tipo cambia el marcador del mapa?** → **No.** Se ve en la tarjeta, en la lista y en el detalle.
+4. **¿Dónde se ven el tipo y el color?** → En la **tarjeta del mapa**, la **lista de *Vehículos*** y el
+   **detalle**.
+5. **¿Motos con modelos?** → **Solo las marcas**; el modelo se escribe a mano.
+6. **¿Dónde se ve la licencia?** → **En un `NOTICE` dentro de la app**, junto al JSON. La pantalla de
+   «Licencias» con todas las librerías queda en el ROADMAP para antes de publicar.
 
 ## Fuera de alcance
 
