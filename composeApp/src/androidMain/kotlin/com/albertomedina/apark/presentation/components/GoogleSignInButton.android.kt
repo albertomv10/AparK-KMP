@@ -47,7 +47,8 @@ actual fun GoogleSignInButton(
 
         Image(
             painter = painterResource(Res.drawable.ic_google_24_webp),
-            contentDescription = "Icono de Google",
+            // Decorativo: el texto del botón ya dice qué es, y un lector de pantalla lo diría dos veces.
+            contentDescription = null,
             modifier = Modifier.size(24.dp)
         )
 

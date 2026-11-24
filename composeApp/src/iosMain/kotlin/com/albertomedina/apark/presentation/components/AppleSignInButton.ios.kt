@@ -15,8 +15,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
 import apark.composeapp.generated.resources.Res
+import apark.composeapp.generated.resources.apple_login
 import apark.composeapp.generated.resources.ic_apple_white
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /** `onError` recibe `(mensaje, cancelledByUser)`; ver [iosGoogleSignInProvider]. */
 var iosAppleSignInProvider: ((
@@ -63,14 +65,15 @@ actual fun AppleSignInButton(
              Image(
                  painter = painterResource(
                      Res.drawable.ic_apple_white),
-                 contentDescription = "Icono de Apple",
+                 // Decorativo: el texto del botón ya dice qué es, y un lector de pantalla lo diría dos veces.
+                 contentDescription = null,
                  modifier = Modifier.width(16.dp),
                  colorFilter = ColorFilter.tint(textColor)
              )
              Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                text = "Continuar con Apple",
+                text = stringResource(Res.string.apple_login),
                 color = textColor,
                 style = MaterialTheme.typography.labelLarge
             )

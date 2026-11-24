@@ -110,6 +110,15 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   y con él se va la vía de respaldo que todavía lo leía en la función de limpieza de vehículos.
 
 ### Fixed
+- **No queda ningún texto en castellano escrito a fuego.** El aviso de permiso de ubicación
+  denegado y su botón «Ajustes», y el texto del botón «Continuar con Apple», salían en castellano
+  con la app en inglés o en francés; ahora van en los tres idiomas. El aviso de permiso, además,
+  tiene prioridad sobre el de «deshacer»: si llegaba con este todavía en pantalla, salía con el
+  botón «Deshacer», que en realidad abría los ajustes.
+- **Los lectores de pantalla ya no leen dos veces los botones de Google y Apple.** Sus iconos son
+  decorativos, porque el texto del botón ya dice qué es, y la animación de verificar el email no
+  cuenta nada. Los cuatro tenían una descripción escrita a fuego, en castellano o en inglés; ahora
+  TalkBack y VoiceOver los saltan.
 - **Los correos de Firebase llegan en el idioma de la app**, y no en inglés. Verificar la cuenta,
   recuperar la contraseña y confirmar un email nuevo salen en el idioma en que se está viendo la
   app: la app nunca se lo decía al SDK, y sin eso Firebase usa el inglés.

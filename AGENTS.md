@@ -395,13 +395,12 @@ graphify path "A" "B" --undirected
 - **No transfer-ownership UI**: `transferVehicleOwnership` exists but nothing calls it, even though
   the delete dialog points users at it.
 - **`UpdateVehicleUseCase` is wired into Koin but nothing calls it**, so `Vehicle.model` and
-  `Vehicle.color` are never written. `Vehicle.inviteCode` is dead too.
+  `Vehicle.color` are never written.
 - **App Check sends tokens but enforcement is off**, and cannot be turned on until there is a paid
   Apple Developer account: iOS attests with App Attest, and enforcement is **per service, not per
   platform**, so enabling it would lock out the iPhones. See [`docs/FIREBASE.md`](docs/FIREBASE.md).
 - `ComposeAppCommonTest.kt` is still a placeholder, though real tests now exist beside it
   (`commonTest/.../settings/`) and in `tools/test/`.
-- Hardcoded Spanish string: the GPS-denied snackbar in `HomeScreen.kt`.
 - **Deleting an account with Apple sign-in is not implemented**, and neither is Apple sign-in itself:
   the iOS target has no entitlements, and that one needs the paid Apple Developer account. When it
   is switched on, account deletion must re-authenticate with Apple **and revoke the token** — App

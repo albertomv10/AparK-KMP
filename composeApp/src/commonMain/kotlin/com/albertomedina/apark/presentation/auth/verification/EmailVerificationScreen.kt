@@ -130,7 +130,8 @@ fun EmailVerificationScreen(
                         composition = composition,
                         iterations = Compottie.IterateForever
                     ),
-                    contentDescription = "Lottie animation",
+                    // Decorativa: acompaña al texto y no cuenta nada que un lector de pantalla deba leer.
+                    contentDescription = null,
                     modifier = Modifier.size(250.dp)
                 )
             } else {
