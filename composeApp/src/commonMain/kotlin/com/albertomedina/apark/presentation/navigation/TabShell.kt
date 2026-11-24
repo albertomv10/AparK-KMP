@@ -87,6 +87,18 @@ fun TabShell(
         currentTab = tab
     }
 
+    // «Ver en el mapa» desde un detalle (spec 014): qué vehículo tiene que enseñar el mapa al llegar.
+    // El mapa vuelve a su raíz, porque es ahí donde está el carrusel; desde otra pestaña, además,
+    // se cambia a la suya, y la otra conserva su pila como siempre.
+    var mapFocusVehicleId by remember { mutableStateOf<String?>(null) }
+
+    fun showOnMap(vehicleId: String) {
+        mapFocusVehicleId = vehicleId
+        isTabSwitch = false
+        while (mapStack.size > 1) mapStack.removeLastOrNull()
+        if (currentTab != Tab.MAP) goToTab(Tab.MAP)
+    }
+
     val stack = when (currentTab) {
         Tab.MAP -> mapStack
         Tab.VEHICLES -> vehiclesStack
@@ -153,7 +165,9 @@ fun TabShell(
                     is Home -> NavEntry(key) {
                         HomeScreen(
                             onNavigateToDetails = { push(VehicleDetail(it)) },
-                            onNavigateToAddVehicle = { push(AddVehicle) }
+                            onNavigateToAddVehicle = { push(AddVehicle) },
+                            focusVehicleId = mapFocusVehicleId,
+                            onFocusHandled = { mapFocusVehicleId = null }
                         )
                     }
                     is Vehicles -> NavEntry(key) {
@@ -181,7 +195,8 @@ fun TabShell(
                     is VehicleDetail -> NavEntry(key) {
                         VehicleDetailScreen(
                             vehicleId = key.vehicleId,
-                            onBack = { pop() }
+                            onBack = { pop() },
+                            onShowOnMap = { showOnMap(it) }
                         )
                     }
                     is AddVehicle -> NavEntry(key) {

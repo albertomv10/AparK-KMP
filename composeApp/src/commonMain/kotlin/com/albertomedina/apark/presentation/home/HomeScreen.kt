@@ -51,7 +51,10 @@ import org.koin.compose.viewmodel.koinViewModel
 fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
     onNavigateToDetails: (String) -> Unit,
-    onNavigateToAddVehicle: () -> Unit
+    onNavigateToAddVehicle: () -> Unit,
+    /** «Ver en el mapa» desde el detalle (spec 014): el vehículo que hay que poner delante. */
+    focusVehicleId: String? = null,
+    onFocusHandled: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -169,6 +172,20 @@ fun HomeScreen(
             // appears to stay put while its neighbours swap around it.
             pagerState.scrollToPage(target)
         }
+    }
+
+    // «Ver en el mapa» (spec 014): el carrusel va a ese vehículo, y el mapa lo sigue, porque se
+    // centra en el seleccionado. Se espera a que llegue la lista; si llega y el vehículo no está
+    // —lo han borrado entretanto—, se da por atendido para no dejarlo pendiente para siempre.
+    LaunchedEffect(focusVehicleId, state.vehicles) {
+        val vehicleId = focusVehicleId ?: return@LaunchedEffect
+        val target = state.vehicles.indexOfFirst { it.id == vehicleId }
+        if (target == -1) {
+            if (state.vehicles.isNotEmpty()) onFocusHandled()
+            return@LaunchedEffect
+        }
+        pagerState.scrollToPage(target)
+        onFocusHandled()
     }
 
     // Deleting shrinks the list: pull the current page back into range, otherwise the pager

@@ -55,17 +55,6 @@ class FirestoreVehicleRepository(
         return vehicles.sortedBy { position[it.id] ?: Int.MAX_VALUE }
     }
 
-    override suspend fun getVehicleById(vehicleId: String): Vehicle? {
-        return try {
-            val snapshot = firestore.collection(FirestoreConstants.CARS_COLLECTION)
-                .document(vehicleId)
-                .get()
-            if (snapshot.exists) snapshot.data<Vehicle>() else null
-        } catch (e: Exception) {
-            null
-        }
-    }
-
     override suspend fun getLastVehicleLocation(vehicleId: String): LocationModel? {
         return try {
             val snapshot = firestore.collection(FirestoreConstants.CARS_COLLECTION)

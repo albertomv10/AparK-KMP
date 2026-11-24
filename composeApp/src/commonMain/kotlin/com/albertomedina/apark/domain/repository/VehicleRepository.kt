@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface VehicleRepository {
     fun getVehiclesForUser(userId: String): Flow<List<Vehicle>>
-    suspend fun getVehicleById(vehicleId: String): Vehicle?
     suspend fun getLastVehicleLocation(vehicleId: String): LocationModel?
     suspend fun updateVehicleLocation(vehicleId: String, location: LocationModel): Result<Unit>
     suspend fun createVehicle(userId: String, name: String, licensePlate: String = ""): Result<Unit>

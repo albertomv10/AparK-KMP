@@ -29,7 +29,6 @@ import com.albertomedina.apark.domain.usecase.DeleteVehicleUseCase
 import com.albertomedina.apark.domain.usecase.GetCurrentLocationUseCase
 import com.albertomedina.apark.domain.usecase.GetLastVehicleLocationUseCase
 import com.albertomedina.apark.domain.usecase.GetUserUseCase
-import com.albertomedina.apark.domain.usecase.GetVehicleByIdUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
 import com.albertomedina.apark.domain.usecase.JoinVehicleWithCodeUseCase
 import com.albertomedina.apark.domain.usecase.LoginAppleUseCase
@@ -130,7 +129,6 @@ val sharedModule = module {
     factory { MoveVehicleUseCase(repository = get()) }
     factory { CreateVehicleInviteUseCase(repository = get()) }
     factory { JoinVehicleWithCodeUseCase(repository = get()) }
-    factory { GetVehicleByIdUseCase(repository = get()) }
     factory { UpdateVehicleUseCase(repository = get()) }
     factory { RemoveUserFromVehicleUseCase(repository = get()) }
     factory { RemoveVehicleMemberUseCase(vehicleRepository = get()) }
@@ -268,9 +266,15 @@ val sharedModule = module {
 
     viewModel {
         VehicleDetailViewModel(
-            getVehicleByIdUseCase = get(),
+            authRepository = get(),
+            getVehicleListUseCase = get(),
+            getVehicleMembersUseCase = get(),
             createVehicleInviteUseCase = get(),
-            authRepository = get()
+            removeVehicleMemberUseCase = get(),
+            transferVehicleOwnershipUseCase = get(),
+            deleteVehicleUseCase = get(),
+            removeUserFromVehicleUseCase = get(),
+            crashReporter = get()
         )
     }
 }
