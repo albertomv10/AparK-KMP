@@ -105,7 +105,7 @@ users/{uid}/devices/{deviceId}        # deviceId determinista → registrar es i
 
 vehicles/{vehicleId}
   name, licensePlate
-  type, make, model, year, fuel, color
+  type, powertrain, fuel, make, model, color, emissionsLabel   # ver §9: qué entra, cuándo y cómo
   ownerId                             # quién puede borrar y compartir
   memberIds: [uid]                    # para CONSULTAR y para las REGLAS
   members: { uid: { role, displayName, joinedAt } }   # para PINTAR sin leer N usuarios
@@ -277,7 +277,165 @@ Todos deben acabar versionados en `firestore.indexes.json`, que hoy está vacío
 | Sin marcas de tiempo | `createdAt` / `updatedAt` / `schemaVersion` | spec 008 |
 | `lastLocation.user` guarda un `User` entero | `by: {uid, displayName}` | spec 008 |
 | `inviteCode` muerto en el vehículo | eliminado | spec 008 |
-| Sin metadatos de vehículo | `type`, `make`, `model`, `year`, `fuel` | fase 2 |
+| Sin metadatos de vehículo (`model` y `color` existen, pero nadie los escribe) | los de §9, cada uno con la función que lo usa | fase 2 y siguientes |
 | Sin subcolecciones | `incidents`, `maintenance`, `reminders`, `places` | fase 3 |
 | Sin `devices` ni `settings` | necesarios para notificar desde el servidor | fase 4 |
 | `firestore.indexes.json` vacío | compuestos y de grupo versionados | según lleguen |
+
+---
+
+## 9. Catálogo de atributos del vehículo
+
+> Redactado y decidido el 2026-11-24, antes de la [spec 015](specs/015-vehicle-data/spec.md), que
+> lo implementa. Las decisiones están al final.
+
+### El criterio
+
+**Un atributo entra con la función que lo usa**, no antes. `Vehicle.model` y `Vehicle.color` existen
+desde el principio «por si acaso», y nada los escribe: son el ejemplo de lo que pasa al revés.
+
+Añadir un campo **después** es barato. Firestore no tiene esquema, y un campo opcional entra con su
+valor por defecto en el modelo de Kotlin, sin migrar los vehículos que ya existen. Lo caro es
+**cambiar la forma** de un dato que ya han rellenado los usuarios: pasar de texto libre a lista
+cerrada, por ejemplo. Por eso las listas cerradas se deciden bien la primera vez, y con tres reglas:
+
+1. **Se guarda un código, no un texto**: `diesel`, no «Diésel». La traducción vive en la app, en los
+   tres idiomas, y cambiar cómo se muestra no toca los datos.
+2. **Un código desconocido se lee como «otro»**, nunca como un error. Si una versión futura añade
+   `hydrogen` a una lista, la app de un miembro que no ha actualizado no puede romperse al leerlo. En
+   Kotlin eso significa **no deserializar directamente a un `enum`**, que lanza con un valor que no
+   conoce: se guarda como `String` y se traduce con un `fromCode()` que tiene su caso por defecto.
+3. **Las reglas validan la lista** (`in [...]`) y las longitudes del texto libre, como ya hacen con el
+   nombre y la matrícula.
+
+### Los atributos
+
+| Atributo | Dato | Para qué | Quién lo usa | Cuándo |
+|---|---|---|---|---|
+| `name` | texto, 1–60 | Distinguir los vehículos | Todo | ✅ existe |
+| `licensePlate` | texto, ≤ 15 | Identificarlo; lo pide cualquier aparcamiento | Tarjeta, detalle | ✅ existe |
+| `type` | lista | Saber de un vistazo qué es: un icono en el mapa y en la tarjeta | Mapa, tarjeta, detalle; más adelante la ITV, que va distinta para motos | **Spec 015** |
+| `powertrain` · `fuel` | dos listas | El sistema (combustión, híbrido, eléctrico…) y qué le echas: no dudar al repostar cuando tienes más de un vehículo | Detalle | **Spec 015** |
+| `color` | lista | Encontrarlo en un aparcamiento grande, que es para lo que existe la app | Tarjeta, detalle | **Spec 015** (el campo existe, sin uso) |
+| `make` · `model` | texto, ≤ 40 | Identificarlo | Detalle | **Spec 015** (`model` existe, sin uso). Se eligen de una lista mientras escribes, o se escriben a mano si no están: ver abajo |
+| `emissionsLabel` | lista, opcional | Saber dónde puedes aparcar: en Madrid y Barcelona decide si entras en la zona de bajas emisiones y cuánto pagas en la zona azul | Detalle; quizá un aviso al aparcar | **Spec 015** |
+| `registrationDate` | mes y año | Calcular cuándo toca la ITV, que cuenta desde la primera matriculación, no desde el año del modelo | ITV (3.2) | Con la ITV. Sustituye al `year` que proponía §4 |
+| `insurance` | `{company, assistancePhone, policyNumber, renewalDate}` | Llamar a la asistencia ante un golpe o una avería, y el aviso de renovación | Incidencias (3.1), recordatorios (3.2, `kind: "insurance"`) | Con las incidencias |
+| `notes` | texto libre, ≤ 500 | Lo que no tenga sitio en otro campo | Detalle | Sin función que lo pida todavía |
+
+**No son atributos del vehículo**, aunque lo parezcan:
+
+- **Los kilómetros.** Cambian cada día, y un valor suelto en el vehículo estaría casi siempre
+  desactualizado. Van en cada intervención de mantenimiento (`maintenance.odometerKm`, §4), y el
+  último conocido es el de la intervención más reciente.
+- **El vehículo por defecto** para el widget y CarPlay, o un alias personal: son de la persona, no del
+  vehículo. Van en `users/{uid}`.
+- **El garaje y otros sitios habituales**: son `places` (3.4).
+
+**Descartados por ahora**: la foto (necesita Firebase Storage, aplazado con la foto de perfil), la
+altura para aparcamientos con gálibo, el número de bastidor (dato sensible sin uso) y los distintivos
+de residente.
+
+### Las listas
+
+**`type`** — qué es.
+
+| Código | Español |
+|---|---|
+| `car` | Coche |
+| `motorcycle` | Moto (incluye ciclomotores) |
+| `van` | Furgoneta |
+| `motorhome` | Autocaravana |
+| `other` | Otro |
+
+**`powertrain`** — **el sistema**: qué mueve el vehículo.
+
+| Código | Español | Notas |
+|---|---|---|
+| `combustion` | Combustión | Solo motor térmico |
+| `mild_hybrid` | Microhíbrido | MHEV: ayuda eléctrica, no anda solo con ella |
+| `hybrid` | Híbrido | HEV: anda a ratos en eléctrico, no se enchufa |
+| `plug_in_hybrid` | Híbrido enchufable | PHEV; incluye los de autonomía extendida |
+| `electric` | Eléctrico | BEV: solo enchufe |
+| `fuel_cell` | Pila de combustible | FCEV: hidrógeno |
+| `other` | Otro | |
+
+**`fuel`** — **qué le echas**. Es la pregunta de quien tiene más de un vehículo y no se acuerda.
+
+| Código | Español | Notas |
+|---|---|---|
+| `petrol` | Gasolina | |
+| `diesel` | Diésel | |
+| `lpg` | GLP (autogás) | Incluye los bifuel gasolina-GLP |
+| `natural_gas` | Gas natural | GNC y GNL |
+| `hydrogen` | Hidrógeno | |
+| `other` | Otro | |
+
+**Las dos se combinan**, y la app solo ofrece lo que tiene sentido:
+
+| Sistema | Qué le echas |
+|---|---|
+| Combustión | gasolina, diésel, GLP o gas natural |
+| Microhíbrido, híbrido, híbrido enchufable | gasolina o diésel |
+| Eléctrico | nada: `fuel` se queda vacío, y el detalle dice «se carga» |
+| Pila de combustible | hidrógeno, sin preguntar |
+
+Las reglas validan cada lista por separado, no las combinaciones: la combinación la cuida la app, y
+una mal formada solo se vería rara, no rompería nada.
+
+**`color`** — una paleta cerrada para poder pintar una muestra en la tarjeta, que es lo que ayuda a
+reconocerlo de lejos: `white` blanco, `black` negro, `grey` gris, `silver` plata, `blue` azul, `red`
+rojo, `green` verde, `yellow` amarillo, `orange` naranja, `brown` marrón o beige, `other` otro.
+
+**`emissionsLabel`** — la etiqueta ambiental de la DGT: `zero` 0 emisiones, `eco` ECO, `c` C, `b` B,
+`none` sin etiqueta. La asigna la DGT según el combustible y la antigüedad, y aquí **no se calcula**: la
+elige quien edita, porque la regla tiene excepciones y la etiqueta es la que figura en su registro.
+
+### Marca y modelo: de dónde sale la lista
+
+La experiencia que se busca es la de apps como BlaBlaCar: se escribe la marca y una lista debajo va
+filtrando las que coinciden; después, el modelo, filtrado por esa marca. La pantalla es sencilla. Lo
+difícil son **los datos**: tenerlos completos, al día y con nombres coherentes.
+
+| Opción | A favor | En contra |
+|---|---|---|
+| **A. Un JSON dentro de la app**, a partir de una lista abierta como [json-car-list](https://github.com/getfrontend/json-car-list) | Gratis, sin conexión, búsqueda instantánea | Es mundial, no europea, y tiene huecos (abajo). Se actualiza al publicar una versión |
+| **B. Generarla de los [microdatos de matriculaciones de la DGT](https://datos.gob.es/es/catalogo/e00130502-microdatos-de-matriculaciones-de-vehiculos-mensual)** | Lo que de verdad se matricula en España, oficial y gratis: trae `MARCA_ITV` y `MODELO_ITV` | Nombres sucios (el modelo mezcla versión y motor), así que pide un script de limpieza en `tools/` y repetirlo de vez en cuando. Solo España |
+| **C. Una API de pago** (Auto-Data.net, cars-data.com…) | Lo más completo: generaciones y versiones | Coste, una clave que habría que esconder tras una callable, y depender de la red al crear un vehículo |
+
+**Sea cual sea la fuente, hay dos cosas fijas:**
+
+- **Siempre se puede escribir a mano.** Ninguna lista está completa, y un modelo que no aparece no
+  puede impedir guardar el vehículo.
+- **Se guarda el texto**, sea de la lista o escrito a mano. Así, cambiar de fuente (enriquecer la lista
+  con la DGT, o llevarla a una colección `catalog` de Firestore para actualizarla sin publicar la app)
+  no obliga a migrar nada.
+
+**Elegida la A** (ver las decisiones). Lo que se comprobó de [json-car-list](https://github.com/getfrontend/json-car-list)
+el 2026-11-24:
+
+- **Licencia**: el README la declara MIT, pero el repositorio no tiene fichero `LICENSE` ni línea de
+  copyright, y GitHub no la detecta. El permiso vale igual —lo da el autor—, y lo que pide la MIT es
+  acompañar los datos con su aviso: el JSON va junto a un `NOTICE` con la atribución y el texto de la
+  licencia.
+- **Tamaño**: 135 marcas y 1.420 modelos, solo los nombres (sin versiones ni generaciones), en 21 KB.
+- **Huecos**: faltan marcas que se venden en España —**Cupra**, Omoda, Jaecoo, KGM/SsangYong— y **no
+  hay ninguna moto**. Van en una lista nuestra que complementa a la suya, en un fichero aparte para
+  poder actualizar la de ellos sin pisarla.
+- **Nombres con tilde**: «Škoda», «Citroën». La búsqueda tiene que ignorar mayúsculas y tildes, o
+  quien escriba «skoda» no lo encuentra.
+
+Si la lista se queda corta, la B sigue siendo la mejora natural para el mercado español: los datos de
+la DGT traen también las motos.
+
+### Decisiones (2026-11-24)
+
+1. **`fuel` va en dos dimensiones**: `powertrain` (el sistema) y `fuel` (qué le echas), con las
+   combinaciones de arriba. Es más exacto que una lista única, y al editar son dos preguntas cortas.
+2. **`color`, en paleta cerrada**, con «otro».
+3. **`type`, con los cinco tipos** de arriba.
+4. **`emissionsLabel` entra**: la de la DGT, opcional. La Crit'Air francesa u otras, solo si alguien
+   las pide.
+5. **Solo el dueño edita** los datos del vehículo, como ya dicen las reglas.
+6. **Marca y modelo, de una lista dentro de la app (opción A)**, con buscador mientras se escribe y
+   la salida a mano siempre disponible. El buscador entra en la spec 015, no en una aparte.
