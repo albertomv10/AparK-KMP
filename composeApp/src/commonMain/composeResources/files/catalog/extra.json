@@ -1,0 +1,17 @@
+{
+  "cars": [
+    { "brand": "Cupra", "models": ["Born", "Formentor", "León", "León Sportstourer", "Ateca", "Tavascan", "Terramar"] },
+    { "brand": "Omoda", "models": ["5", "7", "9", "E5"] },
+    { "brand": "Jaecoo", "models": ["5", "7"] },
+    { "brand": "KGM", "models": ["Tivoli", "Korando", "Torres", "Rexton", "Musso"] },
+    { "brand": "SsangYong", "models": ["Tivoli", "Korando", "Torres", "Rexton", "Musso"] },
+    { "brand": "Škoda", "models": ["Kamiq", "Scala", "Elroq"] },
+    { "brand": "Peugeot", "models": ["3008"] },
+    { "brand": "Toyota", "models": ["C-HR", "Corolla Cross", "bZ4X"] }
+  ],
+  "motorcycles": [
+    "Honda", "Yamaha", "Kawasaki", "Suzuki", "BMW", "Ducati", "KTM", "Harley-Davidson", "Triumph",
+    "Aprilia", "Piaggio", "Vespa", "Kymco", "SYM", "Royal Enfield", "Benelli", "CFMoto", "Husqvarna",
+    "Moto Guzzi", "MV Agusta", "Voge", "Zontes", "Silence", "Rieju", "Peugeot Motocycles"
+  ]
+}

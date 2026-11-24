@@ -6,9 +6,16 @@ import kotlinx.serialization.Serializable
 data class Vehicle(
     val id: String = "",
     val name: String = "",
-    val model: String = "",
     val licensePlate: String = "",
+    // Los datos de la spec 015, como códigos o texto: ver `VehicleAttributes` y `VehicleDetails`.
+    // `""` es «sin dato», y es también lo que vale un campo que el documento no tiene.
+    val type: String = "",
+    val powertrain: String = "",
+    val fuel: String = "",
+    val make: String = "",
+    val model: String = "",
     val color: String = "",
+    val emissionsLabel: String = "",
     val ownerId: String = "",
     /**
      * Todos los miembros, **el dueño incluido**.

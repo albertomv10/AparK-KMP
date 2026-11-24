@@ -1,5 +1,6 @@
 package com.albertomedina.apark.presentation.addvehicle
 
+import com.albertomedina.apark.domain.model.VehicleDetails
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.model.JoinStatus
@@ -69,7 +70,7 @@ class AddVehicleViewModel(
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            val result = createVehicleUseCase(userId, name, licensePlate)
+            val result = createVehicleUseCase(userId, VehicleDetails(name = name, licensePlate = licensePlate))
             _uiState.update { it.copy(isLoading = false) }
 
             result.fold(

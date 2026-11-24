@@ -3,18 +3,18 @@
 - **Spec**: [spec.md](spec.md) · **Diseño**: [design.md](design.md), aprobado en modo plan
 
 ## Reglas
-- [ ] Una validación por lista, con `""` permitido; `make` y `model` hasta 40
-- [ ] `create` valida los campos nuevos
-- [ ] La rama del dueño valida cada campo solo si cambia, incluidos el nombre y la matrícula
-- [ ] Tests: crear válido e inválido, el dueño edita, un miembro no, y el dueño aparca con un valor antiguo inválido
+- [x] Una validación por lista, con `""` permitido; `make` y `model` hasta 40
+- [x] `create` valida los campos nuevos
+- [x] La rama del dueño valida cada campo solo si cambia, incluidos el nombre y la matrícula
+- [x] Tests: crear válido e inválido, el dueño edita, un miembro no, y el dueño aparca con un valor antiguo inválido
 
 ## Dominio, datos y catálogo
-- [ ] `Vehicle` con los campos nuevos; `VehicleAttributes` con `fromCode` y su caso desconocido
-- [ ] Combinaciones de sistema y combustible
-- [ ] `VehicleDetails`; crear y editar en el repositorio y en los casos de uso
-- [ ] `car-list.json` (commit `607d40047355`), `extra.json` y `NOTICE.txt`
-- [ ] `CatalogRepository`, `foldForSearch` y `searchNames`
-- [ ] Tests en `commonTest`
+- [x] `Vehicle` con los campos nuevos; `VehicleAttributes` con `fromCode` y su caso desconocido
+- [x] Combinaciones de sistema y combustible
+- [x] `VehicleDetails`; crear y editar en el repositorio y en los casos de uso
+- [x] `car-list.json` (commit `607d40047355`), `extra.json` y `NOTICE.txt`
+- [x] `CatalogRepository`, `foldForSearch` y `searchNames`
+- [x] Tests en `commonTest`
 
 ## Interfaz
 - [ ] `VehicleForm` con su estado y `autoName`; el buscador en línea; la paleta; «Más datos»
