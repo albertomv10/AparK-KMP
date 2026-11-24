@@ -242,6 +242,15 @@ graphify path "A" "B" --undirected
   — and before that property existed here it sat so close to the edge that the *same commit*
   passed on one branch and died with `OutOfMemoryError` on another. If it comes back, raise that
   one, not `org.gradle.jvmargs`: the Gradle daemon is what runs R8 for Android releases.
+- **In CI that link is slow because of CPU, not memory — measured, so do not tune heaps for
+  speed.** On GitHub's macOS runner (Apple M1 virtual, 3 CPUs, 7 GB), the Kotlin phase of the
+  Release build took 20 minutes in [PR #43](https://github.com/albertomv10/AparK-KMP/pull/43),
+  with free memory never under 32 % and swap at zero until the last three minutes. The two heaps
+  are ceilings, not usage: the Gradle daemon peaked at 2.5–3.2 GB. The same step has taken 5, 13
+  and 24 minutes on that same kind of machine, so the spread is the host, not the build. The
+  measuring script lives in that PR; if you measure again, trust the system's free-memory
+  percentage, because summing `ps` RSS counts shared memory once per process — it reported 11 GB on
+  a 7 GB machine.
 - **The secrets plugin copies *every* `local.properties` key into `BuildConfig`, in every variant.**
   That put the signing keystore passwords and path into the app: release got away with it only
   because R8 drops constants nobody reads — borrowed protection, one `keep` rule from leaking —
