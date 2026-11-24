@@ -39,7 +39,7 @@ según el proveedor: con la contraseña, o volviendo a pasar por Google.
 
 | Archivo | Cambio |
 |---------|--------|
-| `functions/src/account.ts` · `index.ts` | La callable `deleteAccount`, con `planVehicle` y `isRecentLogin` como funciones puras |
+| `functions/src/account.ts` · `accountPlan.ts` · `index.ts` | La callable `deleteAccount`; `planVehicle` e `isRecentLogin`, puras y sin imports, en su propio fichero para que los tests de `tools/` no necesiten las dependencias de `functions/` |
 | `tools/test/account.test.ts` | Tests de `planVehicle` e `isRecentLogin` |
 | `domain/repository/AccountRepository.kt` · `data/repository/FirebaseAccountRepository.kt` | Llamar a la callable y traducir sus errores |
 | `domain/repository/AuthRepository.kt` · `data/repository/FirebaseAuthRepository.kt` | `reauthenticateWithGoogle`, y el *user mismatch* |

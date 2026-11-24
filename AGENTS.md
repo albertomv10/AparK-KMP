@@ -166,6 +166,11 @@ parked last but no longer belong to (anonymised), their invites, `users/{uid}`, 
 account last**, so a failure halfway leaves something to retry from. The decision per vehicle is the
 pure `planVehicle`, tested in `tools/test/account.test.ts`.
 
+- **A test in `tools/` can only import files from `functions/` that import nothing.** CI's rules job
+  installs `tools/` alone, so `firebase-functions` does not resolve there; locally it does, because
+  `functions/node_modules` exists, and the test passes on your machine and fails in CI. That is why
+  `planVehicle` and `isRecentLogin` live in `accountPlan.ts`, apart from the handler in `account.ts`.
+
 ```sh
 npm --prefix functions run build
 npx firebase-tools@latest deploy --only functions            # dev

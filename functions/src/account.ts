@@ -1,7 +1,8 @@
 import { getAuth } from "firebase-admin/auth";
-import { DocumentData, DocumentReference, getFirestore } from "firebase-admin/firestore";
+import { DocumentReference, getFirestore } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { CallableRequest, HttpsError } from "firebase-functions/v2/https";
+import { isRecentLogin, planVehicle, VehiclePlan } from "./accountPlan";
 
 const VEHICLES_COLLECTION = "vehicles";
 const USERS_COLLECTION = "users";
@@ -14,58 +15,7 @@ const PARKED_BY_FIELD = "lastLocation.user";
 /** A batch takes up to 500 writes; stay well below it. */
 const BATCH_LIMIT = 400;
 
-/**
- * How recent the sign-in has to be. The client re-authenticates right before calling, so this only
- * has to cover the round trip; it exists so the server does not take the client's word for it.
- */
-export const RECENT_LOGIN_SECONDS = 5 * 60;
-
 export type DeleteAccountStatus = "deleted" | "requires-recent-login";
-
-export function isRecentLogin(authTimeSeconds: unknown, nowSeconds: number): boolean {
-    return typeof authTimeSeconds === "number" && nowSeconds - authTimeSeconds <= RECENT_LOGIN_SECONDS;
-}
-
-/**
- * Whether `lastLocation.user` names this person. Since spec 008 it is `{uid, name, email}`; vehicles
- * nobody has parked since then still carry the whole old `User`, keyed by `id`.
- */
-function isParkedBy(vehicle: DocumentData, uid: string): boolean {
-    const parkedBy = vehicle.lastLocation?.user;
-    return !!parkedBy && (parkedBy.uid === uid || parkedBy.id === uid);
-}
-
-export type VehiclePlan =
-    | { action: "none" }
-    /** Not a member, but their name and email are still on the card. */
-    | { action: "anonymize" }
-    /** Nobody else is left: the vehicle goes, and `cleanupVehicleReferences` sweeps up after it. */
-    | { action: "delete" }
-    /** Others remain: drop this person, hand over ownership if it was theirs. */
-    | { action: "leave"; memberIds: string[]; newOwnerId?: string; anonymize: boolean };
-
-/**
- * What deleting `uid` means for one vehicle. Pure, so it can be tested without Firestore.
- *
- * Ownership goes to the member who has been there longest — the first of `memberIds` once this
- * person is out. Creating a vehicle writes `[owner]`, joining appends with `arrayUnion`, and the
- * spec 008 migration wrote `[owner, ...sharedUsers]`, so the array's order is joining order.
- */
-export function planVehicle(vehicle: DocumentData, uid: string): VehiclePlan {
-    const members: string[] = Array.isArray(vehicle.memberIds) ? vehicle.memberIds : [];
-    const isOwner = vehicle.ownerId === uid;
-    const parked = isParkedBy(vehicle, uid);
-
-    if (!members.includes(uid) && !isOwner) {
-        return parked ? { action: "anonymize" } : { action: "none" };
-    }
-
-    const others = members.filter((member) => member !== uid);
-    if (others.length === 0) {
-        return { action: "delete" };
-    }
-    return { action: "leave", memberIds: others, newOwnerId: isOwner ? others[0] : undefined, anonymize: parked };
-}
 
 /**
  * Every vehicle the person touches: as a member, as the owner, or as whoever parked it last. A

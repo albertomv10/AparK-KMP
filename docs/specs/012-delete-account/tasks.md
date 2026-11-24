@@ -3,7 +3,7 @@
 - **Spec**: [spec.md](spec.md) · **Diseño**: [design.md](design.md), aprobado en modo plan
 
 ## Servidor
-- [x] `functions/src/account.ts`: `deleteAccount`, con `planVehicle` e `isRecentLogin`
+- [x] `functions/src/account.ts`: `deleteAccount`; `planVehicle` e `isRecentLogin` en `accountPlan.ts`, sin imports
 - [x] Exportada desde `index.ts`, en `europe-west4`
 - [x] `tools/test/account.test.ts`: `planVehicle` e `isRecentLogin`
 

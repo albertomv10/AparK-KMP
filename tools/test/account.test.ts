@@ -3,7 +3,7 @@
  * login reciente. Son funciones puras: no hace falta emulador para probarlas.
  */
 import { describe, expect, it } from "vitest";
-import { isRecentLogin, planVehicle, RECENT_LOGIN_SECONDS } from "../../functions/src/account";
+import { isRecentLogin, planVehicle, RECENT_LOGIN_SECONDS } from "../../functions/src/accountPlan";
 
 const ME = "me";
 const parkedBy = (uid: string) => ({ latitude: 1, longitude: 2, timestamp: 3, user: { uid, name: "X", email: "x@test" } });
