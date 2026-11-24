@@ -164,6 +164,52 @@ describe("salirse", () => {
     });
 });
 
+describe("gestión de miembros (spec 014)", () => {
+    const update = (uid: string, email: string, data: Record<string, unknown>) =>
+        updateDoc(doc(as(uid, email), "vehicles", VEHICLE), data);
+
+    it("el dueño pasa la propiedad a un miembro, y sigue siendo miembro", async () => {
+        await assertSucceeds(update(OWNER, OWNER_EMAIL, { ownerId: MEMBER }));
+    });
+
+    it("NO a alguien que no es miembro: el vehículo tendría un dueño que no puede leerlo", async () => {
+        await assertFails(update(OWNER, OWNER_EMAIL, { ownerId: STRANGER }));
+    });
+
+    it("NO puede pasar la propiedad y quitarse en la misma escritura", async () => {
+        await assertFails(update(OWNER, OWNER_EMAIL, { ownerId: MEMBER, memberIds: [MEMBER] }));
+    });
+
+    it("el dueño quita a un miembro", async () => {
+        await assertSucceeds(update(OWNER, OWNER_EMAIL, { memberIds: [OWNER] }));
+    });
+
+    it("el dueño NO cuela a nadie: se entra solo con un código", async () => {
+        await assertFails(update(OWNER, OWNER_EMAIL, { memberIds: [OWNER, MEMBER, STRANGER] }));
+    });
+
+    it("el dueño NO cambia a un miembro por otro", async () => {
+        await assertFails(update(OWNER, OWNER_EMAIL, { memberIds: [OWNER, STRANGER] }));
+    });
+
+    it("un miembro NO pasa la propiedad, ni a sí mismo", async () => {
+        await assertFails(update(MEMBER, MEMBER_EMAIL, { ownerId: MEMBER }));
+    });
+
+    it("el dueño sigue pudiendo aparcar: la app 1.1.0 escribe por esta rama", async () => {
+        await assertSucceeds(
+            update(OWNER, OWNER_EMAIL, {
+                lastLocation: { latitude: 1, longitude: 2, timestamp: 3, user: { uid: OWNER, name: "", email: OWNER_EMAIL } },
+            })
+        );
+    });
+
+    it("tras pasar la propiedad, el antiguo dueño ya no puede quitar a nadie", async () => {
+        await assertSucceeds(update(OWNER, OWNER_EMAIL, { ownerId: MEMBER }));
+        await assertFails(update(OWNER, OWNER_EMAIL, { memberIds: [OWNER] }));
+    });
+});
+
 describe("borrado", () => {
     it("el dueño borra", async () => {
         const { deleteDoc } = await import("firebase/firestore");

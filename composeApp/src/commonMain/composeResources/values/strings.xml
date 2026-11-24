@@ -202,4 +202,28 @@
     <string name="delete_account_done_body">Tu cuenta y tus datos se han eliminado.</string>
     <string name="error_wrong_account">Esa no es la cuenta de Google con la que entraste</string>
     <string name="error_reauth_again">Ha pasado demasiado tiempo. Vuelve a confirmar</string>
+
+    <!-- Detalle del vehículo, miembros y propiedad (spec 014) -->
+    <string name="vehicle_detail_location_title">Dónde está</string>
+    <string name="vehicle_detail_show_on_map">Ver en el mapa</string>
+    <string name="vehicle_detail_members_title">Miembros</string>
+    <string name="vehicle_detail_member_owner">Dueño</string>
+    <string name="vehicle_detail_member_you">Tú</string>
+    <string name="vehicle_detail_member_unnamed">Miembro sin nombre</string>
+    <string name="vehicle_detail_member_options">Opciones de %1$s</string>
+    <string name="vehicle_detail_make_owner">Hacer dueño</string>
+    <string name="vehicle_detail_remove_member">Quitar del vehículo</string>
+    <string name="vehicle_detail_members_error">No se pudieron cargar los miembros</string>
+    <string name="retry">Reintentar</string>
+    <string name="vehicle_detail_transfer_title">¿Pasar la propiedad a %1$s?</string>
+    <string name="vehicle_detail_transfer_message">%1$s podrá compartir %2$s, quitar a otros miembros y eliminarlo. Tú seguirás siendo miembro, pero ya no podrás hacer nada de eso.</string>
+    <string name="vehicle_detail_transfer_confirm">Pasar la propiedad</string>
+    <string name="vehicle_detail_remove_title">¿Quitar a %1$s?</string>
+    <string name="vehicle_detail_remove_message">%1$s dejará de ver %2$s. Podrá volver si le compartes un código nuevo.</string>
+    <string name="vehicle_detail_remove_confirm">Quitar</string>
+    <string name="vehicle_detail_member_removed">Miembro quitado</string>
+    <string name="vehicle_detail_owner_transferred">Propiedad transferida</string>
+    <string name="vehicle_detail_gone">Ya no tienes acceso a este vehículo</string>
+    <string name="vehicle_detail_gone_hint">Puede que te hayan quitado de él o que se haya eliminado.</string>
+    <string name="vehicle_detail_load_error">No se pudo cargar el vehículo</string>
 </resources>

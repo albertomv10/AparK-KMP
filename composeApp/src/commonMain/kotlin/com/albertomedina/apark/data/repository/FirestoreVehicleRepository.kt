@@ -55,17 +55,6 @@ class FirestoreVehicleRepository(
         return vehicles.sortedBy { position[it.id] ?: Int.MAX_VALUE }
     }
 
-    override suspend fun getVehicleById(vehicleId: String): Vehicle? {
-        return try {
-            val snapshot = firestore.collection(FirestoreConstants.CARS_COLLECTION)
-                .document(vehicleId)
-                .get()
-            if (snapshot.exists) snapshot.data<Vehicle>() else null
-        } catch (e: Exception) {
-            null
-        }
-    }
-
     override suspend fun getLastVehicleLocation(vehicleId: String): LocationModel? {
         return try {
             val snapshot = firestore.collection(FirestoreConstants.CARS_COLLECTION)
@@ -85,24 +74,6 @@ class FirestoreVehicleRepository(
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
-        }
-    }
-
-    override suspend fun shareVehicleWithUser(vehicleId: String, userId: String) {
-        val carRef = firestore.collection(FirestoreConstants.CARS_COLLECTION).document(vehicleId)
-        val userRef = firestore.collection(FirestoreConstants.USERS_COLLECTION).document(userId)
-
-        firestore.runTransaction {
-            val carSnapshot = get(carRef)
-            val userSnapshot = get(userRef)
-
-            val vehicle = carSnapshot.data<Vehicle>()
-            val user = userSnapshot.data<User>()
-
-            if (!vehicle.memberIds.contains(userId) && !user.userVehicles.contains(vehicleId)) {
-                update(carRef, FirestoreConstants.MEMBER_IDS_FIELD to FieldValue.arrayUnion(userId))
-                update(userRef, FirestoreConstants.CARS_FIELD to FieldValue.arrayUnion(vehicleId))
-            }
         }
     }
 
@@ -188,11 +159,34 @@ class FirestoreVehicleRepository(
         }
     }
 
+    /**
+     * El dueño quita a otro miembro (spec 014). Solo `memberIds`: el `users` de esa persona no se
+     * puede escribir desde aquí, así que su lista conserva el id. Es inocuo: la lista sale de la
+     * consulta por `memberIds`, y los ids que sobran en la pista de orden se ignoran (spec 008).
+     */
+    override suspend fun removeMember(vehicleId: String, memberId: String): Result<Unit> {
+        return try {
+            firestore.collection(FirestoreConstants.CARS_COLLECTION)
+                .document(vehicleId)
+                .update(
+                    FirestoreConstants.MEMBER_IDS_FIELD to FieldValue.arrayRemove(memberId),
+                    FirestoreConstants.UPDATED_AT_FIELD to Clock.System.now().toEpochMilliseconds()
+                )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Las reglas solo dejan pasar la propiedad a quien ya está en `memberIds` (spec 014). */
     override suspend fun transferVehicleOwnership(vehicleId: String, newOwnerId: String): Result<Unit> {
         return try {
             firestore.collection(FirestoreConstants.CARS_COLLECTION)
                 .document(vehicleId)
-                .update("ownerId" to newOwnerId)
+                .update(
+                    "ownerId" to newOwnerId,
+                    FirestoreConstants.UPDATED_AT_FIELD to Clock.System.now().toEpochMilliseconds()
+                )
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

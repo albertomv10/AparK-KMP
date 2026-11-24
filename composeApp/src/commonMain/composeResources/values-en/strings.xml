@@ -202,4 +202,28 @@
     <string name="delete_account_done_body">Your account and your data have been deleted.</string>
     <string name="error_wrong_account">That is not the Google account you signed in with</string>
     <string name="error_reauth_again">Too much time has passed. Confirm again</string>
+
+    <!-- Detalle del vehículo, miembros y propiedad (spec 014) -->
+    <string name="vehicle_detail_location_title">Where it is</string>
+    <string name="vehicle_detail_show_on_map">Show on map</string>
+    <string name="vehicle_detail_members_title">Members</string>
+    <string name="vehicle_detail_member_owner">Owner</string>
+    <string name="vehicle_detail_member_you">You</string>
+    <string name="vehicle_detail_member_unnamed">Unnamed member</string>
+    <string name="vehicle_detail_member_options">Options for %1$s</string>
+    <string name="vehicle_detail_make_owner">Make owner</string>
+    <string name="vehicle_detail_remove_member">Remove from vehicle</string>
+    <string name="vehicle_detail_members_error">Couldn't load the members</string>
+    <string name="retry">Retry</string>
+    <string name="vehicle_detail_transfer_title">Make %1$s the owner?</string>
+    <string name="vehicle_detail_transfer_message">%1$s will be able to share %2$s, remove other members and delete it. You'll stay a member, but you won't be able to do any of that.</string>
+    <string name="vehicle_detail_transfer_confirm">Transfer ownership</string>
+    <string name="vehicle_detail_remove_title">Remove %1$s?</string>
+    <string name="vehicle_detail_remove_message">%1$s will no longer see %2$s. They can come back if you share a new code with them.</string>
+    <string name="vehicle_detail_remove_confirm">Remove</string>
+    <string name="vehicle_detail_member_removed">Member removed</string>
+    <string name="vehicle_detail_owner_transferred">Ownership transferred</string>
+    <string name="vehicle_detail_gone">You no longer have access to this vehicle</string>
+    <string name="vehicle_detail_gone_hint">You may have been removed from it, or it may have been deleted.</string>
+    <string name="vehicle_detail_load_error">Couldn't load the vehicle</string>
 </resources>

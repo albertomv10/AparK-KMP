@@ -9,6 +9,7 @@ import { onCall } from "firebase-functions/v2/https";
 import { createInviteHandler, joinWithCodeHandler } from "./invites";
 import { propagateUserProfileHandler } from "./profile";
 import { deleteAccountHandler } from "./account";
+import { getVehicleMembersHandler } from "./members";
 
 initializeApp();
 
@@ -135,3 +136,5 @@ export const propagateUserProfile = onDocumentUpdated(
 );
 
 export const deleteAccount = onCall({ region: REGION }, deleteAccountHandler);
+
+export const getVehicleMembers = onCall({ region: REGION }, getVehicleMembersHandler);
