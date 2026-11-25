@@ -44,9 +44,6 @@ import androidx.compose.ui.unit.dp
 import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.add_vehicle_error_generic
 import apark.composeapp.generated.resources.add_vehicle_error_not_authenticated
-import apark.composeapp.generated.resources.add_vehicle_name_error
-import apark.composeapp.generated.resources.add_vehicle_name_label
-import apark.composeapp.generated.resources.add_vehicle_plate_label
 import apark.composeapp.generated.resources.add_vehicle_save
 import apark.composeapp.generated.resources.add_vehicle_back
 import apark.composeapp.generated.resources.add_vehicle_tab_create
@@ -61,6 +58,7 @@ import apark.composeapp.generated.resources.join_vehicle_error_invalid
 import apark.composeapp.generated.resources.join_vehicle_error_used
 import apark.composeapp.generated.resources.add_vehicle_title
 import com.albertomedina.apark.presentation.components.StandardAparKButton
+import com.albertomedina.apark.presentation.vehicleform.VehicleForm
 import com.albertomedina.apark.utils.SnackbarMessage
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -211,34 +209,14 @@ fun AddVehicleScreen(
                 return@Column
             }
 
-            OutlinedTextField(
-                value = state.name,
-                onValueChange = { viewModel.onEvent(AddVehicleEvent.NameChanged(it)) },
-                label = { Text(stringResource(Res.string.add_vehicle_name_label)) },
-                modifier = Modifier.fillMaxWidth(),
-                isError = state.nameError,
-                supportingText = {
-                    if (state.nameError) Text(stringResource(Res.string.add_vehicle_name_error))
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words,
-                    imeAction = ImeAction.Next
-                )
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = state.licensePlate,
-                onValueChange = { viewModel.onEvent(AddVehicleEvent.LicensePlateChanged(it)) },
-                label = { Text(stringResource(Res.string.add_vehicle_plate_label)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Characters,
-                    imeAction = ImeAction.Done
-                )
+            // Crear y editar comparten formulario (spec 015): marca y modelo primero, y el nombre
+            // se rellena solo.
+            VehicleForm(
+                state = state.form,
+                catalog = state.catalog,
+                onEvent = { viewModel.onEvent(AddVehicleEvent.Form(it)) },
+                enabled = !state.isLoading,
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(32.dp))

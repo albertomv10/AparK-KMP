@@ -1,5 +1,6 @@
 package com.albertomedina.apark.di
 
+import com.albertomedina.apark.data.catalog.ResourceCatalogRepository
 import com.albertomedina.apark.domain.repository.AccountRepository
 import com.albertomedina.apark.data.repository.FirebaseAccountRepository
 import com.albertomedina.apark.domain.usecase.GetAccountDeletionImpactUseCase
@@ -19,6 +20,7 @@ import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.repository.InviteRepository
 import com.albertomedina.apark.domain.repository.LocationRepository
 import com.albertomedina.apark.domain.repository.MemberRepository
+import com.albertomedina.apark.domain.repository.CatalogRepository
 import com.albertomedina.apark.domain.repository.UserRepository
 import com.albertomedina.apark.domain.repository.VehicleRepository
 import com.albertomedina.apark.domain.usecase.ChangeEmailUseCase
@@ -45,6 +47,7 @@ import com.albertomedina.apark.domain.usecase.SyncUserProfileUseCase
 import com.albertomedina.apark.domain.usecase.UpdateUserNameUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleLocationUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleUseCase
+import com.albertomedina.apark.domain.usecase.GetVehicleCatalogUseCase
 import com.albertomedina.apark.presentation.auth.login.LoginViewModel
 import com.albertomedina.apark.presentation.auth.register.RegisterViewModel
 import com.albertomedina.apark.presentation.auth.resetPassword.ResetPassWordViewmodel
@@ -59,6 +62,7 @@ import com.albertomedina.apark.presentation.navigation.SessionViewModel
 import com.albertomedina.apark.presentation.splash.SplashViewModel
 import com.albertomedina.apark.presentation.vehicles.VehiclesViewModel
 import com.albertomedina.apark.presentation.vehicledetail.VehicleDetailViewModel
+import com.albertomedina.apark.presentation.editvehicle.EditVehicleViewModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.app
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -113,6 +117,7 @@ val sharedModule = module {
     single<InviteRepository> { FirebaseInviteRepository(functions = get()) }
     single<AccountRepository> { FirebaseAccountRepository(functions = get()) }
     single<MemberRepository> { FirebaseMemberRepository(functions = get()) }
+    single<CatalogRepository> { ResourceCatalogRepository() }
 
     single<LocationRepository> {
         LocationRepositoryImpl(
@@ -130,6 +135,7 @@ val sharedModule = module {
     factory { CreateVehicleInviteUseCase(repository = get()) }
     factory { JoinVehicleWithCodeUseCase(repository = get()) }
     factory { UpdateVehicleUseCase(repository = get()) }
+    factory { GetVehicleCatalogUseCase(repository = get()) }
     factory { RemoveUserFromVehicleUseCase(repository = get()) }
     factory { RemoveVehicleMemberUseCase(vehicleRepository = get()) }
     factory { TransferVehicleOwnershipUseCase(vehicleRepository = get()) }
@@ -260,7 +266,18 @@ val sharedModule = module {
         AddVehicleViewModel(
             createVehicleUseCase = get(),
             joinVehicleWithCodeUseCase = get(),
+            getVehicleCatalogUseCase = get(),
             authRepository = get()
+        )
+    }
+
+    viewModel {
+        EditVehicleViewModel(
+            authRepository = get(),
+            getVehicleListUseCase = get(),
+            updateVehicleUseCase = get(),
+            getVehicleCatalogUseCase = get(),
+            crashReporter = get()
         )
     }
 

@@ -1,5 +1,7 @@
 package com.albertomedina.apark.presentation.home
 
+import com.albertomedina.apark.presentation.vehicleform.VehicleAvatar
+import com.albertomedina.apark.presentation.vehicleform.hasAvatar
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -385,12 +387,23 @@ fun VehicleCard(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text(
-                    text = vehicle.name,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleLarge
-                )
+                // El tipo y el color, para distinguir un vehículo de otro de un vistazo (spec 015).
+                // En modo edición, el botón de borrar ocupa la esquina: el nombre le deja sitio.
+                Row(
+                    modifier = Modifier.padding(end = if (isEditMode) 24.dp else 0.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (vehicle.hasAvatar) {
+                        VehicleAvatar(vehicle, size = 32.dp)
+                        Spacer(Modifier.width(10.dp))
+                    }
+                    Text(
+                        text = vehicle.name,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                }
 
 
                 val lastLocation = vehicle.lastLocation

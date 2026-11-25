@@ -35,6 +35,7 @@ import com.albertomedina.apark.presentation.account.ChangePasswordScreen
 import com.albertomedina.apark.presentation.account.DeleteAccountScreen
 import com.albertomedina.apark.presentation.addvehicle.AddVehicleScreen
 import com.albertomedina.apark.presentation.components.AparkBottomNavigationBar
+import com.albertomedina.apark.presentation.editvehicle.EditVehicleScreen
 import com.albertomedina.apark.presentation.home.HomeScreen
 import com.albertomedina.apark.presentation.vehicledetail.VehicleDetailScreen
 import com.albertomedina.apark.presentation.vehicles.VehiclesScreen
@@ -196,8 +197,12 @@ fun TabShell(
                         VehicleDetailScreen(
                             vehicleId = key.vehicleId,
                             onBack = { pop() },
-                            onShowOnMap = { showOnMap(it) }
+                            onShowOnMap = { showOnMap(it) },
+                            onEdit = { push(EditVehicle(it)) }
                         )
+                    }
+                    is EditVehicle -> NavEntry(key) {
+                        EditVehicleScreen(vehicleId = key.vehicleId, onBack = { pop() })
                     }
                     is AddVehicle -> NavEntry(key) {
                         AddVehicleScreen(onBack = { pop() })

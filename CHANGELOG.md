@@ -9,6 +9,18 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **Los datos del vehículo, y editarlo** ([spec 015](docs/specs/015-vehicle-data/spec.md)): cada
+  vehículo puede llevar su **tipo**, su **marca y modelo**, el **sistema y el combustible**, el
+  **color** y la **etiqueta ambiental de la DGT**, todo opcional. Al crearlo se eligen primero la
+  marca y el modelo, con un buscador que sugiere mientras se escribe —«skoda» encuentra «Škoda»—, y
+  el nombre se rellena solo, aunque sigue siendo editable y nunca se pisa uno puesto a mano. Lo que
+  no está en la lista se escribe tal cual. El combustible depende del sistema: un eléctrico no
+  pregunta, uno de pila de combustible es de hidrógeno. El **dueño** puede **editar** el vehículo
+  desde el lápiz del detalle, que ya enseña todos sus datos; la tarjeta del mapa y la lista de
+  *Vehículos* llevan un icono del tipo sobre el color, para distinguirlos de un vistazo. Las reglas
+  validan cada código y la longitud de cada texto, y un vehículo con un valor que esta versión no
+  conoce lo enseña como «Otro». La lista de marcas viene de json-car-list (MIT), con su aviso dentro
+  de la app, y de una lista propia con las que le faltan y las motos.
 - **El detalle del vehículo, de verdad** ([spec 014](docs/specs/014-vehicle-detail-members/spec.md)):
   dónde está aparcado, quién lo dejó y cuándo, con un botón para verlo en el mapa, y **con quién se
   comparte**, marcando al dueño. El dueño puede **quitar** a un miembro y **pasarle la propiedad**,

@@ -40,12 +40,21 @@ export const EDU: SeedUser = { uid: "seed-edu", email: "edu@emulador.test", name
 /** Fijo, no `Date.now()`: dos siembras seguidas tienen que dar exactamente lo mismo. */
 const T0 = Date.UTC(2026, 0, 1, 12, 0, 0);
 
+/**
+ * Los datos de la spec 015, como códigos de `docs/DATA-MODEL.md` §9. `""` es «sin dato», que es lo que
+ * tiene cualquier vehículo creado antes de esa spec: la app nunca escribió `model` ni `color`.
+ */
 export interface SeedVehicle {
     id: string;
     name: string;
-    model: string;
     licensePlate: string;
+    type: string;
+    powertrain: string;
+    fuel: string;
+    make: string;
+    model: string;
     color: string;
+    emissionsLabel: string;
     ownerId: string;
     memberIds: string[];
     lastLocation: {
@@ -62,11 +71,17 @@ export function buildVehicles(): SeedVehicle[] {
     return [
         {
             // Sin aparcar: es el estado en el que nace un vehículo y el que enseña el caso vacío.
+            // Con todos los datos, para ver la ficha completa.
             id: "seed-vehicle-sin-aparcar",
             name: "Furgoneta",
-            model: "Transporter",
             licensePlate: "1234 ABC",
-            color: "#3F51B5",
+            type: "van",
+            powertrain: "combustion",
+            fuel: "diesel",
+            make: "Volkswagen",
+            model: "Transporter",
+            color: "white",
+            emissionsLabel: "c",
             ownerId: ALBERTO.uid,
             memberIds: [ALBERTO.uid],
             lastLocation: null,
@@ -74,12 +89,18 @@ export function buildVehicles(): SeedVehicle[] {
             updatedAt: T0,
         },
         {
-            // Aparcado en Madrid, por su dueño.
+            // Aparcado en Madrid, por su dueño. Sin datos, como cualquiera de antes de la spec 015:
+            // su dueño ve «Añade los datos del vehículo».
             id: "seed-vehicle-aparcado",
             name: "Coche de Alberto",
-            model: "Civic",
             licensePlate: "5678 DEF",
-            color: "#E91E63",
+            type: "",
+            powertrain: "",
+            fuel: "",
+            make: "",
+            model: "",
+            color: "",
+            emissionsLabel: "",
             ownerId: ALBERTO.uid,
             memberIds: [ALBERTO.uid],
             lastLocation: {
@@ -95,9 +116,14 @@ export function buildVehicles(): SeedVehicle[] {
             // El interesante: dos miembros, y lo aparcó el que NO es el dueño.
             id: "seed-vehicle-compartido",
             name: "Coche compartido",
-            model: "Ibiza",
             licensePlate: "9012 GHI",
-            color: "#009688",
+            type: "car",
+            powertrain: "hybrid",
+            fuel: "petrol",
+            make: "Seat",
+            model: "Ibiza",
+            color: "red",
+            emissionsLabel: "eco",
             ownerId: ALBERTO.uid,
             memberIds: [ALBERTO.uid, EDU.uid],
             lastLocation: {

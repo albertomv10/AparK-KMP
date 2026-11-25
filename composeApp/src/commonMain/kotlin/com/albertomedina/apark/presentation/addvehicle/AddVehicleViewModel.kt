@@ -4,8 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.model.JoinStatus
 import com.albertomedina.apark.domain.repository.AuthRepository
+import com.albertomedina.apark.domain.catalog.VehicleCatalog
 import com.albertomedina.apark.domain.usecase.CreateVehicleUseCase
+import com.albertomedina.apark.domain.usecase.GetVehicleCatalogUseCase
 import com.albertomedina.apark.domain.usecase.JoinVehicleWithCodeUseCase
+import com.albertomedina.apark.presentation.vehicleform.VehicleFormEvent
+import com.albertomedina.apark.presentation.vehicleform.VehicleFormState
+import com.albertomedina.apark.presentation.vehicleform.reduce
+import com.albertomedina.apark.presentation.vehicleform.toSave
+import com.albertomedina.apark.presentation.vehicleform.withNameError
 import com.albertomedina.apark.utils.SnackbarMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,19 +23,25 @@ import kotlinx.coroutines.launch
 class AddVehicleViewModel(
     private val createVehicleUseCase: CreateVehicleUseCase,
     private val joinVehicleWithCodeUseCase: JoinVehicleWithCodeUseCase,
+    private val getVehicleCatalogUseCase: GetVehicleCatalogUseCase,
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddVehicleUiState())
     val uiState: StateFlow<AddVehicleUiState> = _uiState.asStateFlow()
 
+    init {
+        // Mientras llega, el formulario funciona igual: solo que sin sugerencias.
+        viewModelScope.launch {
+            val catalog = getVehicleCatalogUseCase()
+            _uiState.update { it.copy(catalog = catalog) }
+        }
+    }
+
     fun onEvent(event: AddVehicleEvent) {
         when (event) {
-            is AddVehicleEvent.NameChanged -> {
-                _uiState.update { it.copy(name = event.name, nameError = false) }
-            }
-            is AddVehicleEvent.LicensePlateChanged -> {
-                _uiState.update { it.copy(licensePlate = event.licensePlate) }
+            is AddVehicleEvent.Form -> {
+                _uiState.update { it.copy(form = reduce(it.form, event.event)) }
             }
             AddVehicleEvent.SaveClicked -> save()
             is AddVehicleEvent.TabSelected -> {
@@ -48,11 +61,9 @@ class AddVehicleViewModel(
     }
 
     private fun save() {
-        val state = _uiState.value
-        val name = state.name.trim()
-
-        if (name.isBlank()) {
-            _uiState.update { it.copy(nameError = true) }
+        val details = _uiState.value.form.toSave()
+        if (details == null) {
+            _uiState.update { it.copy(form = it.form.withNameError()) }
             return
         }
 
@@ -64,12 +75,10 @@ class AddVehicleViewModel(
             return
         }
 
-        val licensePlate = state.licensePlate.trim().uppercase()
-
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            val result = createVehicleUseCase(userId, name, licensePlate)
+            val result = createVehicleUseCase(userId, details)
             _uiState.update { it.copy(isLoading = false) }
 
             result.fold(
@@ -137,9 +146,8 @@ class AddVehicleViewModel(
 }
 
 data class AddVehicleUiState(
-    val name: String = "",
-    val nameError: Boolean = false,
-    val licensePlate: String = "",
+    val form: VehicleFormState = VehicleFormState(),
+    val catalog: VehicleCatalog = VehicleCatalog.EMPTY,
     val isLoading: Boolean = false,
     val shouldNavigateBack: Boolean = false,
     val snackbarMessage: SnackbarMessage? = null,
@@ -150,8 +158,7 @@ data class AddVehicleUiState(
 )
 
 sealed class AddVehicleEvent {
-    data class NameChanged(val name: String) : AddVehicleEvent()
-    data class LicensePlateChanged(val licensePlate: String) : AddVehicleEvent()
+    data class Form(val event: VehicleFormEvent) : AddVehicleEvent()
     data object SaveClicked : AddVehicleEvent()
     data object SnackBarDismissed : AddVehicleEvent()
     data object NavigationHandled : AddVehicleEvent()

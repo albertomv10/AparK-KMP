@@ -3,6 +3,7 @@ package com.albertomedina.apark.data.repository
 import com.albertomedina.apark.data.util.FirestoreConstants
 import com.albertomedina.apark.domain.model.User
 import com.albertomedina.apark.domain.model.Vehicle
+import com.albertomedina.apark.domain.model.VehicleDetails
 import com.albertomedina.apark.domain.model.Vehicle.LocationModel
 import com.albertomedina.apark.domain.repository.VehicleRepository
 import dev.gitlive.firebase.firestore.FieldValue
@@ -77,15 +78,22 @@ class FirestoreVehicleRepository(
         }
     }
 
-    override suspend fun createVehicle(userId: String, name: String, licensePlate: String): Result<Unit> {
+    override suspend fun createVehicle(userId: String, details: VehicleDetails): Result<Unit> {
         return try {
             val carRef = firestore.collection(FirestoreConstants.CARS_COLLECTION).document
 
             val now = Clock.System.now().toEpochMilliseconds()
             val newVehicle = Vehicle(
                 id = carRef.id,
-                name = name,
-                licensePlate = licensePlate,
+                name = details.name,
+                licensePlate = details.licensePlate,
+                type = details.type,
+                powertrain = details.powertrain,
+                fuel = details.fuel,
+                make = details.make,
+                model = details.model,
+                color = details.color,
+                emissionsLabel = details.emissionsLabel,
                 ownerId = userId,
                 // El dueño va dentro desde el principio: la regla `create` exige exactamente esto,
                 // porque un vehículo cuyo dueño no es miembro sería ilegible para él mismo.
@@ -126,15 +134,20 @@ class FirestoreVehicleRepository(
         }
     }
 
-    override suspend fun updateVehicle(vehicle: Vehicle): Result<Unit> {
+    override suspend fun updateVehicle(vehicleId: String, details: VehicleDetails): Result<Unit> {
         return try {
             firestore.collection(FirestoreConstants.CARS_COLLECTION)
-                .document(vehicle.id)
+                .document(vehicleId)
                 .update(
-                    "name" to vehicle.name,
-                    "licensePlate" to vehicle.licensePlate,
-                    "model" to vehicle.model,
-                    "color" to vehicle.color,
+                    "name" to details.name,
+                    "licensePlate" to details.licensePlate,
+                    "type" to details.type,
+                    "powertrain" to details.powertrain,
+                    "fuel" to details.fuel,
+                    "make" to details.make,
+                    "model" to details.model,
+                    "color" to details.color,
+                    "emissionsLabel" to details.emissionsLabel,
                     FirestoreConstants.UPDATED_AT_FIELD to Clock.System.now().toEpochMilliseconds()
                 )
             Result.success(Unit)

@@ -1,5 +1,7 @@
 package com.albertomedina.apark.presentation.vehicledetail
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -18,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
@@ -61,7 +66,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.*
+import com.albertomedina.apark.domain.model.EmissionsLabel
+import com.albertomedina.apark.domain.model.Fuel
+import com.albertomedina.apark.domain.model.Powertrain
 import com.albertomedina.apark.domain.model.Vehicle
+import com.albertomedina.apark.domain.model.VehicleColor
+import com.albertomedina.apark.domain.model.VehicleType
+import com.albertomedina.apark.domain.model.hasDetails
+import com.albertomedina.apark.presentation.vehicleform.VehicleAvatar
+import com.albertomedina.apark.presentation.vehicleform.badgeColor
+import com.albertomedina.apark.presentation.vehicleform.hasAvatar
+import com.albertomedina.apark.presentation.vehicleform.label
+import com.albertomedina.apark.presentation.vehicleform.swatch
 import com.albertomedina.apark.presentation.components.AparKConfirmDialog
 import com.albertomedina.apark.presentation.components.DynamicTimeText
 import com.albertomedina.apark.presentation.components.StandardAparKButton
@@ -82,7 +98,8 @@ fun VehicleDetailScreen(
     vehicleId: String,
     viewModel: VehicleDetailViewModel = koinViewModel(),
     onBack: () -> Unit,
-    onShowOnMap: (String) -> Unit
+    onShowOnMap: (String) -> Unit,
+    onEdit: (String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -136,6 +153,15 @@ fun VehicleDetailScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
+                },
+                actions = {
+                    // Solo el dueño edita (spec 015); al resto ni se le ofrece.
+                    val vehicle = state.vehicle
+                    if (state.isOwner && vehicle != null) {
+                        IconButton(onClick = { onEdit(vehicle.id) }, enabled = !state.isWorking) {
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit_vehicle_title))
+                        }
+                    }
                 }
             )
         }
@@ -164,6 +190,10 @@ fun VehicleDetailScreen(
                 if (state.isWorking) LinearProgressIndicator(Modifier.fillMaxWidth())
                 Header(vehicle)
                 LocationSection(vehicle, onShowOnMap = { onShowOnMap(vehicle.id) })
+                if (vehicle.hasDetails || state.isOwner) {
+                    HorizontalDivider(Modifier.padding(top = 12.dp))
+                    DataSection(vehicle, isOwner = state.isOwner, onEdit = { onEdit(vehicle.id) })
+                }
                 HorizontalDivider(Modifier.padding(top = 12.dp))
                 MembersSection(state, viewModel::onEvent)
                 HorizontalDivider(Modifier.padding(top = 12.dp))
@@ -184,16 +214,92 @@ fun VehicleDetailScreen(
     state.invite?.let { invite -> InviteDialog(invite.code, state.vehicleName, viewModel::onEvent) }
 }
 
-/** El nombre ya va en la barra, que sigue a la vista al desplazarse: aquí, solo la matrícula. */
+/**
+ * El nombre ya va en la barra, que sigue a la vista al desplazarse: aquí, el tipo y el color —como en
+ * la tarjeta del mapa— y la matrícula. Lo que no hay no deja hueco.
+ */
 @Composable
 private fun Header(vehicle: Vehicle) {
-    if (vehicle.licensePlate.isBlank()) return
-    Text(
-        vehicle.licensePlate,
-        style = MaterialTheme.typography.titleLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp)
-    )
+    if (vehicle.licensePlate.isBlank() && !vehicle.hasAvatar) return
+    Row(
+        Modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (vehicle.hasAvatar) {
+            VehicleAvatar(vehicle, size = 48.dp)
+            if (vehicle.licensePlate.isNotBlank()) Spacer(Modifier.width(16.dp))
+        }
+        if (vehicle.licensePlate.isNotBlank()) {
+            Text(
+                vehicle.licensePlate,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * Los datos del vehículo (spec 015), como una ficha: solo las filas que tienen algo (criterio 9). Sin
+ * ninguno, el dueño ve cómo añadirlos; los demás, nada, y la sección ni aparece.
+ */
+@Composable
+private fun DataSection(vehicle: Vehicle, isOwner: Boolean, onEdit: () -> Unit) {
+    SectionTitle(stringResource(Res.string.vehicle_detail_data_title))
+    if (!vehicle.hasDetails) {
+        ListItem(
+            headlineContent = { Text(stringResource(Res.string.vehicle_detail_add_data)) },
+            supportingContent = { Text(stringResource(Res.string.vehicle_detail_add_data_hint)) },
+            leadingContent = { Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .selectable(selected = false, enabled = isOwner, onClick = onEdit, role = Role.Button)
+        )
+        return
+    }
+
+    Column(Modifier.padding(horizontal = 24.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        VehicleType.fromCode(vehicle.type)?.let { DataRow(stringResource(Res.string.vehicle_form_type), stringResource(it.label)) }
+        vehicle.make.takeIf { it.isNotBlank() }?.let { DataRow(stringResource(Res.string.vehicle_form_make), it) }
+        vehicle.model.takeIf { it.isNotBlank() }?.let { DataRow(stringResource(Res.string.vehicle_form_model), it) }
+        VehicleColor.fromCode(vehicle.color)?.let { color ->
+            DataRow(stringResource(Res.string.vehicle_form_color), stringResource(color.label)) {
+                Box(
+                    Modifier
+                        .size(14.dp)
+                        .background(color.swatch, CircleShape)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                )
+            }
+        }
+        Powertrain.fromCode(vehicle.powertrain)?.let { DataRow(stringResource(Res.string.vehicle_form_powertrain), stringResource(it.label)) }
+        Fuel.fromCode(vehicle.fuel)?.let { DataRow(stringResource(Res.string.vehicle_form_fuel), stringResource(it.label)) }
+        EmissionsLabel.fromCode(vehicle.emissionsLabel)?.let { label ->
+            DataRow(stringResource(Res.string.vehicle_form_emissions), stringResource(label.label)) {
+                label.badgeColor?.let { Box(Modifier.size(14.dp).background(it, CircleShape)) }
+            }
+        }
+    }
+}
+
+/** Una fila de la ficha: qué es a la izquierda, su valor a la derecha, con su muestra si la tiene. */
+@Composable
+private fun DataRow(label: String, value: String, marker: (@Composable () -> Unit)? = null) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(0.45f)
+        )
+        Row(Modifier.weight(0.55f), verticalAlignment = Alignment.CenterVertically) {
+            if (marker != null) {
+                marker()
+                Spacer(Modifier.width(8.dp))
+            }
+            Text(value, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
 }
 
 @Composable

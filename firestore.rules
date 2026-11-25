@@ -31,6 +31,58 @@ service cloud.firestore {
     }
 
     // Vehicles collection
+    // ---- Vehicle data (spec 015; the catalogue is section 9 of docs/DATA-MODEL.md) ----
+    // Closed lists are stored as codes and checked against them; "" means "no data", which is also
+    // what a missing field reads as. Free text is bounded.
+    function vehicleTypeOk(d) {
+      return d.get('type', '') in ['', 'car', 'motorcycle', 'van', 'motorhome', 'other'];
+    }
+    function powertrainOk(d) {
+      return d.get('powertrain', '') in
+        ['', 'combustion', 'mild_hybrid', 'hybrid', 'plug_in_hybrid', 'electric', 'fuel_cell', 'other'];
+    }
+    function fuelOk(d) {
+      return d.get('fuel', '') in ['', 'petrol', 'diesel', 'lpg', 'natural_gas', 'hydrogen', 'other'];
+    }
+    function colorOk(d) {
+      return d.get('color', '') in ['', 'white', 'black', 'grey', 'silver', 'blue', 'red', 'green',
+                                    'yellow', 'orange', 'brown', 'pink', 'purple'];
+    }
+    function emissionsLabelOk(d) {
+      return d.get('emissionsLabel', '') in ['', 'zero', 'eco', 'c', 'b', 'none'];
+    }
+    function textOk(d, field, max) {
+      return d.get(field, '') is string && d.get(field, '').size() <= max;
+    }
+    function vehicleNameOk(d) {
+      return d.name is string && d.name.size() > 0 && d.name.size() <= 60;
+    }
+
+    // Every field, for a vehicle being created.
+    function vehicleDataOk(d) {
+      return vehicleTypeOk(d) && powertrainOk(d) && fuelOk(d) && colorOk(d) && emissionsLabelOk(d)
+          && textOk(d, 'make', 40) && textOk(d, 'model', 40);
+    }
+
+    // Only the fields that change, for an update. Checking them all would let one value written
+    // before its rule existed lock the owner out of every later write — parking included, since
+    // the owner parks through the same branch.
+    function vehicleFieldChanged(field) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasAny([field]);
+    }
+    function changedVehicleDataOk() {
+      let d = request.resource.data;
+      return (!vehicleFieldChanged('name') || vehicleNameOk(d))
+          && (!vehicleFieldChanged('licensePlate') || textOk(d, 'licensePlate', 15))
+          && (!vehicleFieldChanged('type') || vehicleTypeOk(d))
+          && (!vehicleFieldChanged('powertrain') || powertrainOk(d))
+          && (!vehicleFieldChanged('fuel') || fuelOk(d))
+          && (!vehicleFieldChanged('color') || colorOk(d))
+          && (!vehicleFieldChanged('emissionsLabel') || emissionsLabelOk(d))
+          && (!vehicleFieldChanged('make') || textOk(d, 'make', 40))
+          && (!vehicleFieldChanged('model') || textOk(d, 'model', 40));
+    }
+
     match /vehicles/{vehicleId} {
 
       // Membership lives in one array, owner included, because that is what makes it queryable:
@@ -51,7 +103,8 @@ service cloud.firestore {
                     && request.resource.data.name.size() <= 60
                     && request.resource.data.get('licensePlate', '') is string
                     && request.resource.data.get('licensePlate', '').size() <= 15
-                    && request.resource.data.get('lastLocation', null) == null;
+                    && request.resource.data.get('lastLocation', null) == null
+                    && vehicleDataOk(request.resource.data);
 
       // Delete: owner only
       allow delete: if request.auth != null
@@ -72,6 +125,8 @@ service cloud.firestore {
           // and `joinVehicleWithCode`, which uses the Admin SDK; that is what gives an invitation
           // any meaning (spec 014).
           && request.resource.data.memberIds.hasOnly(resource.data.memberIds)
+          // Its data, validated only where it changes (spec 015).
+          && changedVehicleDataOk()
         )
         ||
         (
