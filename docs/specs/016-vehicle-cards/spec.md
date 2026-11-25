@@ -1,7 +1,7 @@
 # Spec: Las tarjetas del mapa, y ordenar los vehículos desde su lista
 
 - **ID**: 016-vehicle-cards
-- **Estado**: Aprobada — diseño en [design.md](design.md)
+- **Estado**: Implementada — diseño en [design.md](design.md)
 - **Fecha**: 2026-11-25
 
 ## Problema / Por qué
@@ -80,7 +80,7 @@ el gesto que todo el mundo conoce. Además, ordenar es gestión, no uso diario, 
 **Borrar, fuera de la tarjeta**
 
 1. **Dado** el carrusel, **cuando** mantengo pulsada una tarjeta, **entonces** no aparece ninguna
-   opción de eliminar ni de quitar.
+   opción de eliminar ni de quitar: cuenta como un toque y abre el detalle.
 2. **Dado** el detalle, **cuando** soy el dueño o un miembro, **entonces** eliminar y quitar de mi
    lista siguen funcionando como en la spec 014.
 
@@ -124,8 +124,8 @@ el gesto que todo el mundo conoce. Además, ordenar es gestión, no uso diario, 
 
 Todas se cerraron en el diseño. El razonamiento completo está en [design.md](design.md).
 
-1. **¿Queda algo del modo edición en el carrusel?** → **No.** La pulsación larga deja de hacer nada,
-   y ordenar vive en un solo sitio.
+1. **¿Queda algo del modo edición en el carrusel?** → **No.** La pulsación larga deja de ser un
+   gesto propio y cuenta como un toque, como en un botón de iOS; ordenar vive en un solo sitio.
 2. **¿Cómo se entra a ordenar?** → **Con «Ordenar» en la barra de *Vehículos***, que abre un modo con
    asas de arrastre y «Hecho». Fuera de ese modo, tocar una fila abre el detalle.
 3. **¿A mano o con una librería?** → **[Reorderable](https://github.com/Calvin-LL/Reorderable)

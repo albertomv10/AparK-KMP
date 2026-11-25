@@ -86,7 +86,8 @@ El modo edición del carrusel desaparece entero.
 
 ## El carrusel
 
-- **El modo edición se quita entero:**
+- **El modo edición se quita entero.** La pulsación larga cuenta ahora como un toque y abre el
+  detalle, que es lo que hace `clickable` sin `onLongClick`, y lo que hace un botón en iOS:
   - en la pantalla, `combinedClickable`, el velo sobre el mapa, el `BackHandler`, la papelera, el
     diálogo, las flechas y `followedVehicleId`;
   - en `HomeViewModel`, los casos de uso de borrar, quitar y mover, y `PendingDeletion` con sus
@@ -96,6 +97,10 @@ El modo edición del carrusel desaparece entero.
   - Cuando llega la lista con ese vehículo en otra posición, `selectedVehicleIndex` pasa a ella y la
     pantalla mueve el pager con `scrollToPage`.
   - Si el vehículo ya no está, el efecto de ahora devuelve el pager a una posición válida.
+  - **El pager no comunica la página con la que nace**, solo los cambios (`snapshotFlow` +
+    `drop(1)`). Al volver a la pestaña recupera la página que tenía guardada, que puede ser vieja si
+    entretanto se ha ordenado, y comunicarla pisaba la selección que el ViewModel ya había movido.
+    Lo encontró la verificación.
 - **Aparcar siempre confirma** (criterio 13). Si no había ubicación anterior, o la había con
   `timestamp == 0`, sale el aviso de éxito sin datos para deshacer, y la pantalla lo pinta sin
   «Deshacer».
@@ -128,8 +133,8 @@ El modo edición del carrusel desaparece entero.
   `DynamicTimeText` y a la línea de quién aparcó.
   - Se usa en la tarjeta, en la fila de *Vehículos* (que conserva la matrícula) y en el detalle.
   - Se refresca cada minuto.
-- **`parkedBy(location, currentUserId)`** es pura y tiene tests. Devuelve `You`, `Named(nombre o
-  email)` o `Nobody`; `Nobody` es una cuenta borrada, que se queda solo con el cuándo.
+- **`whoParked(location, currentUserId)`** es pura y tiene tests. Devuelve `You`, `Named(nombre o
+  email)` o `Unknown`; `Unknown` es una cuenta borrada, que se queda solo con el cuándo.
 - **Hay una frase por cada tipo de tiempo**, porque la preposición cambia («hace 5 min», «hoy a las
   18:45», «el 01 ene»). El quién va en una plantilla aparte:
 

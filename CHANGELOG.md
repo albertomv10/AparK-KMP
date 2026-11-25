@@ -9,6 +9,12 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **Ordenar los vehículos desde su lista** ([spec 016](docs/specs/016-vehicle-cards/spec.md)): en
+  *Vehículos*, «Ordenar» enseña un asa en cada fila, y se arrastra un vehículo directamente a su
+  sitio viéndolos todos, en vez de moverlo de uno en uno en el carrusel. «Hecho» lo guarda una sola
+  vez, y **funciona sin conexión**: antes cada movimiento era una transacción, que sin red fallaba.
+  Con un lector de pantalla, cada fila tiene «Subir» y «Bajar». El carrusel del mapa sigue en el
+  vehículo que enseñaba aunque cambie de posición.
 - **Los datos del vehículo, y editarlo** ([spec 015](docs/specs/015-vehicle-data/spec.md)): cada
   vehículo puede llevar su **tipo**, su **marca y modelo**, el **sistema y el combustible**, el
   **color** y la **etiqueta ambiental de la DGT**, todo opcional. Al crearlo se eligen primero la
@@ -95,6 +101,13 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   `docs/specs/_template/` y este `CHANGELOG.md`.
 
 ### Changed
+- **La tarjeta del mapa, rehecha** ([spec 016](docs/specs/016-vehicle-cards/spec.md)): una sola
+  línea dice cuándo se aparcó y quién —«Aparcado hace 5 min por Edu», o «por ti»—, igual que la lista
+  de *Vehículos* y el detalle; todas las tarjetas miden lo mismo, más bajas que antes y sin el hueco
+  de cuando no está aparcado; una flecha dice que abre el detalle, y el lector de pantalla lo
+  anuncia. Deja sitio para los iconos de las incidencias que vendrán.
+- **Aparcar siempre confirma.** El aviso solo salía cuando había algo que deshacer, así que aparcar
+  un vehículo por primera vez no daba ninguna señal.
 - **La CI de iOS, de 14–35 minutos a la mitad, y a cero cuando no toca la app.** Casi todo el tiempo
   era enlazar el framework de Kotlin, una vez para Debug y otra para Release, en la misma máquina y
   una detrás de otra. Ahora van en paralelo en dos máquinas, y validan lo mismo que antes. Un job
@@ -124,6 +137,9 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   a las bases de datos `(default)` y `apark-at`.
 
 ### Removed
+- **El modo edición del carrusel**: la pulsación larga sobre una tarjeta ya no enseña la papelera
+  ni las flechas. Eliminar un vehículo o quitarlo de tu lista se hace desde su detalle, lejos del
+  botón de aparcar, y ordenar desde *Vehículos*. Una pulsación larga cuenta ahora como un toque.
 - **La base de datos `apark-at` de producción**, de cuando desarrollo y producción compartían
   proyecto. Solo tenía datos de prueba.
 - **El campo `sharedUsers` de los vehículos**, sustituido por `memberIds` en la
@@ -131,6 +147,8 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   y con él se va la vía de respaldo que todavía lo leía en la función de limpieza de vehículos.
 
 ### Fixed
+- **En francés, la tarjeta decía «Pour Edu»** en vez de quién había aparcado. Lo sustituye la frase
+  nueva, «Garé il y a 5 min par Edu».
 - **No queda ningún texto en castellano escrito a fuego.** El aviso de permiso de ubicación
   denegado y su botón «Ajustes», y el texto del botón «Continuar con Apple», salían en castellano
   con la app en inglés o en francés; ahora van en los tres idiomas. El aviso de permiso, además,
