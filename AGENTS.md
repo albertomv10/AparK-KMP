@@ -375,14 +375,23 @@ graphify path "A" "B" --undirected
   for the system bars *again*, and the content floats up by that much. `Modifier.padding(p)` plus
   `consumeWindowInsets(p)` is the fix. On Android the gesture inset is small enough to miss; on
   iPhone the home indicator is ~34pt and it is obvious.
-- **Android rebuilds the map on every return to its tab; iOS does not, and that is not Compose.**
-  `GoogleMap` wraps a native `MapView` that is destroyed when it leaves composition, so coming back
-  reinitialises the GL surface and refetches tiles. On iOS the map's state lives in Swift, in
-  `MapLocationController.shared`, outside Compose entirely — which is why it looks untouched. The
-  same split shows in other apps, so it is a platform trait, not a bug here. The camera is **not**
-  the problem: a fresh composition has `isFirstLoad = true` and calls `move()`, an instant jump, so
-  hoisting the camera state would fix nothing. What is left is the blank first frame, and the fix
-  is to cover it — `onMapLoaded` drives a veil over the map.
+- **The map camera is decided once, in common code, and both platforms only execute it** (spec 017).
+  `cameraMoveFor(previous, current)` in `MapCamera.kt` is a pure function of the *focus* — the
+  selected vehicle's id and location — and `HomeViewModel` turns its result into `CameraRequest`s,
+  sent through a conflated `Channel` that each `AparKMap` collects. The camera moves only when the
+  focus changes, the map appears (`HomeEvent.MapShown` resets the focus, so it is a jump, not a
+  flight), or the user asks. Before this, each platform moved it in an effect keyed on the whole
+  vehicle list, so *any* data change — another member parking another car, a rename, a reorder —
+  snapped the camera back to the selected vehicle. Do not key a camera move on `vehicles` again.
+- **Both platforms build a new native map on every return to the tab.** Android's `GoogleMap`
+  wraps a `MapView` destroyed when it leaves composition; iOS's `UIKitView` calls the factory again,
+  which builds a new `GMSMapView`. Android shows the blank first frame, so `onMapLoaded` drives a
+  veil over it. On iOS a camera order can arrive before the new map exists: Swift keeps it in
+  `pendingCamera` and the factory uses it as the initial camera, and `UIKitView(onRelease = …)`
+  clears the reference to the old map so the order does not go to it instead.
+- **On Android, touching the map mid-flight cancels `animate` with an exception that is not ours.**
+  Uncaught, it ends the collector and the camera stops obeying for good. It is caught, and rethrown
+  only if the collector itself was cancelled (`currentCoroutineContext().ensureActive()`).
 - **The iOS map follows the *system* appearance unless told otherwise, and `mapStyle = nil` does
   not undo it.** `GMSMapView.overrideUserInterfaceStyle` is what drives the map's colour scheme
   (its own header says so), and the Maps SDK has honoured the inherited trait since v9 — so the
@@ -452,6 +461,16 @@ graphify path "A" "B" --undirected
 - **Driving a Compose text field in the simulator**: once the field has focus, a tap does not move
   the cursor, which stays at the start, so `delete` erases nothing and pasted text lands in front.
   Clear a field with `forward_delete` from the start instead.
+- **An Android Studio sync can leave the iPhone build without strings.** Compose's resource tasks
+  read `idea.sync.active`, and in sync mode they generate accessors pointing at the raw
+  `values/strings.xml`, which is never packaged — only `strings.commonMain.cvr` is. A device Debug
+  build made right after a sync carried those accessors and crashed at start with
+  `MissingResourceException: … compose-resources/values/strings.xml`; the simulator and Release
+  frameworks were fine. How the sync output reached a normal build was not pinned down — the build
+  cache and a reused daemon are the suspects. The fix: `./gradlew --stop`, delete
+  `composeApp/build/generated/compose` and `composeApp/build/xcode-frameworks`, and build again from
+  Xcode. To check a framework, search its binary for `values/strings.xml` encoded as UTF-16:
+  Kotlin/Native stores string literals that way, so `strings` does not find them.
 - The release build is tested on a personal iPhone, so **the Android release path gets the least
   attention** — that is where R8 problems hide.
 

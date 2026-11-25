@@ -1,7 +1,7 @@
 # Spec: La cámara del mapa, y mover un vehículo manteniendo pulsado
 
 - **ID**: 017-map-camera
-- **Estado**: Aprobada — diseño en [design.md](design.md)
+- **Estado**: Implementada — diseño en [design.md](design.md)
 - **Fecha**: 2026-11-25
 
 ## Problema / Por qué
@@ -111,16 +111,19 @@ preciso, y es el gesto que todo el mundo conoce de otras apps de mapas.
 
 Todas se cerraron en el diseño. El razonamiento completo está en [design.md](design.md).
 
-1. **¿Qué zoom después de aparcar o mover?** → **El que tengas.** Si mueves el coche a mano, el zoom
-   ya lo has elegido tú, y si aparcas por GPS, el 20 acercaba de más.
+1. **¿Qué zoom después de aparcar o mover?** → **De cerca, zoom 20, como antes.** Se probó
+   conservar el zoom y Alberto lo descartó. El GPS se equivoca a veces varios metros, y de lejos el
+   error no se ve; de cerca sí, y se corrige a mano.
 2. **¿Mantener pulsado mueve o pregunta?** → **Mueve directamente**, con vibración y «Deshacer», como
    arrastrar.
 3. **¿Tocar un marcador elige el vehículo?** → **Sí.** El mapa y el carrusel hablan siempre del mismo
    vehículo.
 4. **¿Qué zoom al elegir un vehículo?** → **Siempre 17**, y también para tu ubicación. Es el mismo en
    las dos plataformas.
-5. **¿Cómo se vuelve al vehículo?** → **Con un botón pequeño, «Ir al vehículo»**, encima del de
-   centrar. Lleva el icono de su tipo y solo aparece si el vehículo está aparcado.
+5. **¿Cómo se vuelve al vehículo?** → **Con un botón «Ir al vehículo»**, encima del de centrar y del
+   mismo tamaño. Lleva el icono de su tipo y solo aparece si el vehículo está aparcado. Además
+   **acerca hasta el zoom 20**, el que antes ponía aparcar, para ver exactamente dónde está. Así no
+   repite lo que ya hace elegir el vehículo, que lo enseña a zoom 17. Esto se decidió al probarlo.
 
 ## Fuera de alcance
 

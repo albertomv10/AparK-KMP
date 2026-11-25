@@ -9,6 +9,12 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **Mover un vehículo manteniendo pulsado el mapa** ([spec 017](docs/specs/017-map-camera/spec.md)):
+  el vehículo elegido pasa al punto que mantienes pulsado, el móvil vibra y sale el aviso con
+  «Deshacer», igual que al arrastrar su marcador. Si nunca se había aparcado, queda aparcado ahí.
+- **Tocar el marcador de un vehículo lo elige**: el carrusel va a su tarjeta.
+- **«Ir al vehículo»**: un botón con el icono de su tipo, encima del de centrar y del mismo tamaño.
+  Vuelve al vehículo elegido después de mover el mapa, y de cerca, para ver exactamente dónde está.
 - **Ordenar los vehículos desde su lista** ([spec 016](docs/specs/016-vehicle-cards/spec.md)): en
   *Vehículos*, «Ordenar» enseña un asa en cada fila, y se arrastra un vehículo directamente a su
   sitio viéndolos todos, en vez de moverlo de uno en uno en el carrusel. «Hecho» lo guarda una sola
@@ -101,6 +107,12 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   `docs/specs/_template/` y este `CHANGELOG.md`.
 
 ### Changed
+- **Una sola regla de cámara para Android e iOS**, decidida en código común
+  ([spec 017](docs/specs/017-map-camera/spec.md)). La cámara solo se mueve al abrir el mapa, al
+  elegir otro vehículo, cuando el elegido cambia de sitio o al pedirlo. El zoom de calle es 17 en las
+  dos plataformas (antes 18 en una y 17 en la otra, y 16 o 15 al centrar). Al aparcar o mover el
+  vehículo elegido, la cámara lo sigue de cerca, con zoom 20, para ver si el GPS acertó. Al abrir el
+  mapa con un vehículo que nunca se aparcó, o sin vehículos, aparece en tu ubicación.
 - **La tarjeta del mapa, rehecha** ([spec 016](docs/specs/016-vehicle-cards/spec.md)): una sola
   línea dice cuándo se aparcó y quién —«Aparcado hace 5 min por Edu», o «por ti»—, igual que la lista
   de *Vehículos* y el detalle; todas las tarjetas miden lo mismo, más bajas que antes y sin el hueco
@@ -147,6 +159,13 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   y con él se va la vía de respaldo que todavía lo leía en la función de limpieza de vehículos.
 
 ### Fixed
+- **La cámara del mapa volvía sola al vehículo elegido** cada vez que cambiaba cualquier dato: que
+  otro miembro aparcara otro coche, un nombre o el orden. Si estabas mirando los alrededores, te
+  devolvía de golpe y perdías el zoom.
+- **Elegir un vehículo que nunca se aparcó dejaba la cámara enseñando el anterior.** Ahora va a tu
+  ubicación, que es donde lo dejaría «Aparcar».
+- **En Android, centrar no hacía nada** si el sistema no tenía una ubicación guardada. Ahora la
+  pide.
 - **En francés, la tarjeta decía «Pour Edu»** en vez de quién había aparcado. Lo sustituye la frase
   nueva, «Garé il y a 5 min par Edu».
 - **No queda ningún texto en castellano escrito a fuego.** El aviso de permiso de ubicación

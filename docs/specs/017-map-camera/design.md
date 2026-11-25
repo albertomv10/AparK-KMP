@@ -45,7 +45,7 @@ fun cameraMoveFor(previous: MapFocus?, current: MapFocus): CameraMove?
 |---|---|
 | `previous == null`: el mapa acaba de aparecer | Al vehículo, zoom 17, **de un salto**. Si no tiene ubicación o no hay vehículos, a ti, de un salto |
 | Cambia el vehículo elegido | Al vehículo, zoom 17, animado. Si nunca se aparcó, a ti, animado |
-| El mismo vehículo, en otro sitio | Al sitio nuevo **conservando el zoom**, animado |
+| El mismo vehículo, en otro sitio | Al sitio nuevo **de cerca, zoom 20** (`CLOSE_ZOOM`), animado: el GPS se equivoca a veces varios metros, y de cerca se ve y se corrige a mano |
 | Se elige la «+», o lo que cambió no es el vehículo ni su sitio | Nada |
 
 ## `HomeViewModel`
@@ -99,10 +99,18 @@ callbacks nuevos: `iosOnMapLongPressed` e `iosOnMarkerTapped`.
 ## `HomeScreen`
 
 - **Mantener pulsado el mapa vibra**, y solo si la tarjeta elegida es un vehículo.
-- **Sobre el botón de centrar va «Ir al vehículo»**, un botón pequeño con el icono del tipo del
+- **Sobre el botón de centrar va «Ir al vehículo»**, del mismo tamaño y con el icono del tipo del
   vehículo. Solo aparece si el vehículo elegido está aparcado.
+  - Lleva al vehículo **de cerca, con `CLOSE_ZOOM` = 20**, el mismo zoom que al aparcar.
+  - Elegir el vehículo ya lo enseña a 17, así que el botón añade algo: ver exactamente dónde está.
+  - Lo pidió Alberto al probarlo, igual que el tamaño: al principio era un botón pequeño, de 40 dp.
 
 ## Riesgos
 
-- **En iOS, una orden puede llegar antes de que exista el mapa.** La cubre `pendingCamera`.
+- **En iOS, una orden puede llegar antes de que exista el mapa.** La cubre `pendingCamera`. Para que
+  llegue ahí y no al mapa anterior, `UIKitView(onRelease = …)` avisa a Swift, que suelta su
+  referencia al mapa viejo. Si no, `mapView` seguiría apuntando al mapa que acaba de irse.
+- **En Android, tocar el mapa a mitad de un vuelo** interrumpe `animate` con una cancelación que no
+  es nuestra. Si no se capturara, terminaría el recolector y la cámara dejaría de obedecer. Se
+  captura, y solo se relanza si quien se cancela es el propio recolector (`ensureActive()`).
 - **Un gesto accidental al mantener pulsado.** Lo cubre «Deshacer», como decidió Alberto.
