@@ -253,6 +253,12 @@ describe("datos del vehículo (spec 015)", () => {
         await assertFails(ownerUpdate({ color: "granate" }));
     });
 
+    it("la paleta no tiene «otro», y sí rosa y morado", async () => {
+        await assertFails(ownerUpdate({ color: "other" }));
+        await assertSucceeds(ownerUpdate({ color: "pink" }));
+        await assertSucceeds(ownerUpdate({ color: "purple" }));
+    });
+
     it("el dueño NO deja el nombre vacío ni lo pasa de 60", async () => {
         await assertFails(ownerUpdate({ name: "" }));
         await assertFails(ownerUpdate({ name: "x".repeat(61) }));

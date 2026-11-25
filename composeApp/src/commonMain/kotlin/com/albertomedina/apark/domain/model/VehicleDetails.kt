@@ -31,6 +31,12 @@ fun Vehicle.details(): VehicleDetails = VehicleDetails(
     emissionsLabel = emissionsLabel
 )
 
-/** Si tiene alguno de los datos de la spec 015. Sin ninguno, el detalle invita al dueño a añadirlos. */
+/**
+ * Si tiene alguno de los datos de la spec 015 **que esta versión sepa enseñar**. Sin ninguno, el
+ * detalle invita al dueño a añadirlos. Un color o una etiqueta desconocidos no cuentan: no se
+ * muestran, y contarlos dejaría la sección «Datos» con el título y nada debajo.
+ */
 val Vehicle.hasDetails: Boolean
-    get() = listOf(type, powertrain, fuel, make, model, color, emissionsLabel).any { it.isNotBlank() }
+    get() = listOf(type, powertrain, fuel, make, model).any { it.isNotBlank() } ||
+        VehicleColor.fromCode(color) != null ||
+        EmissionsLabel.fromCode(emissionsLabel) != null

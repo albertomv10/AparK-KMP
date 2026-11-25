@@ -6,7 +6,8 @@ package com.albertomedina.apark.domain.model
  * En el documento se guarda el [code] como `String`, **nunca el `enum`**: deserializar directamente a
  * un `enum` lanza con un valor que no conoce, y una versión futura que añada un código rompería la app
  * de quien no ha actualizado. Por eso cada lista se lee con `fromCode`, que devuelve `null` para `""`
- * («sin dato») y `OTHER` para lo desconocido. Las reglas de Firestore validan los mismos códigos.
+ * («sin dato») y `OTHER` para lo desconocido; el color y la etiqueta, que no tienen «otro», `null`
+ * también para lo desconocido: no se muestran. Las reglas de Firestore validan los mismos códigos.
  */
 enum class VehicleType(val code: String) {
     CAR("car"), MOTORCYCLE("motorcycle"), VAN("van"), MOTORHOME("motorhome"), OTHER("other");
@@ -53,13 +54,17 @@ enum class Fuel(val code: String) {
     }
 }
 
-/** Una paleta cerrada, para poder pintar una muestra que ayude a reconocerlo de lejos. */
+/**
+ * Una paleta cerrada, para poder pintar una muestra que ayude a reconocerlo de lejos. Sin «otro»: todo
+ * color de la paleta se puede pintar, y el que no está en ella no se guarda.
+ */
 enum class VehicleColor(val code: String) {
     WHITE("white"), BLACK("black"), GREY("grey"), SILVER("silver"), BLUE("blue"), RED("red"),
-    GREEN("green"), YELLOW("yellow"), ORANGE("orange"), BROWN("brown"), OTHER("other");
+    GREEN("green"), YELLOW("yellow"), ORANGE("orange"), BROWN("brown"), PINK("pink"), PURPLE("purple");
 
     companion object {
-        fun fromCode(code: String): VehicleColor? = decode(code, entries, OTHER) { it.code }
+        /** Sin «otro» al que recurrir, un código desconocido sale como sin color, `null`. */
+        fun fromCode(code: String): VehicleColor? = entries.firstOrNull { it.code == code }
     }
 }
 

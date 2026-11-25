@@ -54,6 +54,12 @@ data object AddVehicle : Destiny {
     override val showsTabBar: Boolean get() = false
 }
 
+/** Editar un vehículo (spec 015): una tarea con teclado, como crearlo, así que sin barra. */
+@Serializable
+data class EditVehicle(val vehicleId: String) : Destiny {
+    override val showsTabBar: Boolean get() = false
+}
+
 /**
  * Cambiar el email o la contraseña: tareas con principio y fin, y con teclado, así que sin barra.
  * Una pantalla y no un diálogo porque la contraseña lleva tres campos (spec 011).
@@ -89,6 +95,7 @@ internal val navigationConfig = SavedStateConfiguration {
             subclass(Account::class, Account.serializer())
             subclass(AddVehicle::class, AddVehicle.serializer())
             subclass(VehicleDetail::class, VehicleDetail.serializer())
+            subclass(EditVehicle::class, EditVehicle.serializer())
             subclass(ChangeEmail::class, ChangeEmail.serializer())
             subclass(ChangePassword::class, ChangePassword.serializer())
             subclass(DeleteAccount::class, DeleteAccount.serializer())

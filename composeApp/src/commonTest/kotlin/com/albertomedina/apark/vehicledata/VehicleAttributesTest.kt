@@ -40,11 +40,12 @@ class VehicleAttributesTest {
         assertEquals(VehicleType.OTHER, VehicleType.fromCode("tractor"))
         assertEquals(Powertrain.OTHER, Powertrain.fromCode("nuclear"))
         assertEquals(Fuel.OTHER, Fuel.fromCode("ethanol"))
-        assertEquals(VehicleColor.OTHER, VehicleColor.fromCode("purple"))
     }
 
     @Test
-    fun `una etiqueta desconocida no se inventa`() {
+    fun `un color o una etiqueta desconocidos no se inventan`() {
+        assertNull(VehicleColor.fromCode("granate"))
+        assertNull(VehicleColor.fromCode("other"))
         assertNull(EmissionsLabel.fromCode("crit_air_1"))
     }
 
@@ -86,9 +87,9 @@ class VehicleAttributesTest {
 
     @Test
     fun `los datos editables salen del vehículo tal cual aunque el código sea desconocido`() {
-        val vehicle = Vehicle(id = "v", name = "Coche", licensePlate = "1234ABC", color = "purple", make = "Škoda")
+        val vehicle = Vehicle(id = "v", name = "Coche", licensePlate = "1234ABC", color = "granate", make = "Škoda")
         val details = vehicle.details()
-        assertEquals("purple", details.color)
+        assertEquals("granate", details.color)
         assertEquals("Škoda", details.make)
         assertEquals("1234ABC", details.licensePlate)
     }
@@ -97,5 +98,11 @@ class VehicleAttributesTest {
     fun `un vehículo de antes no tiene datos`() {
         assertFalse(Vehicle(id = "v", name = "Coche", licensePlate = "1234ABC").hasDetails)
         assertTrue(Vehicle(id = "v", name = "Coche", color = "red").hasDetails)
+    }
+
+    @Test
+    fun `un color desconocido no cuenta como dato`() {
+        assertFalse(Vehicle(id = "v", name = "Coche", color = "granate").hasDetails)
+        assertFalse(Vehicle(id = "v", name = "Coche", emissionsLabel = "crit_air_1").hasDetails)
     }
 }

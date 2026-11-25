@@ -62,6 +62,7 @@ import com.albertomedina.apark.presentation.navigation.SessionViewModel
 import com.albertomedina.apark.presentation.splash.SplashViewModel
 import com.albertomedina.apark.presentation.vehicles.VehiclesViewModel
 import com.albertomedina.apark.presentation.vehicledetail.VehicleDetailViewModel
+import com.albertomedina.apark.presentation.editvehicle.EditVehicleViewModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.app
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -265,7 +266,18 @@ val sharedModule = module {
         AddVehicleViewModel(
             createVehicleUseCase = get(),
             joinVehicleWithCodeUseCase = get(),
+            getVehicleCatalogUseCase = get(),
             authRepository = get()
+        )
+    }
+
+    viewModel {
+        EditVehicleViewModel(
+            authRepository = get(),
+            getVehicleListUseCase = get(),
+            updateVehicleUseCase = get(),
+            getVehicleCatalogUseCase = get(),
+            crashReporter = get()
         )
     }
 

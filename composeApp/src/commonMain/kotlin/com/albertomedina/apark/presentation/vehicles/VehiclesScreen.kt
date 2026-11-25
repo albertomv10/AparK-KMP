@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.presentation.components.DynamicTimeText
+import com.albertomedina.apark.presentation.vehicleform.VehicleAvatar
+import com.albertomedina.apark.presentation.vehicleform.hasAvatar
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -73,6 +75,11 @@ private fun VehicleRow(vehicle: Vehicle, onClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // El tipo y el color, como en la tarjeta del mapa (spec 015). Sin ninguno, nada.
+        if (vehicle.hasAvatar) {
+            VehicleAvatar(vehicle, size = 40.dp)
+            Spacer(Modifier.width(16.dp))
+        }
         Column(Modifier.weight(1f)) {
             Text(
                 text = vehicle.name,

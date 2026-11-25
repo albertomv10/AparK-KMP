@@ -46,7 +46,7 @@ service cloud.firestore {
     }
     function colorOk(d) {
       return d.get('color', '') in ['', 'white', 'black', 'grey', 'silver', 'blue', 'red', 'green',
-                                    'yellow', 'orange', 'brown', 'other'];
+                                    'yellow', 'orange', 'brown', 'pink', 'purple'];
     }
     function emissionsLabelOk(d) {
       return d.get('emissionsLabel', '') in ['', 'zero', 'eco', 'c', 'b', 'none'];
