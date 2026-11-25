@@ -115,6 +115,7 @@ kotlin {
             implementation(libs.androidx.datastore.preferences.core)
 
             implementation(libs.compottie)
+            implementation(libs.reorderable)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

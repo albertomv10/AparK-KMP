@@ -36,8 +36,8 @@ import com.albertomedina.apark.domain.usecase.JoinVehicleWithCodeUseCase
 import com.albertomedina.apark.domain.usecase.LoginAppleUseCase
 import com.albertomedina.apark.domain.usecase.LoginGoogleUseCase
 import com.albertomedina.apark.domain.usecase.LoginUseCase
-import com.albertomedina.apark.domain.usecase.MoveVehicleUseCase
 import com.albertomedina.apark.domain.usecase.RegisterUseCase
+import com.albertomedina.apark.domain.usecase.SetVehicleOrderUseCase
 import com.albertomedina.apark.domain.usecase.RemoveUserFromVehicleUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleMembersUseCase
 import com.albertomedina.apark.domain.usecase.RemoveVehicleMemberUseCase
@@ -131,7 +131,7 @@ val sharedModule = module {
     factory { GetVehicleListUseCase(repository = get()) }
     factory { CreateVehicleUseCase(repository = get()) }
     factory { DeleteVehicleUseCase(repository = get()) }
-    factory { MoveVehicleUseCase(repository = get()) }
+    factory { SetVehicleOrderUseCase(repository = get()) }
     factory { CreateVehicleInviteUseCase(repository = get()) }
     factory { JoinVehicleWithCodeUseCase(repository = get()) }
     factory { UpdateVehicleUseCase(repository = get()) }
@@ -173,7 +173,8 @@ val sharedModule = module {
     viewModel {
         VehiclesViewModel(
             authRepository = get(),
-            getVehicleListUseCase = get()
+            getVehicleListUseCase = get(),
+            setVehicleOrderUseCase = get()
         )
     }
 
@@ -255,9 +256,6 @@ val sharedModule = module {
             authRepository = get(),
             updateVehicleLocationUseCase = get(),
             getVehicleListUseCase = get(),
-            deleteVehicleUseCase = get(),
-            removeUserFromVehicleUseCase = get(),
-            moveVehicleUseCase = get(),
             crashReporter = get()
         )
     }

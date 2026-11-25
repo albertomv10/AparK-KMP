@@ -3,52 +3,44 @@ package com.albertomedina.apark.presentation.home
 import com.albertomedina.apark.presentation.vehicleform.VehicleAvatar
 import com.albertomedina.apark.presentation.vehicleform.hasAvatar
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.drop
 import androidx.compose.ui.zIndex
 import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.domain.model.Vehicle
-import com.albertomedina.apark.presentation.components.AparKConfirmDialog
 import com.albertomedina.apark.presentation.components.AparKMap
-import com.albertomedina.apark.presentation.components.DynamicTimeText
 import com.albertomedina.apark.presentation.components.LocationPermissionHandler
+import com.albertomedina.apark.presentation.components.ParkedText
 import com.albertomedina.apark.utils.OpenAppSettingsHandler
 import com.albertomedina.apark.utils.SnackbarMessage
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
@@ -88,11 +80,6 @@ fun HomeScreen(
         "error_location_save" -> stringResource(Res.string.error_location_save)
         "error_gps_permissions" -> stringResource(Res.string.error_gps_permissions)
         "error_undo_failed" -> stringResource(Res.string.error_undo_failed)
-        HomeViewModel.SUCCESS_DELETED_KEY -> stringResource(Res.string.delete_vehicle_success_deleted)
-        HomeViewModel.SUCCESS_REMOVED_KEY -> stringResource(Res.string.delete_vehicle_success_removed)
-        HomeViewModel.ERROR_DELETE_KEY -> stringResource(Res.string.delete_vehicle_error)
-        HomeViewModel.ERROR_NOT_AUTHENTICATED_KEY -> stringResource(Res.string.delete_vehicle_error_not_authenticated)
-        HomeViewModel.ERROR_REORDER_KEY -> stringResource(Res.string.reorder_error)
         else -> state.snackbarMessage?.message
     }
 
@@ -155,23 +142,22 @@ fun HomeScreen(
         pageCount = { state.vehicles.size + 1 }
     )
 
-    LaunchedEffect(pagerState.currentPage) {
-        if (pagerState.currentPage <= state.vehicles.size) {
-            viewModel.onEvent(HomeEvent.OnVehicleSwiped(pagerState.currentPage))
-        }
+    // La selección es del ViewModel, y el pager la sigue; lo único que el pager le cuenta son los
+    // cambios de página. La página con la que nace no: al volver a esta pestaña el pager recupera la
+    // que tenía guardada, que puede ser vieja —si entretanto se ha ordenado desde *Vehículos*—, y
+    // comunicarla pisaría la selección que el ViewModel ya había movido con su vehículo (spec 016).
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }
+            .drop(1)
+            .collect { page -> viewModel.onEvent(HomeEvent.OnVehicleSwiped(page)) }
     }
 
-    // Keep the vehicle being reordered centred, so its arrows stay under the user's finger.
-    // Re-runs on every list update rather than once: the reordered list may arrive after this
-    // would first run, and moving twice quickly would otherwise leave the pager one short.
-    LaunchedEffect(state.followedVehicleId, state.vehicles) {
-        val vehicleId = state.followedVehicleId ?: return@LaunchedEffect
-        val target = state.vehicles.indexOfFirst { it.id == vehicleId }
-
-        if (target != -1 && pagerState.currentPage != target) {
-            // Instant, not animated: a following tap would interrupt an animated scroll and
-            // strand the pager a position behind. It also reads better — the card being moved
-            // appears to stay put while its neighbours swap around it.
+    // El carrusel sigue al vehículo que enseñaba cuando la lista cambia de orden (spec 016): el
+    // ViewModel mueve la selección con él, y aquí el pager va detrás. Sin animar, para que parezca que
+    // la tarjeta no se ha movido. Al deslizar, la selección ya es la página actual y esto no hace nada.
+    LaunchedEffect(state.selectedVehicleIndex) {
+        val target = state.selectedVehicleIndex
+        if (target in 0..state.vehicles.size && pagerState.currentPage != target) {
             pagerState.scrollToPage(target)
         }
     }
@@ -200,12 +186,6 @@ fun HomeScreen(
         }
     }
 
-    // While editing, back leaves the mode rather than the screen. Only enabled in edit mode,
-    // so normal back behaviour is untouched.
-    BackHandler(enabled = state.isEditMode) {
-        viewModel.onEvent(HomeEvent.EditModeExited)
-    }
-
     Scaffold { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
 
@@ -220,20 +200,6 @@ fun HomeScreen(
 
                 }
             )
-
-            // While editing, a scrim locks the map: it swallows gestures that would otherwise
-            // pan it or drag a marker, dims it to signal the mode, and doubles as the way out.
-            if (state.isEditMode) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.25f))
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { viewModel.onEvent(HomeEvent.EditModeExited) }
-                )
-            }
 
             FloatingActionButton(
                 onClick = {
@@ -302,18 +268,11 @@ fun HomeScreen(
                             AddVehicleCard(onClick = onNavigateToAddVehicle)
                         } else {
                             VehicleCard(
+                                vehicle = vehicle,
+                                currentUserId = state.currentUserId,
                                 isLoading = state.isLoading,
                                 isSpecificLoading = state.updatingVehicleId == vehicle.id,
-                                vehicle = vehicle,
-                                isEditMode = state.isEditMode,
-                                isOwner = vehicle.ownerId == state.currentUserId,
-                                canMoveLeft = page > 0,
-                                canMoveRight = page < state.vehicles.lastIndex,
                                 onClick = { onNavigateToDetails(vehicle.id) },
-                                onLongClick = { viewModel.onEvent(HomeEvent.VehicleLongPressed) },
-                                onDelete = { viewModel.onEvent(HomeEvent.DeleteVehicleClicked(vehicle.id)) },
-                                onMoveLeft = { viewModel.onEvent(HomeEvent.MoveVehicleClicked(vehicle.id, -1)) },
-                                onMoveRight = { viewModel.onEvent(HomeEvent.MoveVehicleClicked(vehicle.id, 1)) },
                                 onUpdateLocation = {
                                     if (hasLocationPermission){
                                         viewModel.onEvent(HomeEvent.UpdateLocationClicked(vehicle.id))
@@ -327,181 +286,91 @@ fun HomeScreen(
                 }
             }
 
-            state.pendingDeletion?.let { pending ->
-                AparKConfirmDialog(
-                    title = if (pending.isOwner) {
-                        stringResource(Res.string.delete_vehicle_confirm_title, pending.vehicleName)
-                    } else {
-                        stringResource(Res.string.remove_vehicle_confirm_title, pending.vehicleName)
-                    },
-                    text = if (pending.isOwner) {
-                        stringResource(Res.string.delete_vehicle_confirm_message)
-                    } else {
-                        stringResource(Res.string.remove_vehicle_confirm_message)
-                    },
-                    confirmLabel = if (pending.isOwner) {
-                        stringResource(Res.string.delete_vehicle_confirm_action)
-                    } else {
-                        stringResource(Res.string.remove_vehicle_confirm_action)
-                    },
-                    dismissLabel = stringResource(Res.string.cancel),
-                    isDestructive = pending.isOwner,
-                    onConfirm = { viewModel.onEvent(HomeEvent.DeleteConfirmed) },
-                    onDismiss = { viewModel.onEvent(HomeEvent.DeleteDismissed) }
-                )
-            }
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+/**
+ * El alto mínimo de las tarjetas del carrusel (spec 016). Las de vehículo llegan a él por su propio
+ * contenido, que es igual en todas —la fila del nombre, una línea y el botón—, así que todas miden lo
+ * mismo y el carrusel no cambia de alto al deslizar. La de «+» lo usa para igualarse con ellas. No es
+ * una altura fija: con la letra grande, las tarjetas de vehículo crecen todas a la vez.
+ */
+private val CardMinHeight = 148.dp
+
+/**
+ * Lo que hace falta para el día a día, y nada más (spec 016): qué vehículo es, dónde se dejó y quién,
+ * y aparcarlo. Borrar y ordenar viven en el detalle y en *Vehículos*.
+ */
 @Composable
 fun VehicleCard(
     vehicle: Vehicle,
-    isLoading: Boolean,           // Estado global para deshabilitar
-    isSpecificLoading: Boolean,   // Estado local para mostrar el spinner    vehicle: Vehicle,
-    isEditMode: Boolean,
-    isOwner: Boolean,
-    canMoveLeft: Boolean,
-    canMoveRight: Boolean,
+    currentUserId: String?,
+    /** Hay una operación en marcha, de este vehículo o de otro: aparcar queda deshabilitado. */
+    isLoading: Boolean,
+    /** La operación en marcha es la de este vehículo: el botón enseña que está trabajando. */
+    isSpecificLoading: Boolean,
     onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    onDelete: () -> Unit,
-    onMoveLeft: () -> Unit,
-    onMoveRight: () -> Unit,
     onUpdateLocation: () -> Unit
-    ) {
-    Box {
+) {
+    val shape = CardDefaults.shape
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp)
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            ),
+            .heightIn(min = CardMinHeight)
+            .clip(shape)
+            // La etiqueta es lo que anuncia el lector de pantalla al llegar a la tarjeta.
+            .clickable(onClickLabel = stringResource(Res.string.vehicle_card_open_details), onClick = onClick),
+        shape = shape,
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column {
-                // El tipo y el color, para distinguir un vehículo de otro de un vistazo (spec 015).
-                // En modo edición, el botón de borrar ocupa la esquina: el nombre le deja sitio.
-                Row(
-                    modifier = Modifier.padding(end = if (isEditMode) 24.dp else 0.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (vehicle.hasAvatar) {
-                        VehicleAvatar(vehicle, size = 32.dp)
-                        Spacer(Modifier.width(10.dp))
-                    }
-                    Text(
-                        text = vehicle.name,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                }
-
-
-                val lastLocation = vehicle.lastLocation
-                val hasLocation = lastLocation != null && lastLocation.timestamp != 0L
-
-                if (!hasLocation) {
-                    Text(
-                        text = stringResource(Res.string.home_not_parked_yet),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else {
-                    val userName = lastLocation.user?.name?.takeIf { it.isNotBlank() }
-                    val userEmail = lastLocation.user?.email?.takeIf { it.isNotBlank() }
-
-                    DynamicTimeText(
-                        timestamp = lastLocation.timestamp,
-                        text = Res.string.home_last_time,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    // Quien aparcó puede no tener nombre ni email: si borró su cuenta, el servidor
-                    // deja la ubicación y la hora pero quita quién fue (spec 012). Mejor ninguna
-                    // línea que «Aparcado por » con el hueco vacío.
-                    val displayName = userName ?: userEmail
-                    if (displayName != null) {
-                        Text(
-                            text = stringResource(Res.string.home_parked_by, displayName),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-            if (isLoading && isSpecificLoading){
-                CircularProgressIndicator()
-            } else if (isEditMode) {
-                // Editing reuses the parking button's slot for the reorder arrows: it is
-                // disabled here anyway, so nothing is covered and the height stays put.
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onMoveLeft, enabled = canMoveLeft) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowLeft,
-                            contentDescription = stringResource(Res.string.reorder_move_left)
-                        )
-                    }
-                    IconButton(onClick = onMoveRight, enabled = canMoveRight) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowRight,
-                            contentDescription = stringResource(Res.string.reorder_move_right)
-                        )
-                    }
-                }
-            } else {
-                Button(
-                    onClick = onUpdateLocation,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isLoading
-                ) {
-                    Text(stringResource(Res.string.home_park_here))
-                }
-            }
-
-
-        }
-    }
-
-        if (isEditMode) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.error,
-                contentColor = MaterialTheme.colorScheme.onError,
-                shadowElevation = 4.dp,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp)
-                    .size(32.dp)
-                    .clickable { onDelete() }
+            // El nombre y la flecha que dice que la tarjeta abre el detalle. Entre los dos irán los
+            // iconos de lo pendiente (fase 3, ver NAVIGATION.md): el nombre ya se corta antes de ella.
+            // Mide al menos lo que el avatar, para que con avatar y sin él las tarjetas midan igual.
+            Row(
+                modifier = Modifier.fillMaxWidth().heightIn(min = 32.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = if (isOwner) Icons.Default.Delete else Icons.Default.Close,
-                        contentDescription = if (isOwner) {
-                            stringResource(Res.string.delete_vehicle_action)
-                        } else {
-                            stringResource(Res.string.remove_vehicle_action)
-                        },
-                        modifier = Modifier.size(18.dp)
-                    )
+                if (vehicle.hasAvatar) {
+                    VehicleAvatar(vehicle, size = 32.dp)
+                    Spacer(Modifier.width(10.dp))
+                }
+                Text(
+                    text = vehicle.name,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            ParkedText(
+                location = vehicle.lastLocation,
+                currentUserId = currentUserId,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            // Mientras aparca, el indicador va dentro del botón: cambiar el botón por un indicador
+            // suelto cambiaba el alto de la tarjeta.
+            Button(
+                onClick = onUpdateLocation,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading
+            ) {
+                if (isLoading && isSpecificLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text(stringResource(Res.string.home_park_here))
                 }
             }
         }
@@ -514,7 +383,7 @@ fun AddVehicleCard(onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp),
+            .heightIn(min = CardMinHeight),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f)
@@ -522,7 +391,7 @@ fun AddVehicleCard(onClick: () -> Unit) {
         border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.45f))
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = CardMinHeight).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -530,13 +399,13 @@ fun AddVehicleCard(onClick: () -> Unit) {
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(56.dp)
+                modifier = Modifier.size(48.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        modifier = Modifier.size(30.dp)
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }

@@ -15,6 +15,8 @@ androidx-testExt = "1.3.0"
 composeMultiplatform = "1.9.3"
 datastore = "1.2.1"
 compottie = "2.1.0"
+# Arrastrar para ordenar en listas (spec 016). Apache-2.0: va a la pantalla de licencias.
+reorderable = "3.1.0"
 junit = "4.13.2"
 kotlin = "2.3.0"
 kotlinx-serialization = "1.10.0"
@@ -41,6 +43,7 @@ secrets = "2.0.1"
 
 [libraries]
 compottie = { module = "io.github.alexzhirkevich:compottie", version.ref = "compottie" }
+reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 androidx-datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesPlayServices" }

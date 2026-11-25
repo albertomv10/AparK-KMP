@@ -70,6 +70,11 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -sdk iphonesimulator 
 **Compiling Kotlin for iOS does not compile the Swift.** Changes to `iosApp/` — bridges, Info.plist,
 build phases — only fail in Xcode, so run the command above before claiming an iOS change works.
 
+**That command is for compiling, not for running.** Without signing the app has no keychain access,
+Firebase cannot store the session, and signing in fails with «Ha ocurrido un error inesperado» —
+the log says `FIRAuthErrorDomain Code=17995`, an error accessing the keychain. To install it in the
+simulator, build without `CODE_SIGNING_ALLOWED=NO`: the simulator signs it locally, with no team.
+
 ## Environments
 
 Two **separate Firebase projects**. Which one a build talks to is decided by the config file baked
@@ -125,11 +130,11 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 | `domain.repository` | Repository interfaces |
 | `domain.usecase` | One `operator fun invoke()` each |
 | `presentation.splash` · `presentation.auth.*` | Splash, login, register, verification, reset |
-| `presentation.home` | Map + vehicle carousel + edit mode |
-| `presentation.vehicles` · `presentation.account` | The vehicle list, and the account: name, email, password, theme, sign out, delete |
+| `presentation.home` | Map + vehicle carousel: park, and open the detail. No edit mode since spec 016 |
+| `presentation.vehicles` · `presentation.account` | The vehicle list, where vehicles are reordered (spec 016); and the account: name, email, password, theme, sign out, delete |
 | `presentation.addvehicle` · `presentation.editvehicle` · `presentation.vehicledetail` | Create/join, edit, and the detail: where it is, its data, its members, transfer and remove |
 | `presentation.vehicleform` | The form shared by create and edit, its pure reducer, and the labels, icons and swatches of each code |
-| `presentation.components` | Shared composables: map, buttons, dialog, permission handlers |
+| `presentation.components` | Shared composables: map, buttons, dialog, permission handlers, and `ParkedText` — «Aparcado hace 5 min por Edu», the one sentence the card, the list and the detail share |
 | `presentation.navigation` | Navigation 3 setup |
 | `di` · `ui.theme` · `utils` | Koin modules, Material 3 theme, helpers |
 
@@ -399,6 +404,16 @@ graphify path "A" "B" --undirected
   fade also covers the `MapView` rebuild; on iOS there is nothing to cover, and during a crossfade
   the outgoing screen stays painted over the map, so a long fade reads as a veil and costs the
   immediacy that platform already had.
+- **Writes do not finish offline, and the UI must not wait for them.** A gitlive `set` or `update`
+  suspends until the server acknowledges it, which offline is never; the local cache, meanwhile,
+  shows the change at once. Reordering (spec 016) launches the write and moves on, holding the new
+  order in an override until the list comes back in it. A transaction is worse: it fails outright
+  without a connection, which is why reordering stopped using one.
+- **The carousel's selection lives in `HomeViewModel`, and the pager follows it.** The selection is
+  kept by vehicle id, so it moves with the vehicle when the order changes. The pager reports only
+  *changes* of page (`snapshotFlow` + `drop(1)`), never the page it is born with: coming back to the
+  tab it restores its saved page, which is stale if the order changed meanwhile, and reporting it
+  overwrote the selection the ViewModel had already moved.
 - **Switching tabs is not navigating forward.** `NavDisplay` animates on whatever its back stack
   shows, so swapping in another tab's stack looks like a push and slides sideways, suggesting a
   depth that is not there. The shell tells the two apart by *cause*, not by key: every push and pop
