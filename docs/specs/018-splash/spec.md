@@ -84,6 +84,20 @@ centrado con restricciones. En un iPhone de otro tamaño podría quedar algo des
 6. **Dado** que todo lo anterior se cumple, **cuando** abro la app en iOS, **entonces** el splash se
    ve igual que hoy.
 
+## Resultado
+
+Se cumple todo en Android estándar y en iOS, menos una cosa en el Xiaomi de Alberto (HyperOS). Allí
+el logo ya se ve nítido, pero en modo oscuro **el fondo del splash sigue saliendo oscuro**
+(criterio 2):
+
+- la app pide que no se le aplique el oscuro forzado (`forceDarkAllowed=false`);
+- no está en la lista de apps a las que HyperOS aplica el modo oscuro;
+- y en un emulador con Android estándar, en modo oscuro, sale blanco.
+
+Así que es HyperOS pintando la ventana de arranque por su cuenta. Alberto lo da por bueno así: no
+queda mal. Si algún día molesta, lo que queda por probar es que el logo destaque también sobre
+oscuro (un círculo blanco detrás, `windowSplashScreenIconBackgroundColor`), no pelear con el color.
+
 ## Preguntas abiertas — resueltas
 
 Se cerraron en el diseño. El razonamiento completo está en [design.md](design.md).
