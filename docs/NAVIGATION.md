@@ -25,10 +25,12 @@ que es lo que la gente hace a diario. De ahí sale la estructura entera.
 ```
 Mapa ─────────── dónde están · aparcar
   mapa + carrusel + «Aparcar aquí»
+  tarjeta: iconos de lo que tiene pendiente
   └── + Añadir vehículo  (crear · unirse con código)
 
 Vehículos ────── cómo están · gestionar
-  lista con el ESTADO de cada uno          chapita: pendientes totales
+  PENDIENTE de todos, arriba               chapita: pendientes totales
+  lista con el ESTADO de cada uno · ordenar
   └── Detalle del vehículo
        ├── Datos · Miembros · Compartir
        ├── Incidencias
@@ -60,6 +62,58 @@ y hay que quitarla.
 El motivo de fondo es que la app es **compartida**. Su valor no es solo saber dónde está el coche,
 sino que todos sepan **qué le pasa**. Una chapita con los pendientes es lo que convierte eso en algo
 que se ve sin buscarlo — y eso el mapa no lo da.
+
+**Hasta que lleguen las incidencias, la pestaña aporta poco**, y se asume: lo único que solo se hace
+ahí es ordenar ([spec 016](specs/016-vehicle-cards/spec.md)). No se le inventan funciones para
+justificarla. La pestaña se justifica con lo que se describe a continuación.
+
+### Cómo se verán los pendientes (decidido para la fase 3)
+
+Ni las incidencias ni los vencimientos existen todavía. Lo que sigue es dónde irán cuando existan,
+decidido de antemano para que la spec que las construya parta de aquí.
+
+**En *Vehículos*, primero lo pendiente de todos y después cada vehículo:**
+
+```
+Vehículos                          [Ordenar]
+─────────────────────────────────────────────
+PENDIENTE
+⛽  Furgoneta · Sin gasolina       Edu · ayer
+🧽  Ibiza · Lavar por dentro      tú · hace 2 h
+📋  Furgoneta · ITV en 12 días
+─────────────────────────────────────────────
+🚐  Furgoneta        ⛽ 📋            ›
+🚗  Ibiza            🧽               ›
+🚗  Coche de Alberto                   ›
+```
+
+- **Arriba, lo pendiente de todos los vehículos**, por urgencia: las incidencias abiertas y los
+  vencimientos próximos.
+- **Sin nada pendiente, la sección se queda en una línea**, «Todo en orden», y la lista sigue debajo:
+  la pantalla nunca queda vacía.
+- **En la barra de pestañas, la chapita con el total.**
+
+**No va en una pestaña propia.** Una pestaña «Incidencias» junto a *Vehículos* deja cuatro pestañas y
+una de ellas redundante, que acabaría quitándose. Convertir *Vehículos* en «Incidencias» lleva a la
+misma pantalla con otro nombre, porque necesita la lista de vehículos dentro. El nombre de la pestaña
+se decide con las incidencias.
+
+**En la tarjeta del mapa, iconos por tipo en la esquina de arriba a la derecha**:
+
+- **Un icono por tipo de pendiente, no por incidencia**: dos incidencias de limpieza son una sola 🧽.
+- **Como mucho tres, y después «+N»**, para no comerse el nombre.
+- **Iconos y no un número.** Un número obliga a abrir el detalle para saber si importa; «⛽» lo dice
+  sin tocar nada, que es lo que se quiere saber antes de coger el coche.
+- **La ITV no es una incidencia**, es un recordatorio (`reminders`, `kind: "itv"`), pero sale en la
+  misma esquina cuando su fecha está cerca.
+- **Los tipos de incidencia serán una lista cerrada** con códigos, como las de la spec 015, y cada
+  código tendrá su icono.
+- **Esa esquina queda libre desde la spec 016**, que quita de ahí la papelera, para que los iconos no
+  obliguen a rehacer la tarjeta.
+
+**El coste**: pintar los tipos exige saber de qué tipo es cada incidencia abierta, no solo contarlas,
+así que el `count()` de [`DATA-MODEL.md`](DATA-MODEL.md) §5 no basta. Con diez vehículos como mucho,
+sirve una consulta de las incidencias abiertas por vehículo. Se decide en la spec de incidencias.
 
 ---
 
@@ -122,7 +176,8 @@ de esa pantalla.
 
 - **Una pestaña de «Pendientes»** que agregue incidencias y vencimientos de todos los vehículos.
   Tentador, pero con dos o cuatro coches es trocear de más: la chapita en *Vehículos* y los
-  pendientes arriba de esa lista cubren lo mismo con una pestaña menos.
+  pendientes arriba de esa lista cubren lo mismo con una pestaña menos. Ver
+  [Cómo se verán los pendientes](#cómo-se-verán-los-pendientes-decidido-para-la-fase-3).
 - **Un cajón lateral.** No hay suficientes secciones para justificarlo, y compite con las pestañas.
 - **Buscar.** Con un puñado de vehículos no hay nada que buscar.
 
