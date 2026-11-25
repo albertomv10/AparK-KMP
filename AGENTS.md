@@ -449,6 +449,23 @@ graphify path "A" "B" --undirected
   measures — `onGloballyPositioned` sits *before* `.padding(...)` in the chain on purpose, so it
   includes it.
 
+- **The Android splash is `core-splashscreen`, and its icon must be a square vector with a margin**
+  (spec 018). `Theme.AparK.Starting` (parent `Theme.SplashScreen`) is the launch theme and
+  `installSplashScreen()` swaps it for `Theme.AparK`. The icon, `splash_logo.xml`, is a 288×288 dp
+  vector with the logo inside the central 192 dp circle: Android masks everything outside it. The
+  old icon was a 2000 px PNG in `drawable/` with no density, so Android scaled it up for the screen
+  and then down hard into the icon slot, which left jagged edges. A plain `<inset>` around the old
+  vector would have stretched it, because it is not square. There is no `values-night` for the
+  splash on purpose: it is white always, like iOS.
+- **Xiaomi still darkens the splash in dark mode, and that is accepted as is** (spec 018). The app
+  opts out of forced dark (`android:forceDarkAllowed=false` in both themes), because it has its own
+  dark mode, chosen in *Cuenta*. On a stock Android emulator in dark mode the splash comes out white,
+  as it should. On Alberto's Xiaomi (HyperOS) the logo is sharp but the background is still dark,
+  and the app is not in HyperOS's list of apps with dark mode applied, so it is HyperOS painting the
+  starting window on its own. If it ever matters, what is left to try is making the logo stand out
+  on dark too (`windowSplashScreenIconBackgroundColor`, a white circle behind it), not fighting the
+  colour.
+
 ### Testing on devices
 
 - **MIUI/Xiaomi suppresses third-party app logs.** `println` and `Log` from the app do not reach
@@ -471,6 +488,9 @@ graphify path "A" "B" --undirected
   `composeApp/build/generated/compose` and `composeApp/build/xcode-frameworks`, and build again from
   Xcode. To check a framework, search its binary for `values/strings.xml` encoded as UTF-16:
   Kotlin/Native stores string literals that way, so `strings` does not find them.
+- **iOS caches the launch screen.** To see a change to `Launch Screen.storyboard` in the simulator,
+  uninstall the app first. A location permission alert left open by a previous launch can stay
+  stuck on screen even after uninstalling; rebooting the simulator clears it.
 - The release build is tested on a personal iPhone, so **the Android release path gets the least
   attention** — that is where R8 problems hide.
 

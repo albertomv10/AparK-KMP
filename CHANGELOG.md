@@ -107,6 +107,11 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   `docs/specs/_template/` y este `CHANGELOG.md`.
 
 ### Changed
+- **El splash de Android, como el de iOS** ([spec 018](docs/specs/018-splash/spec.md)): fondo blanco
+  y el logo nítido en el centro, también en modo oscuro (salvo en Xiaomi con HyperOS, que oscurece el
+  fondo por su cuenta). Ahora usa la librería de splash de Android,
+  así que sale igual de Android 7 a 15; antes, de la 7 a la 11, no salía el logo. En iOS, el logo
+  de la pantalla de arranque está centrado con restricciones, para cualquier tamaño de iPhone.
 - **Una sola regla de cámara para Android e iOS**, decidida en código común
   ([spec 017](docs/specs/017-map-camera/spec.md)). La cámara solo se mueve al abrir el mapa, al
   elegir otro vehículo, cuando el elegido cambia de sitio o al pedirlo. El zoom de calle es 17 en las
@@ -149,6 +154,8 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   a las bases de datos `(default)` y `apark-at`.
 
 ### Removed
+- **Cinco imágenes que no usaba nada o que ya no hacen falta**, entre ellas el PNG del splash de
+  2000 px: unos 530 KB menos dentro de la app de Android.
 - **El modo edición del carrusel**: la pulsación larga sobre una tarjeta ya no enseña la papelera
   ni las flechas. Eliminar un vehículo o quitarlo de tu lista se hace desde su detalle, lejos del
   botón de aparcar, y ordenar desde *Vehículos*. Una pulsación larga cuenta ahora como un toque.
@@ -159,6 +166,8 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   y con él se va la vía de respaldo que todavía lo leía en la función de limpieza de vehículos.
 
 ### Fixed
+- **El logo del splash de Android se veía con los bordes dentados.** Era un PNG de 2000 px que Android
+  ampliaba y luego reducía mucho; ahora es vectorial.
 - **La cámara del mapa volvía sola al vehículo elegido** cada vez que cambiaba cualquier dato: que
   otro miembro aparcara otro coche, un nombre o el orden. Si estabas mirando los alrededores, te
   devolvía de golpe y perdías el zoom.
