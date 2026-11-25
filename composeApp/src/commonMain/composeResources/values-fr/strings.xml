@@ -40,18 +40,12 @@
     <string name="email_verification_button_back">Retour à la connexion</string>
 
     <!-- Home -->
-    <string name="home_last_time">Dernière fois : %1$s</string>
-    <string name="home_parked_by">Pour %1$s</string>
     <string name="home_park_here">Garer</string>
     <string name="home_add_vehicle">Ajouter un nouveau véhicule</string>
     <string name="home_center_map">Centrer sur ma position</string>
     <string name="success_location_updated">Position mise à jour avec succès</string>
 
     <!-- Time & Dates -->
-    <string name="time_less_than_minute">À l'instant</string>
-    <string name="time_ago_minutes">Il y a %1$d min</string>
-    <string name="time_ago_hours">Il y a %1$d h</string>
-    <string name="time_yesterday">Hier à %1$s</string>
     <string name="month_jan">janv.</string>
     <string name="month_feb">févr.</string>
     <string name="month_mar">mars</string>
@@ -94,6 +88,19 @@
     <string name="add_vehicle_error_not_authenticated">Vous devez être connecté pour ajouter un véhicule</string>
     <string name="add_vehicle_error_generic">Impossible de créer le véhicule. Veuillez réessayer</string>
     <string name="home_not_parked_yet">Pas encore garé</string>
+    <string name="parked_just_now">Garé à l'instant</string>
+    <string name="parked_minutes_ago">Garé il y a %1$d min</string>
+    <string name="parked_hours_ago">Garé il y a %1$d h</string>
+    <string name="parked_today_at">Garé aujourd'hui à %1$s</string>
+    <string name="parked_yesterday_at">Garé hier à %1$s</string>
+    <string name="parked_on_date">Garé le %1$s %2$s</string>
+    <string name="parked_by">%1$s par %2$s</string>
+    <string name="parked_by_you">%1$s par vous</string>
+    <string name="vehicle_card_open_details">Voir les détails</string>
+    <string name="vehicles_reorder">Réorganiser</string>
+    <string name="vehicles_reorder_done">Terminé</string>
+    <string name="vehicles_move_up">Monter</string>
+    <string name="vehicles_move_down">Descendre</string>
     <string name="delete_vehicle_action">Supprimer le véhicule</string>
     <string name="remove_vehicle_action">Retirer de ma liste</string>
     <string name="delete_vehicle_confirm_title">Supprimer %1$s ?</string>
@@ -103,12 +110,7 @@
     <string name="remove_vehicle_confirm_message">Le véhicule n'apparaîtra plus dans votre liste, mais il continuera d'exister pour les autres membres.</string>
     <string name="remove_vehicle_confirm_action">Retirer</string>
     <string name="cancel">Annuler</string>
-    <string name="delete_vehicle_success_deleted">Véhicule supprimé</string>
-    <string name="delete_vehicle_success_removed">Véhicule retiré de votre liste</string>
     <string name="delete_vehicle_error">Impossible de terminer l'action. Veuillez réessayer</string>
-    <string name="delete_vehicle_error_not_authenticated">Vous devez être connecté pour faire cela</string>
-    <string name="reorder_move_left">Déplacer vers la gauche</string>
-    <string name="reorder_move_right">Déplacer vers la droite</string>
     <string name="reorder_error">Impossible de modifier l'ordre. Veuillez réessayer</string>
     <string name="add_vehicle_tab_create">Créer</string>
     <string name="add_vehicle_tab_join">Rejoindre</string>

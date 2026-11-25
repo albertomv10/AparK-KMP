@@ -40,18 +40,12 @@
     <string name="email_verification_button_back">Back to Login</string>
 
     <!-- Home -->
-    <string name="home_last_time">Last time: %1$s</string>
     <string name="home_park_here">Park</string>
     <string name="home_add_vehicle">Add new vehicle</string>
     <string name="home_center_map">Center on my location</string>
-    <string name="home_parked_by">Parked by %1$s</string>
     <string name="success_location_updated">Location updated successfully</string>
 
     <!-- Time & Dates -->
-    <string name="time_less_than_minute">Just now</string>
-    <string name="time_ago_minutes">%1$d min ago</string>
-    <string name="time_ago_hours">%1$d h ago</string>
-    <string name="time_yesterday">Yesterday at %1$d</string>
     <string name="month_jan">Jan</string>
     <string name="month_feb">Feb</string>
     <string name="month_mar">Mar</string>
@@ -94,6 +88,19 @@
     <string name="add_vehicle_error_not_authenticated">You must be signed in to add a vehicle</string>
     <string name="add_vehicle_error_generic">Couldn't create the vehicle. Please try again</string>
     <string name="home_not_parked_yet">Not parked yet</string>
+    <string name="parked_just_now">Parked just now</string>
+    <string name="parked_minutes_ago">Parked %1$d min ago</string>
+    <string name="parked_hours_ago">Parked %1$d h ago</string>
+    <string name="parked_today_at">Parked today at %1$s</string>
+    <string name="parked_yesterday_at">Parked yesterday at %1$s</string>
+    <string name="parked_on_date">Parked on %1$s %2$s</string>
+    <string name="parked_by">%1$s by %2$s</string>
+    <string name="parked_by_you">%1$s by you</string>
+    <string name="vehicle_card_open_details">View details</string>
+    <string name="vehicles_reorder">Reorder</string>
+    <string name="vehicles_reorder_done">Done</string>
+    <string name="vehicles_move_up">Move up</string>
+    <string name="vehicles_move_down">Move down</string>
     <string name="delete_vehicle_action">Delete vehicle</string>
     <string name="remove_vehicle_action">Remove from my list</string>
     <string name="delete_vehicle_confirm_title">Delete %1$s?</string>
@@ -103,12 +110,7 @@
     <string name="remove_vehicle_confirm_message">The vehicle will no longer appear in your list, but it will still exist for the other members.</string>
     <string name="remove_vehicle_confirm_action">Remove</string>
     <string name="cancel">Cancel</string>
-    <string name="delete_vehicle_success_deleted">Vehicle deleted</string>
-    <string name="delete_vehicle_success_removed">Vehicle removed from your list</string>
     <string name="delete_vehicle_error">Could not complete the action. Please try again</string>
-    <string name="delete_vehicle_error_not_authenticated">You must be signed in to do this</string>
-    <string name="reorder_move_left">Move left</string>
-    <string name="reorder_move_right">Move right</string>
     <string name="reorder_error">Could not change the order. Please try again</string>
     <string name="add_vehicle_tab_create">Create</string>
     <string name="add_vehicle_tab_join">Join</string>

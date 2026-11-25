@@ -79,7 +79,7 @@ import com.albertomedina.apark.presentation.vehicleform.hasAvatar
 import com.albertomedina.apark.presentation.vehicleform.label
 import com.albertomedina.apark.presentation.vehicleform.swatch
 import com.albertomedina.apark.presentation.components.AparKConfirmDialog
-import com.albertomedina.apark.presentation.components.DynamicTimeText
+import com.albertomedina.apark.presentation.components.ParkedText
 import com.albertomedina.apark.presentation.components.StandardAparKButton
 import com.albertomedina.apark.utils.ShareTextHandler
 import com.albertomedina.apark.utils.SnackbarMessage
@@ -189,7 +189,7 @@ fun VehicleDetailScreen(
             else -> Column(contentModifier.verticalScroll(rememberScrollState())) {
                 if (state.isWorking) LinearProgressIndicator(Modifier.fillMaxWidth())
                 Header(vehicle)
-                LocationSection(vehicle, onShowOnMap = { onShowOnMap(vehicle.id) })
+                LocationSection(vehicle, state.currentUserId, onShowOnMap = { onShowOnMap(vehicle.id) })
                 if (vehicle.hasDetails || state.isOwner) {
                     HorizontalDivider(Modifier.padding(top = 12.dp))
                     DataSection(vehicle, isOwner = state.isOwner, onEdit = { onEdit(vehicle.id) })
@@ -303,28 +303,13 @@ private fun DataRow(label: String, value: String, marker: (@Composable () -> Uni
 }
 
 @Composable
-private fun LocationSection(vehicle: Vehicle, onShowOnMap: () -> Unit) {
+private fun LocationSection(vehicle: Vehicle, currentUserId: String?, onShowOnMap: () -> Unit) {
     SectionTitle(stringResource(Res.string.vehicle_detail_location_title))
     Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         val location = vehicle.lastLocation
-        if (location == null || location.timestamp == 0L) {
-            Text(stringResource(Res.string.home_not_parked_yet), style = MaterialTheme.typography.bodyLarge)
-            return@Column
-        }
-        DynamicTimeText(
-            timestamp = location.timestamp,
-            text = Res.string.home_last_time,
-            style = MaterialTheme.typography.bodyLarge
-        )
-        // Mismo criterio que la tarjeta: sin nadie a quien nombrar, ninguna línea.
-        val parkedBy = location.user?.name?.takeIf { it.isNotBlank() } ?: location.user?.email?.takeIf { it.isNotBlank() }
-        if (parkedBy != null) {
-            Text(
-                stringResource(Res.string.home_parked_by, parkedBy),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        // La misma frase que la tarjeta y la lista (spec 016); aquí puede ocupar dos líneas.
+        ParkedText(location, currentUserId, style = MaterialTheme.typography.bodyLarge, maxLines = 2)
+        if (location == null || location.timestamp == 0L) return@Column
         OutlinedButton(onClick = onShowOnMap, modifier = Modifier.padding(top = 8.dp)) {
             Icon(Icons.Default.Map, contentDescription = null)
             Spacer(Modifier.width(8.dp))
