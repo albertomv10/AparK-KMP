@@ -1,7 +1,7 @@
 # Spec: El splash de Android, como el de iOS
 
 - **ID**: 018-splash
-- **Estado**: Aprobada — diseño en [design.md](design.md)
+- **Estado**: Implementada — diseño en [design.md](design.md)
 - **Fecha**: 2026-11-25
 
 ## Problema / Por qué
