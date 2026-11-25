@@ -24,7 +24,6 @@ import com.albertomedina.apark.ui.theme.LocalIsDarkTheme
 import androidx.compose.ui.unit.Dp
 import androidx.core.content.ContextCompat
 import com.albertomedina.apark.domain.model.Vehicle
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -36,8 +35,11 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 
 
 @Composable
@@ -46,99 +48,43 @@ actual fun AparKMap(
     bottomPadding: Dp,
     vehicles: List<Vehicle>,
     selectedVehicleIndex: Int,
-    centerCameraTrigger: Int,
-    onMarkerDragged: (String, Double, Double) -> Unit
+    cameraRequests: Flow<CameraRequest>,
+    onMarkerDragged: (String, Double, Double) -> Unit,
+    onMarkerTapped: (String) -> Unit,
+    onMapLongPressed: (Double, Double) -> Unit
 ) {
 
     val context = LocalContext.current
-    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-    val cameraPositionState = rememberCameraPositionState()
-    var isFirstLoad by remember { mutableStateOf(true) }
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(
+            LatLng(DefaultMapCenter.latitude, DefaultMapCenter.longitude),
+            DEFAULT_MAP_ZOOM
+        )
+    }
 
     val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-    val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
-    var lastVehicleId by remember { mutableStateOf<String?>(null) }
-    var lastProcessedLocation by remember { mutableStateOf<Vehicle.LocationModel?>(null) }
-
-    LaunchedEffect(selectedVehicleIndex, vehicles) {
-        if (vehicles.isNotEmpty() && selectedVehicleIndex < vehicles.size) {
-            val currentVehicle = vehicles[selectedVehicleIndex]
-            val currentLocation = currentVehicle.lastLocation
-
-            if (currentLocation != null) {
-                val isNewSelection = lastVehicleId != currentVehicle.id
-                val locationChanged = lastProcessedLocation != null &&
-                        (lastProcessedLocation!!.latitude != currentLocation.latitude ||
-                                lastProcessedLocation!!.longitude != currentLocation.longitude)
-
-                // Requisito: 20f si se actualiza, 18f si se cambia de tarjeta o carga inicial
-                val targetZoom = if (locationChanged && !isNewSelection) 20f else 18f
-
-                val cameraUpdate = CameraUpdateFactory.newLatLngZoom(
-                    LatLng(currentLocation.latitude, currentLocation.longitude),
-                    targetZoom
-                )
-
-                if (isFirstLoad) {
-                    cameraPositionState.move(cameraUpdate)
-                    isFirstLoad = false
-                } else {
-                    cameraPositionState.animate(cameraUpdate, durationMs = 1000)
-                }
-
-                lastProcessedLocation = currentLocation
-                lastVehicleId = currentVehicle.id
-            }
-        }
-    }
-
-    LaunchedEffect(centerCameraTrigger) {
-        if (centerCameraTrigger > 0) {
-
-            if (hasFine || hasCoarse) {
+    // La cámara solo hace lo que le mandan (spec 017): la regla vive en código común. `collectLatest`
+    // corta el vuelo anterior si llega otra orden, que es lo que se quiere al deslizar rápido.
+    LaunchedEffect(cameraRequests) {
+        cameraRequests.collectLatest { request ->
+            val target = LatLng(request.point.latitude, request.point.longitude)
+            val update = request.zoom?.let { CameraUpdateFactory.newLatLngZoom(target, it) }
+                ?: CameraUpdateFactory.newLatLng(target)
+            if (request.animated) {
                 try {
-                    val location = fusedLocationClient.lastLocation.await()
-
-                    if (location != null) {
-
-                        cameraPositionState.animate(
-                            update = CameraUpdateFactory.newLatLngZoom(
-                                LatLng(location.latitude, location.longitude), 16f
-                            ),
-                            durationMs = 800
-                        )
-                    }
-                } catch (e: Exception) {
-                    // Manejar si algo falla con el GPS
+                    cameraPositionState.animate(update, durationMs = 800)
+                } catch (e: CancellationException) {
+                    // Tocar el mapa a mitad de vuelo lo interrumpe con una cancelación que no es
+                    // nuestra: sin capturarla, terminaría este recolector y la cámara dejaría de
+                    // obedecer. Si la cancelación sí es nuestra —otra orden, o el mapa se va—, sigue.
+                    currentCoroutineContext().ensureActive()
                 }
+            } else {
+                cameraPositionState.move(update)
             }
         }
     }
-
-
-
-//    LaunchedEffect(selectedVehicleIndex, vehicles) {
-//        if (vehicles.isNotEmpty() && selectedVehicleIndex < vehicles.size) {
-//            val location = vehicles[selectedVehicleIndex].lastLocation
-//            if (location != null) {
-//                // Preparamos el movimiento a la ciudad del coche con zoom 15
-//                val cameraUpdate = CameraUpdateFactory.newLatLngZoom(
-//                    LatLng(location.latitude, location.longitude),
-//                    17f
-//                )
-//
-//                if (isFirstLoad) {
-//                    // TELETRANSPORTE INSTANTÁNEO
-//                    cameraPositionState.move(cameraUpdate)
-//                    isFirstLoad = false
-//                } else {
-//                    // ANIMACIÓN SUAVE AL DESLIZAR
-//                    cameraPositionState.animate(cameraUpdate, durationMs = 800)
-//                }
-//            }
-//        }
-//    }
 
     val uiSettings = MapUiSettings(myLocationButtonEnabled = false, zoomControlsEnabled = false)
     // El tema de la app, no el del sistema: con el selector de Cuenta los dos pueden discrepar.
@@ -156,10 +102,9 @@ actual fun AparKMap(
     // pedir teselas. iOS no lo enseña porque su estado vive en Swift, fuera de Compose, en
     // `MapLocationController.shared`. La diferencia es de plataforma y está en apps ajenas también.
     //
-    // La cámara no es el problema —en una composición nueva `isFirstLoad` vuelve a ser true y se
-    // hace `move()`, que es un salto instantáneo al vehículo correcto—, así que izar su estado no
-    // arreglaría nada. Lo único que se ve es el hueco mientras el mapa dibuja su primer fotograma,
-    // y lo que se hace con eso es taparlo.
+    // La cámara no es el problema —al volver, el ViewModel manda un salto al vehículo
+    // (`HomeEvent.MapShown`)—, así que izar su estado no arreglaría nada. Lo único que se ve es el
+    // hueco mientras el mapa dibuja su primer fotograma, y lo que se hace con eso es taparlo.
     var isMapLoaded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier) {
@@ -169,7 +114,8 @@ actual fun AparKMap(
             properties = mapProperties,
             uiSettings = uiSettings,
             contentPadding = PaddingValues(bottom = bottomPadding),
-            onMapLoaded = { isMapLoaded = true }
+            onMapLoaded = { isMapLoaded = true },
+            onMapLongClick = { onMapLongPressed(it.latitude, it.longitude) }
         ) {
             vehicles.forEachIndexed { index, vehicle ->
                 vehicle.lastLocation?.let { loc ->
@@ -208,9 +154,14 @@ actual fun AparKMap(
                     Marker(
                         state = markerState,
                         title = vehicle.name,
-                        snippet = vehicle.model,
                         icon = iconMarker,
-                        draggable = true
+                        draggable = true,
+                        // Tocarlo elige el vehículo. `true` evita lo de por defecto —centrarlo y abrir
+                        // un globo—: la cámara ya va a él por la regla común.
+                        onClick = {
+                            onMarkerTapped(vehicle.id)
+                            true
+                        }
                     )
                 }
             }

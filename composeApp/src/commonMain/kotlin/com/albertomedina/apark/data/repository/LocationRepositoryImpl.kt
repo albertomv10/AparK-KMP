@@ -3,10 +3,8 @@ package com.albertomedina.apark.data.repository
 import com.albertomedina.apark.data.location.LocationSource
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.domain.repository.LocationRepository
-import dev.gitlive.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -14,18 +12,16 @@ class LocationRepositoryImpl(
     private val locationSource: LocationSource,
 ) : LocationRepository {
 
-    override fun getUserLocation(): Flow<Vehicle.LocationModel?> = flow {
-        // Intentamos obtener una ubicación fresca con un timeout
-        val location = withTimeoutOrNull(8000L) {
-            locationSource.getFreshLocation()
+    override suspend fun getApproximateLocation(): Vehicle.LocationModel? = try {
+        withContext(Dispatchers.Default) {
+            locationSource.getLastKnownLocation()
+                ?: withTimeoutOrNull(5000L) { locationSource.getFreshLocation() }
         }
-
-        if (location != null) {
-            emit(location)
-        } else {
-            // Si falla el timeout, emitimos la última conocida
-            emit(locationSource.getLastKnownLocation())
-        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        // Sin permiso, o sin servicios de ubicación: el mapa no se mueve, y ya está.
+        null
     }
 
     override suspend fun getCurrentLocation(): Vehicle.LocationModel {

@@ -43,6 +43,7 @@
     <string name="home_park_here">Park</string>
     <string name="home_add_vehicle">Add new vehicle</string>
     <string name="home_center_map">Center on my location</string>
+    <string name="map_go_to_vehicle">Go to vehicle</string>
     <string name="success_location_updated">Location updated successfully</string>
 
     <!-- Time & Dates -->

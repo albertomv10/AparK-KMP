@@ -90,9 +90,11 @@ struct iOSApp: App {
         AparKMap_iosKt.iosMapViewFactory = {
             let options = GMSMapViewOptions()
             
-            // Le damos una cámara por defecto (ej. Madrid) para que el motor empiece a dibujar.
-            // Una milésima de segundo después, el código de arriba lo teletransportará a la tarjeta real.
-            options.camera = GMSCameraPosition.camera(withLatitude: 40.4168, longitude: -3.7038, zoom: 5.0)
+            // Si Kotlin ya ha mandado adónde ir, el mapa nace ahí (spec 017). Si no, en España, como
+            // Android (`DefaultMapCenter`), hasta que llegue la primera orden.
+            options.camera = MapLocationController.shared.pendingCamera
+                ?? GMSCameraPosition.camera(withLatitude: 40.4168, longitude: -3.7038, zoom: 5.0)
+            MapLocationController.shared.pendingCamera = nil
             
             let mapView = GMSMapView(options: options)
             
@@ -130,6 +132,13 @@ struct iOSApp: App {
             mapView.mapStyle = try? GMSMapStyle(jsonString: json)
         }
 
+        // El mapa se va de la pantalla: se suelta, para que una orden de cámara no vaya a él (spec 017).
+        AparKMap_iosKt.iosOnMapReleased = { view in
+            if MapLocationController.shared.mapView === view {
+                MapLocationController.shared.mapView = nil
+            }
+        }
+
         //Escuchamos los cambios de padding que manda Kotlin
         AparKMap_iosKt.updateMapPadding = { newPadding in
                     // Convertimos el Double que manda Kotlin a CGFloat y actualizamos el mapa
@@ -142,32 +151,36 @@ struct iOSApp: App {
                 }
         
     //Mapa
-        // 1. Mover la cámara
+        // 1. Mover la cámara. Adónde y cómo lo decide la regla común (spec 017); aquí solo se ejecuta.
         AparKMap_iosKt.iosMapUpdateCamera = { lat, lng, zoom, animated in
-            // TRUCO PRO: DispatchQueue.main.async hace que esta orden espere
-            // un milisegundo a que el mapa ya tenga su tamaño real en pantalla.
+            // DispatchQueue.main.async: la orden espera a que el mapa tenga su tamaño real en pantalla.
             DispatchQueue.main.async {
-                if let map = MapLocationController.shared.mapView {
-                    
-                    let camera = GMSCameraPosition.camera(withLatitude: lat.doubleValue, longitude: lng.doubleValue, zoom: zoom.floatValue)
-                    
-                    if animated.boolValue {
-                        // MOVIMIENTO SUAVE (Al deslizar tarjetas)
-                        CATransaction.begin()
-                        CATransaction.setAnimationDuration(0.8)
-                        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: .easeInEaseOut))
-                        map.animate(to: camera)
-                        CATransaction.commit()
-                    } else {
-                        // TELETRANSPORTE INICIAL
-                        // En lugar de 'map.camera = camera', usamos la animación a 0.0 segundos
-                        // Esto fuerza a Google Maps a respetar la orden aunque acabe de nacer.
-                        CATransaction.begin()
-                        CATransaction.setAnimationDuration(0.0)
-                        map.animate(to: camera)
-                        CATransaction.commit()
-                    }
+                guard let map = MapLocationController.shared.mapView else {
+                    // El mapa aún no existe: que nazca ya aquí. Sin zoom que conservar, el de calle.
+                    MapLocationController.shared.pendingCamera = GMSCameraPosition.camera(
+                        withLatitude: lat.doubleValue,
+                        longitude: lng.doubleValue,
+                        zoom: zoom?.floatValue ?? 17
+                    )
+                    return
                 }
+                // Sin zoom, se conserva el que tenga quien mira.
+                let camera = GMSCameraPosition.camera(
+                    withLatitude: lat.doubleValue,
+                    longitude: lng.doubleValue,
+                    zoom: zoom?.floatValue ?? map.camera.zoom
+                )
+                // Siempre con `animate`, también el salto: a 0 s, Google Maps respeta la orden aunque
+                // el mapa acabe de nacer, cosa que `map.camera = camera` no siempre hace.
+                CATransaction.begin()
+                if animated.boolValue {
+                    CATransaction.setAnimationDuration(0.8)
+                    CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: .easeInEaseOut))
+                } else {
+                    CATransaction.setAnimationDuration(0.0)
+                }
+                map.animate(to: camera)
+                CATransaction.commit()
             }
         }
 
@@ -175,11 +188,6 @@ struct iOSApp: App {
         AparKMap_iosKt.iosMapUpdateMarkers = { markers in
             if let map = MapLocationController.shared.mapView {
                 map.clear() // Borra los pines antiguos para no duplicarlos
-                
-                let markerColors: [UIColor] = [
-                            .systemBlue, .systemRed,  .systemGreen, .systemYellow,
-                                .systemOrange, .cyan, .systemPink, .systemPurple, .magenta
-                            ]
                 
                 for marker in markers {
                     let position = CLLocationCoordinate2D(latitude: marker.lat, longitude: marker.lng)
@@ -194,13 +202,6 @@ struct iOSApp: App {
                     gmsMarker.userData = marker.id
                     gmsMarker.map = map
                 }
-            }
-        }
-        
-        // 3. Centrar en el usuario
-        AparKMap_iosKt.iosCenterOnUserLocation = { animated in
-            DispatchQueue.main.async {
-                MapLocationController.shared.centerOnUserLocation(animated: animated.boolValue)
             }
         }
         

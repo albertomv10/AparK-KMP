@@ -6,9 +6,21 @@ import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.domain.logging.CrashReporter
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
+import com.albertomedina.apark.domain.usecase.LocateUserUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleLocationUseCase
+import com.albertomedina.apark.presentation.components.CLOSE_ZOOM
+import com.albertomedina.apark.presentation.components.CameraMove
+import com.albertomedina.apark.presentation.components.CameraRequest
+import com.albertomedina.apark.presentation.components.GeoPoint
+import com.albertomedina.apark.presentation.components.MapFocus
+import com.albertomedina.apark.presentation.components.STREET_ZOOM
+import com.albertomedina.apark.presentation.components.cameraMoveFor
+import com.albertomedina.apark.presentation.components.mapLocation
 import com.albertomedina.apark.utils.SnackbarMessage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +28,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -23,11 +36,26 @@ class HomeViewModel(
     private val authRepository: AuthRepository,
     private val updateVehicleLocationUseCase: UpdateVehicleLocationUseCase,
     private val getVehicleListUseCase: GetVehicleListUseCase,
+    private val locateUserUseCase: LocateUserUseCase,
     private val crashReporter: CrashReporter
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    /**
+     * Las órdenes para la cámara del mapa (spec 017). *Conflated*: si llegan con la pestaña oculta,
+     * se queda solo la última, y el salto de [HomeEvent.MapShown] la sustituye al volver; nunca se
+     * reproduce una vieja.
+     */
+    private val cameraChannel = Channel<CameraRequest>(Channel.CONFLATED)
+    val cameraRequests: Flow<CameraRequest> = cameraChannel.receiveAsFlow()
+
+    /** Lo último que enseñó el mapa. `null`: acaba de aparecer, y lo que toca es un salto. */
+    private var lastFocus: MapFocus? = null
+
+    /** Averiguar dónde estás puede tardar: si entretanto llega otro movimiento, este sobra. */
+    private var locateJob: Job? = null
 
     init {
         observeAuthState()
@@ -56,7 +84,8 @@ class HomeViewModel(
                     }
                 }
                 .collect { vehicleList ->
-                    _uiState.update { it.withVehicles(vehicleList) }
+                    _uiState.update { it.withVehicles(vehicleList).copy(vehiclesLoaded = true) }
+                    updateCamera()
                 }
         }
     }
@@ -70,6 +99,40 @@ class HomeViewModel(
                         selectedVehicleId = it.vehicles.getOrNull(event.newIndex)?.id
                     )
                 }
+                updateCamera()
+            }
+
+            // Tocar un marcador elige su vehículo: el carrusel va a él por el efecto de selección de
+            // la pantalla, y la cámara por la regla de siempre.
+            is HomeEvent.MarkerTapped -> {
+                val index = _uiState.value.vehicles.indexOfFirst { it.id == event.vehicleId }
+                if (index >= 0) {
+                    _uiState.update { it.copy(selectedVehicleIndex = index, selectedVehicleId = event.vehicleId) }
+                    updateCamera()
+                }
+            }
+
+            // Mantener pulsado el mapa mueve ahí el vehículo elegido, igual que arrastrar su
+            // marcador. Con la tarjeta «+» no hay vehículo que mover.
+            is HomeEvent.MapLongPressed -> {
+                val state = _uiState.value
+                state.vehicles.getOrNull(state.selectedVehicleIndex)?.let {
+                    saveManualLocation(it.id, event.latitude, event.longitude)
+                }
+            }
+
+            is HomeEvent.MapShown -> {
+                lastFocus = null
+                updateCamera()
+            }
+
+            is HomeEvent.GoToVehicleClicked -> {
+                val state = _uiState.value
+                // De cerca: elegir el vehículo ya lo enseña a zoom de calle, y este botón sirve para
+                // ver exactamente dónde está.
+                state.vehicles.getOrNull(state.selectedVehicleIndex)?.mapLocation?.let {
+                    perform(CameraMove.ToPoint(it, CLOSE_ZOOM, animated = true))
+                }
             }
 
             is HomeEvent.UpdateLocationClicked -> {
@@ -80,13 +143,11 @@ class HomeViewModel(
                 undoVehicleLocation(event.vehicleId, event.previousLocation)
             }
 
-            is HomeEvent.OnMarkerDragged -> {
+            is HomeEvent.ManualLocationChosen -> {
                 saveManualLocation(event.vehicleId, event.latitude, event.longitude)
             }
 
-            is HomeEvent.CenterMapOnUserClicked -> {
-                _uiState.update { it.copy(centerCameraTrigger = it.centerCameraTrigger + 1) }
-            }
+            is HomeEvent.CenterMapOnUserClicked -> perform(CameraMove.ToUser(animated = true))
 
             is HomeEvent.SnackBarDismissed -> {
                 _uiState.update {
@@ -171,6 +232,32 @@ class HomeViewModel(
     }
 
     /**
+     * Mueve la cámara si el foco ha cambiado (spec 017). Solo con la lista ya cargada: si no, al
+     * arrancar se iría a tu ubicación y después volaría hasta el vehículo.
+     */
+    private fun updateCamera() {
+        val state = _uiState.value
+        if (!state.vehiclesLoaded) return
+        val selected = state.vehicles.getOrNull(state.selectedVehicleIndex)
+        val focus = MapFocus(selected?.id, selected?.mapLocation)
+        val move = cameraMoveFor(lastFocus, focus)
+        lastFocus = focus
+        move?.let(::perform)
+    }
+
+    private fun perform(move: CameraMove) {
+        locateJob?.cancel()
+        when (move) {
+            is CameraMove.ToPoint -> cameraChannel.trySend(CameraRequest(move.point, move.zoom, move.animated))
+            is CameraMove.ToUser -> locateJob = viewModelScope.launch {
+                // Sin ubicación —sin permiso, o sin señal—, la cámara se queda donde está.
+                val here = locateUserUseCase() ?: return@launch
+                cameraChannel.trySend(CameraRequest(GeoPoint(here.latitude, here.longitude), STREET_ZOOM, move.animated))
+            }
+        }
+    }
+
+    /**
      * Aparcar siempre confirma (spec 016). Antes el aviso solo salía si había una ubicación a la que
      * volver con «Deshacer», así que aparcar por primera vez no daba ninguna señal. Sin ubicación
      * anterior —o con la vacía, `timestamp == 0`— sale igual, sin nada que deshacer.
@@ -205,9 +292,10 @@ data class HomeUiState(
     val selectedVehicleIndex: Int = 0,
     /** El vehículo que enseña el carrusel, para seguirlo si cambia de posición; `null` en la tarjeta «+». */
     val selectedVehicleId: String? = null,
+    /** Ya ha llegado la lista al menos una vez: hasta entonces la cámara no sabe adónde ir. */
+    val vehiclesLoaded: Boolean = false,
     val isLoading: Boolean = false,
     val updatingVehicleId: String? = null,
-    val centerCameraTrigger: Int = 0,
     val openSettingsTrigger: Int = 0,
     val locationUpdateSuccessData: UndoLocationData? = null,
     val snackbarMessage: SnackbarMessage? = null
@@ -222,11 +310,18 @@ sealed class HomeEvent {
     data class OnVehicleSwiped(val newIndex: Int) : HomeEvent()
     data class UpdateLocationClicked(val vehicleId: String) : HomeEvent()
     data class UndoLocationClicked(val vehicleId:String, val previousLocation: Vehicle.LocationModel): HomeEvent()
-    data class OnMarkerDragged(
+    /** Una ubicación elegida a mano para un vehículo: arrastrando su marcador. */
+    data class ManualLocationChosen(
         val vehicleId: String,
         val latitude: Double,
         val longitude: Double
     ) : HomeEvent()
+    data class MarkerTapped(val vehicleId: String) : HomeEvent()
+    /** Mantener pulsado un punto del mapa: el vehículo elegido pasa ahí (spec 017). */
+    data class MapLongPressed(val latitude: Double, val longitude: Double) : HomeEvent()
+    /** El mapa acaba de componerse: lo siguiente es un salto, no un vuelo. */
+    data object MapShown : HomeEvent()
+    data object GoToVehicleClicked : HomeEvent()
     data object PermisionsDenied : HomeEvent()
     data object OpenSettingsClicked : HomeEvent()
     data object CenterMapOnUserClicked : HomeEvent()
