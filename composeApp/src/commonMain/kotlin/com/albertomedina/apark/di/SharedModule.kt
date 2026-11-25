@@ -1,5 +1,12 @@
 package com.albertomedina.apark.di
 
+import com.albertomedina.apark.data.repository.FirestoreIncidentRepository
+import com.albertomedina.apark.domain.repository.IncidentRepository
+import com.albertomedina.apark.domain.usecase.DeleteIncidentUseCase
+import com.albertomedina.apark.domain.usecase.ObserveIncidentsUseCase
+import com.albertomedina.apark.domain.usecase.ReopenIncidentUseCase
+import com.albertomedina.apark.domain.usecase.ReportIncidentUseCase
+import com.albertomedina.apark.domain.usecase.ResolveIncidentUseCase
 import com.albertomedina.apark.data.catalog.ResourceCatalogRepository
 import com.albertomedina.apark.domain.repository.AccountRepository
 import com.albertomedina.apark.data.repository.FirebaseAccountRepository
@@ -113,6 +120,7 @@ val sharedModule = module {
 
     single<VehicleRepository> { FirestoreVehicleRepository(firestore = get()) }
     single<UserRepository> { FirestoreUserRepository(firestore = get()) }
+    single<IncidentRepository> { FirestoreIncidentRepository(firestore = get()) }
 
     single<AuthRepository> { FirebaseAuthRepository(firebaseAuth = get()) }
     single<InviteRepository> { FirebaseInviteRepository(functions = get()) }
@@ -169,6 +177,11 @@ val sharedModule = module {
     // Location
     factory { GetCurrentLocationUseCase(repository = get()) }
     factory { LocateUserUseCase(repository = get()) }
+    factory { ObserveIncidentsUseCase(repository = get()) }
+    factory { ReportIncidentUseCase(repository = get()) }
+    factory { ResolveIncidentUseCase(repository = get()) }
+    factory { ReopenIncidentUseCase(repository = get()) }
+    factory { DeleteIncidentUseCase(repository = get()) }
 
     viewModel { SplashViewModel(authRepository = get()) }
 
