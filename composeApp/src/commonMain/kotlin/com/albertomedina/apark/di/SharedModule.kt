@@ -33,6 +33,7 @@ import com.albertomedina.apark.domain.usecase.GetLastVehicleLocationUseCase
 import com.albertomedina.apark.domain.usecase.GetUserUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
 import com.albertomedina.apark.domain.usecase.JoinVehicleWithCodeUseCase
+import com.albertomedina.apark.domain.usecase.LocateUserUseCase
 import com.albertomedina.apark.domain.usecase.LoginAppleUseCase
 import com.albertomedina.apark.domain.usecase.LoginGoogleUseCase
 import com.albertomedina.apark.domain.usecase.LoginUseCase
@@ -167,6 +168,7 @@ val sharedModule = module {
 
     // Location
     factory { GetCurrentLocationUseCase(repository = get()) }
+    factory { LocateUserUseCase(repository = get()) }
 
     viewModel { SplashViewModel(authRepository = get()) }
 
@@ -256,6 +258,7 @@ val sharedModule = module {
             authRepository = get(),
             updateVehicleLocationUseCase = get(),
             getVehicleListUseCase = get(),
+            locateUserUseCase = get(),
             crashReporter = get()
         )
     }

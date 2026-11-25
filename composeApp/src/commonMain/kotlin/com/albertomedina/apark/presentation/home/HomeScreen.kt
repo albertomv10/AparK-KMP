@@ -23,8 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -33,9 +35,12 @@ import androidx.compose.ui.zIndex
 import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.domain.model.Vehicle
+import com.albertomedina.apark.domain.model.VehicleType
 import com.albertomedina.apark.presentation.components.AparKMap
 import com.albertomedina.apark.presentation.components.LocationPermissionHandler
 import com.albertomedina.apark.presentation.components.ParkedText
+import com.albertomedina.apark.presentation.components.mapLocation
+import com.albertomedina.apark.presentation.vehicleform.icon
 import com.albertomedina.apark.utils.OpenAppSettingsHandler
 import com.albertomedina.apark.utils.SnackbarMessage
 import org.jetbrains.compose.resources.stringResource
@@ -186,39 +191,77 @@ fun HomeScreen(
         }
     }
 
+    // El mapa acaba de aparecer, al arrancar o al volver a esta pestaña: lo siguiente es un salto, no
+    // un vuelo (spec 017). Va antes que el mapa, para que la orden esté puesta cuando empiece a
+    // escucharlas.
+    LaunchedEffect(Unit) {
+        viewModel.onEvent(HomeEvent.MapShown)
+    }
+
+    val haptics = LocalHapticFeedback.current
+    val selectedVehicle = state.vehicles.getOrNull(state.selectedVehicleIndex)
+
     Scaffold { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
 
             AparKMap(
-                Modifier.fillMaxSize(),
-                pagerHeight,
-                state.vehicles,
-                state.selectedVehicleIndex.coerceIn(0, maxOf(0, state.vehicles.lastIndex)),
-                state.centerCameraTrigger,
-                onMarkerDragged = {id, latitude, longitude ->
-                    viewModel.onEvent(HomeEvent.OnMarkerDragged(id, latitude, longitude))
-
+                modifier = Modifier.fillMaxSize(),
+                bottomPadding = pagerHeight,
+                vehicles = state.vehicles,
+                selectedVehicleIndex = state.selectedVehicleIndex.coerceIn(0, maxOf(0, state.vehicles.lastIndex)),
+                cameraRequests = viewModel.cameraRequests,
+                onMarkerDragged = { id, latitude, longitude ->
+                    viewModel.onEvent(HomeEvent.ManualLocationChosen(id, latitude, longitude))
+                },
+                onMarkerTapped = { viewModel.onEvent(HomeEvent.MarkerTapped(it)) },
+                onMapLongPressed = { latitude, longitude ->
+                    // Con la tarjeta «+» no hay vehículo que mover: ni vibra.
+                    if (selectedVehicle != null) {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        viewModel.onEvent(HomeEvent.MapLongPressed(latitude, longitude))
+                    }
                 }
             )
 
-            FloatingActionButton(
-                onClick = {
-                    if (hasLocationPermission){
-                        viewModel.onEvent(HomeEvent.CenterMapOnUserClicked)
-                    }else{
-                        viewModel.onEvent(HomeEvent.PermisionsDenied)
-                    }
-                          },
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(bottom = pagerHeight + 8.dp, end = 16.dp),
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.primary
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.MyLocation,
-                    contentDescription = stringResource(Res.string.home_center_map)
-                )
+                // Volver al vehículo elegido, de cerca (spec 017). Con su icono, para que no se
+                // confunda con el de centrar en ti, y del mismo tamaño: los dos se usan con una mano,
+                // a menudo en la calle. Sin aparcar, no hay adónde volver.
+                if (selectedVehicle?.mapLocation != null) {
+                    FloatingActionButton(
+                        onClick = { viewModel.onEvent(HomeEvent.GoToVehicleClicked) },
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.primary
+                    ) {
+                        Icon(
+                            imageVector = VehicleType.fromCode(selectedVehicle.type).icon,
+                            contentDescription = stringResource(Res.string.map_go_to_vehicle)
+                        )
+                    }
+                }
+
+                FloatingActionButton(
+                    onClick = {
+                        if (hasLocationPermission) {
+                            viewModel.onEvent(HomeEvent.CenterMapOnUserClicked)
+                        } else {
+                            viewModel.onEvent(HomeEvent.PermisionsDenied)
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MyLocation,
+                        contentDescription = stringResource(Res.string.home_center_map)
+                    )
+                }
             }
 
             SnackbarHost(

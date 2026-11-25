@@ -8,10 +8,11 @@ class MapLocationController: NSObject, CLLocationManagerDelegate, GMSMapViewDele
     
     let locationManager = CLLocationManager()
     var mapView: GMSMapView?
-    
-    private var shouldCenterCamera = false
-    // 👇 Guardamos si la cámara debe animarse cuando el GPS responda
-    private var animateNextCameraMove = false
+
+    /// Una orden de cámara que llegó antes de que existiera el mapa (spec 017). La fábrica la usa como
+    /// cámara inicial, así que el mapa nace ya en su sitio en vez de en Madrid. Pasa al arrancar y al
+    /// volver a la pestaña: `UIKitView` crea un `GMSMapView` nuevo cada vez.
+    var pendingCamera: GMSCameraPosition?
     
     override init() {
         super.init()
@@ -22,37 +23,15 @@ class MapLocationController: NSObject, CLLocationManagerDelegate, GMSMapViewDele
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
     }
-    
-    // Recibimos el parámetro animated
-    func centerOnUserLocation(animated: Bool) {
-        locationManager.requestWhenInUseAuthorization()
-        
-        if let location = mapView?.myLocation ?? locationManager.location {
-            // Ya tenemos la ubicación instantáneamente
-            moveCamera(to: location.coordinate, animated: animated)
-        } else {
-            // No la tenemos. Encendemos el GPS y guardamos si queríamos animación
-            shouldCenterCamera = true
-            animateNextCameraMove = animated
-            locationManager.startUpdatingLocation()
-        }
-    }
-    
+
+    // Dónde estás para la cámara lo averigua Kotlin (`LocateUserUseCase`), igual que en Android: aquí
+    // solo se pide el permiso al arrancar, para el punto azul del mapa.
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.first else { return }
-        
-        if shouldCenterCamera {
-            // Movemos la cámara usando la preferencia que guardamos
-            moveCamera(to: location.coordinate, animated: animateNextCameraMove)
-            shouldCenterCamera = false
-        }
-        
         manager.stopUpdatingLocation()
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("AparK: Error obteniendo ubicación (\(error.localizedDescription))")
-        shouldCenterCamera = false
     }
     
     func mapView(_ mapView: GMSMapView, didEndDragging marker: GMSMarker) {
@@ -70,21 +49,21 @@ class MapLocationController: NSObject, CLLocationManagerDelegate, GMSMapViewDele
                 KotlinDouble(value: newLng)
             )
         }
-    
-    // Función auxiliar para no repetir el código del CATransaction
-    private func moveCamera(to coordinate: CLLocationCoordinate2D, animated: Bool) {
-        guard let map = mapView else { return }
-        let camera = GMSCameraPosition.camera(withTarget: coordinate, zoom: 15)
-        
-        CATransaction.begin()
-        if animated {
-            CATransaction.setAnimationDuration(0.8)
-            CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: .easeInEaseOut))
-        } else {
-            // Teletransporte instantáneo (0.0 segundos)
-            CATransaction.setAnimationDuration(0.0)
-        }
-        map.animate(to: camera)
-        CATransaction.commit()
+
+    /// Tocar un marcador elige su vehículo (spec 017). Devolver `true` evita lo de por defecto —centrarlo
+    /// y abrir el globo—: la cámara ya va a él por la regla común.
+    func mapView(_ mapView: GMSMapView, didTap marker: GMSMarker) -> Bool {
+        guard let vehicleId = marker.userData as? String else { return false }
+        AparKMap_iosKt.iosOnMarkerTapped?(vehicleId)
+        return true
+    }
+
+    /// Mantener pulsado el mapa vacío mueve ahí el vehículo elegido (spec 017). Sobre un marcador, el
+    /// mismo gesto empieza a arrastrarlo, así que no chocan.
+    func mapView(_ mapView: GMSMapView, didLongPressAt coordinate: CLLocationCoordinate2D) {
+        AparKMap_iosKt.iosOnMapLongPressed?(
+            KotlinDouble(value: coordinate.latitude),
+            KotlinDouble(value: coordinate.longitude)
+        )
     }
 }

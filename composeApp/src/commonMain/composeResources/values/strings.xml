@@ -43,6 +43,7 @@
     <string name="home_park_here">Aparcar</string>
     <string name="home_add_vehicle">Añadir nuevo vehículo</string>
     <string name="home_center_map">Centrar en mi ubicación</string>
+    <string name="map_go_to_vehicle">Ir al vehículo</string>
     <string name="success_location_updated">Ubicación actualizada correctamente</string>
 
     <!-- Time & Dates -->
