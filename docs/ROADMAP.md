@@ -261,6 +261,9 @@ Y lo que no hay y debería haber antes de publicar:
   directorios de Firebase con `dataExtractionRules`, o desactivarlo.
 - Las **versiones de Android e iOS han empezado a separarse** (1.0.1 / código 2 frente a
   `MARKETING_VERSION=1.0` / build 1). Conviene una única fuente antes de la primera subida.
+- **Una pantalla de «Licencias»** con todas las librerías y datos de terceros. Hoy la única
+  atribución que lo exige, la de json-car-list (MIT), viaja como `NOTICE.txt` junto a su JSON
+  ([spec 015](specs/015-vehicle-data/spec.md)), lo que cumple la licencia pero no lo ve nadie.
 
 ---
 
@@ -352,14 +355,14 @@ prerequisito de cualquier pantalla nueva — hoy las tres pestañas no llevan a 
 
 | # | Qué | Tamaño |
 |---|-----|--------|
-| 2.1 | **Datos del vehículo**: marca, modelo, tipo, año, combustible | M |
-| 2.2 | **Editar vehículo** — `UpdateVehicleUseCase` ya existe y no lo llama nadie. Spec aparte, decidido el 2026-11-24 | S |
+| 2.1 | **Datos del vehículo**: tipo, marca, modelo, sistema y combustible, color y etiqueta de la DGT — ✅ [spec 015](specs/015-vehicle-data/spec.md). El año, con la ITV (3.2) | M |
+| 2.2 | **Editar vehículo** — ✅ [spec 015](specs/015-vehicle-data/spec.md), solo el dueño | S |
 | 2.3 | **Pantalla de detalle de verdad** — ✅ [spec 014](specs/014-vehicle-detail-members/spec.md) | M |
 | 2.4 | **Gestión de miembros + transferir propiedad** — ✅ [spec 014](specs/014-vehicle-detail-members/spec.md) | M |
-| 2.5 | **Desplegables de marca/modelo** | S–M |
+| 2.5 | **Buscador de marca y modelo** — ✅ [spec 015](specs/015-vehicle-data/spec.md): sugerencias en línea sobre json-car-list y una lista propia | S–M |
 
-Sobre 2.5, la recomendación es **no usar una API**: un **JSON estático curado** en
-`composeResources`. Sin clave, sin límite de peticiones, sin latencia, funciona sin conexión, y las
+Sobre 2.5, la recomendación era **no usar una API**, y así se hizo: un **JSON estático curado** en
+`composeResources` (ver [DATA-MODEL.md](DATA-MODEL.md) §9). Sin clave, sin límite de peticiones, sin latencia, funciona sin conexión, y las
 marcas y modelos cambian una vez al año. La opción pública gratuita real (vPIC de la NHTSA) está
 centrada en EE. UU. y no cubre bien el mercado europeo. Si algún día quieres exhaustividad, el
 JSON se sustituye por una colección `catalog` en Firestore que la app cachea — sin cambiar la UI.

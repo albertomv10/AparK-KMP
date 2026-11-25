@@ -120,13 +120,15 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 | `data.repository` | Firestore, Auth, invite and location implementations |
 | `data.location` | Platform location source |
 | `data.util` | Firestore constants |
-| `domain.model` | `User`, `Vehicle` (with nested `LocationModel`), `VehicleMember`, `VehicleInvite`, `JoinResult` |
+| `data.catalog` · `domain.catalog` | The make and model list: loading and merging the bundled JSON, and the accent-blind search |
+| `domain.model` | `User`, `Vehicle` (with nested `LocationModel`), `VehicleAttributes` (the closed lists), `VehicleDetails` (what can be edited), `VehicleMember`, `VehicleInvite`, `JoinResult` |
 | `domain.repository` | Repository interfaces |
 | `domain.usecase` | One `operator fun invoke()` each |
 | `presentation.splash` · `presentation.auth.*` | Splash, login, register, verification, reset |
 | `presentation.home` | Map + vehicle carousel + edit mode |
 | `presentation.vehicles` · `presentation.account` | The vehicle list, and the account: name, email, password, theme, sign out, delete |
-| `presentation.addvehicle` · `presentation.vehicledetail` | Create/join, and the detail: where it is, its members, transfer and remove |
+| `presentation.addvehicle` · `presentation.editvehicle` · `presentation.vehicledetail` | Create/join, edit, and the detail: where it is, its data, its members, transfer and remove |
+| `presentation.vehicleform` | The form shared by create and edit, its pure reducer, and the labels, icons and swatches of each code |
 | `presentation.components` | Shared composables: map, buttons, dialog, permission handlers |
 | `presentation.navigation` | Navigation 3 setup |
 | `di` · `ui.theme` · `utils` | Koin modules, Material 3 theme, helpers |
@@ -136,7 +138,7 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 | Collection | Document ID | Key fields |
 |------------|-------------|------------|
 | `users` | `FirebaseAuth.uid` | `email`, `name` — **the only copy the client writes**; `userVehicles: List<String>` — **an ordering hint only**, never the source of the list |
-| `vehicles` | Auto-generated | `name`, `licensePlate`, `ownerId`, `memberIds: List<String>` (owner included), `lastLocation`, `createdAt`, `updatedAt` |
+| `vehicles` | Auto-generated | `name`, `licensePlate`, `ownerId`, `memberIds: List<String>` (owner included), `lastLocation`, `createdAt`, `updatedAt`; and spec 015's `type`, `powertrain`, `fuel`, `make`, `model`, `color`, `emissionsLabel` — codes or text, `""` meaning no data |
 | `invites` | The 8-character code | `vehicleId`, `createdBy`, `expiresAt`, `usedBy` — clients are denied all access |
 
 > [spec 008](docs/specs/008-vehicle-membership-model/spec.md) shipped this shape.
@@ -352,6 +354,17 @@ graphify path "A" "B" --undirected
   Every French string carried one for months, because nobody reads the app in French. Verify by
   decoding what was actually baked, not by reading the XML:
   `composeApp/build/**/preparedResources/**/strings.commonMain.cvr` is `kind|name|base64`.
+- **A vehicle's closed lists are stored as `String` codes and read with `fromCode`, never as the
+  `enum`** (spec 015): deserialising straight into an `enum` throws on a code it does not know, so a
+  newer app adding one would crash every older one. `fromCode` gives `null` for `""` and `OTHER` for
+  the unknown — except colour and DGT label, which have no `OTHER` and give `null`, so an unknown one
+  is simply not shown. **Adding a code means touching the `enum` and `firestore.rules` in the same
+  version**: old apps then show it as «Otro» or not at all, but if the rules lag, nobody can save it. Editing keeps the codes
+  as text in `VehicleDetails`, so an unknown one survives an edit that does not touch that field.
+- **The rules validate each vehicle field only when it changes** (`diff().affectedKeys()`), in
+  `create` and in the owner's branch. Validating them all would let one stale value block parking.
+- **The make and model search folds accents with its own table** (`foldForSearch`): `commonMain`
+  has no `java.text.Normalizer`. It covers Latin letters, which is what brand names need.
 - **A `Scaffold` inside the tab shell must consume the insets the shell already applied.** The
   shell pads its `NavDisplay` by the tab bar's height; a screen's own `Scaffold` then reserves room
   for the system bars *again*, and the content floats up by that much. `Modifier.padding(p)` plus
@@ -417,6 +430,13 @@ graphify path "A" "B" --undirected
 - **MIUI/Xiaomi suppresses third-party app logs.** `println` and `Log` from the app do not reach
   `logcat`, and the buffer only holds a few minutes. Do not debug by log on those devices — make the
   app show its own error instead. This is why Crashlytics is a priority in the roadmap.
+- **Re-seeding the emulators while the iOS app is running can leave its Firestore writes hanging.**
+  The seed deletes and recreates the Auth accounts; after signing back in, reads worked but a save
+  spun forever, and the pending write only reached the emulator when the app was relaunched. A
+  normal sign-out and sign-in does not do it. Relaunch the app after `npm run seed`.
+- **Driving a Compose text field in the simulator**: once the field has focus, a tap does not move
+  the cursor, which stays at the start, so `delete` erases nothing and pasted text lands in front.
+  Clear a field with `forward_delete` from the start instead.
 - The release build is tested on a personal iPhone, so **the Android release path gets the least
   attention** — that is where R8 problems hide.
 
@@ -424,8 +444,6 @@ graphify path "A" "B" --undirected
 
 > The full picture and the order to tackle it: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
-- **`UpdateVehicleUseCase` is wired into Koin but nothing calls it**, so `Vehicle.model` and
-  `Vehicle.color` are never written.
 - **App Check sends tokens but enforcement is off**, and cannot be turned on until there is a paid
   Apple Developer account: iOS attests with App Attest, and enforcement is **per service, not per
   platform**, so enabling it would lock out the iPhones. See [`docs/FIREBASE.md`](docs/FIREBASE.md).

@@ -67,7 +67,8 @@ Esta spec lo convierte en pantallas.
 6. **Dado** cualquier valor de las listas cerradas, **cuando** se guarda, **entonces** se guarda su
    código y no su texto, y las reglas rechazan un código que no existe o un texto demasiado largo.
 7. **Dado** un vehículo con un código que esta versión de la app no conoce, **cuando** se muestra,
-   **entonces** sale como «Otro», sin errores.
+   **entonces** sale como «Otro», sin errores. El color y la etiqueta no tienen «Otro»: un valor
+   desconocido no se muestra.
 8. **Dado** un vehículo con datos, **cuando** lo veo en el detalle, **entonces** aparecen todos; y en
    la tarjeta, al menos el tipo y el color.
 9. **Dado** un vehículo sin datos, como cualquiera de los que ya existen, **cuando** lo veo, **entonces**

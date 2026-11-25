@@ -293,7 +293,7 @@ Todos deben acabar versionados en `firestore.indexes.json`, que hoy está vacío
 ## 9. Catálogo de atributos del vehículo
 
 > Redactado y decidido el 2026-11-24, antes de la [spec 015](specs/015-vehicle-data/spec.md), que
-> lo implementa. Las decisiones están al final.
+> lo implementa. Las decisiones están al final, y **lo construido**, después de ellas.
 
 ### El criterio
 
@@ -307,7 +307,8 @@ cerrada, por ejemplo. Por eso las listas cerradas se deciden bien la primera vez
 
 1. **Se guarda un código, no un texto**: `diesel`, no «Diésel». La traducción vive en la app, en los
    tres idiomas, y cambiar cómo se muestra no toca los datos.
-2. **Un código desconocido se lee como «otro»**, nunca como un error. Si una versión futura añade
+2. **Un código desconocido se lee como «otro»** —o como sin dato, en las listas que no tienen
+   «otro»—, nunca como un error. Si una versión futura añade
    `hydrogen` a una lista, la app de un miembro que no ha actualizado no puede romperse al leerlo. En
    Kotlin eso significa **no deserializar directamente a un `enum`**, que lanza con un valor que no
    conoce: se guarda como `String` y se traduce con un `fromCode()` que tiene su caso por defecto.
@@ -391,7 +392,9 @@ una mal formada solo se vería rara, no rompería nada.
 
 **`color`** — una paleta cerrada para poder pintar una muestra en la tarjeta, que es lo que ayuda a
 reconocerlo de lejos: `white` blanco, `black` negro, `grey` gris, `silver` plata, `blue` azul, `red`
-rojo, `green` verde, `yellow` amarillo, `orange` naranja, `brown` marrón o beige, `other` otro.
+rojo, `green` verde, `yellow` amarillo, `orange` naranja, `brown` marrón o beige, `pink` rosa,
+`purple` morado. **Sin «otro»**: no hay muestra que pintar para él, y un color desconocido se lee como
+sin color, como la etiqueta.
 
 **`emissionsLabel`** — la etiqueta ambiental de la DGT: `zero` 0 emisiones, `eco` ECO, `c` C, `b` B,
 `none` sin etiqueta. La asigna la DGT según el combustible y la antigüedad, y aquí **no se calcula**: la
@@ -445,3 +448,15 @@ la DGT traen también las motos.
 5. **Solo el dueño edita** los datos del vehículo, como ya dicen las reglas.
 6. **Marca y modelo, de una lista dentro de la app (opción A)**, con buscador mientras se escribe y
    la salida a mano siempre disponible. El buscador entra en la spec 015, no en una aparte.
+
+### Lo construido ([spec 015](specs/015-vehicle-data/spec.md))
+
+- **Los códigos** viven en `domain/model/VehicleAttributes.kt`, uno por `enum`, y en las reglas, una
+  función por lista. **Añadir un código es tocar los dos sitios**, y los dos en la misma versión: la
+  app vieja lo leerá como «otro», pero si las reglas no lo conocen, nadie podrá guardarlo.
+- **Las reglas validan cada campo solo cuando cambia** (`diff().affectedKeys()`), en el `create` y
+  en la rama del dueño. Así, un valor antiguo que ya no valga no impide aparcar ni editar lo demás.
+- **La lista de marcas** está en `composeResources/files/catalog/`: `car-list.json` (json-car-list,
+  sin tocar), `extra.json` (lo nuestro: las marcas que faltan, modelos de más y las motos) y
+  `NOTICE.txt`. Una marca en los dos ficheros suma sus modelos. **Para actualizar la de ellos se
+  sustituye el fichero entero** y se apunta el commit nuevo en `NOTICE.txt`; lo nuestro no se toca.
