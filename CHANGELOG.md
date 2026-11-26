@@ -166,6 +166,11 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   y con él se va la vía de respaldo que todavía lo leía en la función de limpieza de vehículos.
 
 ### Fixed
+- **La debug de Android ya puede entrar contra los emuladores de Firebase.**
+  - Android bloquea el HTTP sin cifrar desde la 9, los emuladores hablan HTTP y el proyecto nunca lo
+    había permitido. Así que el inicio de sesión fallaba con «Ha ocurrido un error inesperado».
+  - Ahora se permite solo en la debug apuntada a los emuladores (`APARK_EMULATOR_HOST`). La debug
+    normal y la release siguen sin HTTP.
 - **La app ya no se cierra cuando una escucha de Firestore falla**
   ([spec 021](docs/specs/021-session-listener-errors/spec.md)).
   - Si la sesión terminaba desde fuera —contraseña o email cambiados en otro sitio, cuenta
