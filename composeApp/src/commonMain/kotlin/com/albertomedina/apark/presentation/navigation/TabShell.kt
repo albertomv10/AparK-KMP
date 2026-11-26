@@ -59,7 +59,8 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun TabShell(
     onSignedOut: () -> Unit,
-    session: SessionViewModel = koinViewModel()
+    session: SessionViewModel = koinViewModel(),
+    pendingCount: PendingCountViewModel = koinViewModel()
 ) {
     // La única salida: el botón de cerrar sesión, una sesión revocada o una cuenta deshabilitada
     // pasan todos por aquí. Ver `SessionViewModel`.
@@ -114,11 +115,15 @@ fun TabShell(
 
     val showsTabBar = (stack.lastOrNull() as? Destiny)?.showsTabBar ?: true
 
+    // La chapita de *Vehículos*: las incidencias abiertas de todos (spec 020).
+    val openIncidents by pendingCount.openIncidents.collectAsState()
+
     Scaffold(
         bottomBar = {
             if (showsTabBar) {
                 AparkBottomNavigationBar(
                     current = currentTab,
+                    badges = mapOf(Tab.VEHICLES to openIncidents),
                     onSelect = { tab ->
                         // Tocar la pestaña en la que ya estás te devuelve a su raíz, que es lo que
                         // espera todo el mundo y la salida de emergencia si te has perdido dentro.

@@ -16,6 +16,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -29,8 +31,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import apark.composeapp.generated.resources.*
+import com.albertomedina.apark.domain.model.Pending
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.presentation.components.ParkedText
+import com.albertomedina.apark.presentation.components.SectionTitle
 import com.albertomedina.apark.presentation.vehicleform.VehicleAvatar
 import com.albertomedina.apark.presentation.vehicleform.hasAvatar
 import org.jetbrains.compose.resources.stringResource
@@ -41,13 +45,14 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 /**
  * La lista de vehículos: la puerta de entrada a gestionar cada uno, y el sitio donde se ordenan.
  *
- * Hoy aporta poco frente al carrusel del mapa, y se asume: lo que la justifica es que enseñe **cómo
- * está** cada vehículo —lo pendiente de todos arriba, e iconos en cada fila— cuando lleguen las
- * incidencias y los vencimientos. Ver `docs/NAVIGATION.md`.
+ * Lo que la separa del carrusel del mapa es que enseña **cómo está** cada vehículo: arriba,
+ * «Pendiente», con las incidencias abiertas de todos (spec 020). Las filas de los vehículos no llevan
+ * iconos: lo pendiente ya está encima. Ver `docs/NAVIGATION.md`.
  *
- * **Ordenar** (spec 016) es un modo: «Ordenar» enseña un asa en cada fila, se arrastra por ella y
- * «Hecho» lo guarda, una sola vez. Mientras tanto las filas no abren el detalle, para que tocar y
- * arrastrar no se pisen.
+ * **Ordenar** (spec 016) es un modo: «Ordenar», junto al título «Tus vehículos» (spec 020), enseña
+ * un asa en cada fila, se arrastra por ella y «Hecho», en el mismo sitio, lo guarda una sola vez.
+ * Mientras tanto «Pendiente» se oculta y las filas no abren el detalle, para que tocar y arrastrar no
+ * se pisen.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -79,22 +84,7 @@ fun VehiclesScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.tab_vehicles)) },
-                actions = {
-                    if (state.isReordering) {
-                        TextButton(onClick = { viewModel.onEvent(VehiclesEvent.ReorderFinished) }) {
-                            Text(stringResource(Res.string.vehicles_reorder_done))
-                        }
-                    } else if (vehicles.size >= 2) {
-                        TextButton(onClick = { viewModel.onEvent(VehiclesEvent.ReorderStarted) }) {
-                            Text(stringResource(Res.string.vehicles_reorder))
-                        }
-                    }
-                }
-            )
-        },
+        topBar = { TopAppBar(title = { Text(stringResource(Res.string.tab_vehicles)) }) },
         floatingActionButton = {
             if (!state.isReordering) {
                 FloatingActionButton(onClick = onNavigateToAddVehicle) {
@@ -113,9 +103,13 @@ fun VehiclesScreen(
 
             else -> VehicleList(
                 vehicles = vehicles,
+                // Mientras se ordena no se enseña: la lista que se mueve queda sola, arriba.
+                pending = state.pending.takeUnless { state.isReordering },
                 currentUserId = state.currentUserId,
                 isReordering = state.isReordering,
                 onOpen = onNavigateToDetails,
+                onReorder = { viewModel.onEvent(VehiclesEvent.ReorderStarted) },
+                onReorderDone = { viewModel.onEvent(VehiclesEvent.ReorderFinished) },
                 onMove = { from, to -> viewModel.onEvent(VehiclesEvent.Moved(from, to)) },
                 modifier = Modifier.fillMaxSize().padding(padding)
             )
@@ -126,19 +120,40 @@ fun VehiclesScreen(
 @Composable
 private fun VehicleList(
     vehicles: List<Vehicle>,
+    /** «Pendiente», delante de los vehículos; `null` mientras se ordena. */
+    pending: Pending?,
     currentUserId: String?,
     isReordering: Boolean,
     onOpen: (String) -> Unit,
+    onReorder: () -> Unit,
+    onReorderDone: () -> Unit,
     onMove: (from: Int, to: Int) -> Unit,
     modifier: Modifier
 ) {
     val haptics = LocalHapticFeedback.current
     val listState = rememberLazyListState()
-    // Cada fila es un solo elemento de la lista, con su separador dentro, así que las posiciones que
-    // da la librería son las de `vehicles` tal cual.
+    // La librería da posiciones de la lista entera, y delante de los vehículos puede haber filas de
+    // «Pendiente», así que se traducen por la clave de cada fila, que es el id del vehículo.
+    val currentVehicles by rememberUpdatedState(vehicles)
     val reorderState = rememberReorderableLazyListState(listState) { from, to ->
-        onMove(from.index, to.index)
+        val fromIndex = currentVehicles.indexOfFirst { it.id == from.key }
+        val toIndex = currentVehicles.indexOfFirst { it.id == to.key }
+        if (fromIndex < 0 || toIndex < 0) return@rememberReorderableLazyListState
+        onMove(fromIndex, toIndex)
         haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+    }
+    // «Pendiente» aparece encima de los vehículos cuando ya están pintados: al llegar sus incidencias,
+    // o al terminar de ordenar. `LazyColumn` mantiene a la vista la fila que estaba arriba, así que la
+    // sección quedaba por encima, tapada por la barra. Si se estaba arriba del todo, se sigue arriba;
+    // si no, se respeta dónde se estaba. Se pide aquí, en la composición, antes de medir las filas
+    // nuevas: lo que se lee es todavía la posición de antes.
+    val showsPending = pending != null && pending.isShown
+    remember(showsPending) {
+        Snapshot.withoutReadObservation {
+            if (showsPending && listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0) {
+                listState.requestScrollToItem(0)
+            }
+        }
     }
     val moveUp = stringResource(Res.string.vehicles_move_up)
     val moveDown = stringResource(Res.string.vehicles_move_down)
@@ -148,6 +163,21 @@ private fun VehicleList(
         state = listState,
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
+        if (pending != null) pendingSection(pending, onOpen)
+
+        // El título de la lista lleva «Ordenar», que es lo que se hace con ella; mientras se ordena,
+        // «Hecho» en el mismo sitio. Se ve en los dos modos, así que es lo primero de la lista al
+        // ordenar y el botón no se mueve de la vista al cambiar.
+        item(key = "vehicles_header") {
+            SectionTitle(stringResource(Res.string.vehicles_list_title), start = 16.dp) {
+                if (isReordering) {
+                    TextButton(onClick = onReorderDone) { Text(stringResource(Res.string.vehicles_reorder_done)) }
+                } else if (vehicles.size >= 2) {
+                    TextButton(onClick = onReorder) { Text(stringResource(Res.string.vehicles_reorder)) }
+                }
+            }
+        }
+
         items(vehicles, key = { it.id }) { vehicle ->
             ReorderableItem(reorderState, key = vehicle.id, enabled = isReordering) { isDragging ->
                 val elevation by animateDpAsState(if (isDragging) 6.dp else 0.dp)

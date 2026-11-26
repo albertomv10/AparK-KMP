@@ -3,9 +3,13 @@ package com.albertomedina.apark.presentation.vehicles
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.logging.CrashReporter
+import com.albertomedina.apark.domain.model.OpenIncidents
+import com.albertomedina.apark.domain.model.Pending
 import com.albertomedina.apark.domain.model.Vehicle
+import com.albertomedina.apark.domain.model.pendingOf
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
+import com.albertomedina.apark.domain.usecase.ObserveOpenIncidentsUseCase
 import com.albertomedina.apark.domain.usecase.SetVehicleOrderUseCase
 import com.albertomedina.apark.utils.catchListenerFailure
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,6 +27,7 @@ class VehiclesViewModel(
     private val authRepository: AuthRepository,
     private val getVehicleListUseCase: GetVehicleListUseCase,
     private val setVehicleOrderUseCase: SetVehicleOrderUseCase,
+    private val observeOpenIncidents: ObserveOpenIncidentsUseCase,
     private val crashReporter: CrashReporter
 ) : ViewModel() {
 
@@ -33,6 +38,28 @@ class VehiclesViewModel(
         // Igual que en Home: se observa el estado de auth en vez de cargar una vez en `init`, para
         // que los datos cambien con el usuario y no se quede lo del anterior.
         observeAuthState()
+        observeIncidents()
+    }
+
+    /**
+     * Las incidencias abiertas de cada vehículo, para «Pendiente» (spec 020). Las escuchas se abren
+     * según **el conjunto de ids** de la lista: se reabren cuando alguien entra o sale de un vehículo,
+     * no cada vez que alguien aparca o se reordena. El mapa no se vacía al reabrir: mientras llega lo
+     * de un vehículo nuevo se sigue viendo lo de los demás, y `pendingOf` ignora lo que sobre.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeIncidents() {
+        viewModelScope.launch {
+            _uiState
+                .map { state -> state.vehicles.mapTo(mutableSetOf(), Vehicle::id) }
+                .distinctUntilChanged()
+                .flatMapLatest { ids ->
+                    observeOpenIncidents(ids, { authRepository.getCurrentUser() != null }) { error ->
+                        crashReporter.recordError(error, INCIDENTS_LISTENER_CONTEXT)
+                    }
+                }
+                .collect { open -> _uiState.update { it.copy(openIncidents = it.openIncidents + open) } }
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -45,9 +72,15 @@ class VehiclesViewModel(
                 // listeners de Firestore y los volvía a abrir para el mismo usuario.
                 .distinctUntilChanged()
                 .flatMapLatest { userId ->
-                    // Otro usuario, otra lista: lo que se estuviera ordenando ya no vale.
+                    // Otro usuario, otra lista: lo que se estuviera ordenando ya no vale, ni lo que se
+                    // supiera de sus incidencias.
                     _uiState.update {
-                        it.copy(currentUserId = userId, isReordering = false, orderOverride = null)
+                        it.copy(
+                            currentUserId = userId,
+                            isReordering = false,
+                            orderOverride = null,
+                            openIncidents = emptyMap()
+                        )
                     }
                     if (userId.isNullOrBlank()) {
                         flowOf(emptyList())
@@ -113,6 +146,7 @@ class VehiclesViewModel(
         const val ERROR_REORDER_KEY = "reorder_error"
         const val ERROR_LOAD_KEY = "load_error"
         private const val VEHICLES_LISTENER_CONTEXT = "vehicles_list_listener"
+        private const val INCIDENTS_LISTENER_CONTEXT = "vehicles_incidents_listener"
     }
 }
 
@@ -126,11 +160,17 @@ data class VehiclesUiState(
      * Mientras exista manda sobre el de [vehicles]; los vehículos que no estén en él van al final.
      */
     val orderOverride: List<String>? = null,
-    val errorKey: String? = null
+    val errorKey: String? = null,
+    /** Lo que se sabe de las incidencias abiertas de cada vehículo, por su id (spec 020). */
+    val openIncidents: Map<String, OpenIncidents> = emptyMap()
 ) {
     /** Lo que se ve: la lista de Firestore, en el orden que se está poniendo si se está ordenando. */
     val shownVehicles: List<Vehicle>
         get() = orderOverride?.let { vehicles.inOrder(it) } ?: vehicles
+
+    /** «Pendiente»: lo abierto de los vehículos de la lista, y si se sabe todo. */
+    val pending: Pending
+        get() = pendingOf(vehicles, openIncidents)
 }
 
 /**

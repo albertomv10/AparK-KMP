@@ -1,5 +1,9 @@
 package com.albertomedina.apark.presentation.incidents
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.BatteryAlert
@@ -19,9 +23,14 @@ import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.TireRepair
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.domain.model.Incident
 import com.albertomedina.apark.domain.model.IncidentCategory
@@ -31,8 +40,9 @@ import com.albertomedina.apark.ui.theme.LocalIsDarkTheme
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-// Los nombres y los iconos de cada código (spec 019). El de cada tipo es el que llevará la tarjeta del
-// mapa en la spec 020; el de las categorías solo sale en los chips del formulario.
+// Los nombres y los iconos de cada código (spec 019). El de cada tipo es el que llevan el detalle,
+// «Pendiente» y la tarjeta del mapa (spec 020); el de las categorías solo sale en los chips del
+// formulario.
 
 val IncidentCategory.label: StringResource
     get() = when (this) {
@@ -135,6 +145,29 @@ fun Incident.displayName(): String =
     if (kind == IncidentType.CUSTOM) title.ifBlank { stringResource(Res.string.incident_untitled) }
     else stringResource(kind.label)
 
+/**
+ * El icono de un tipo en un círculo del color de su categoría, al 16 %: se distinguen de un vistazo
+ * (specs 019 y 020). Es el mismo en el detalle, en «Pendiente» y, más pequeño, en la tarjeta del mapa.
+ *
+ * @param color el de su categoría, salvo que quien lo pinta quiera otro: las resueltas van en gris.
+ */
+@Composable
+fun IncidentTypeIcon(
+    type: IncidentType,
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp,
+    iconSize: Dp = 22.dp,
+    color: Color = type.color
+) {
+    Box(
+        modifier.size(size).background(color.copy(alpha = 0.16f), CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        // Decorativo: el nombre va al lado, o en la descripción de quien lo agrupa.
+        Icon(type.icon, contentDescription = null, tint = color, modifier = Modifier.size(iconSize))
+    }
+}
+
 val ReportedSentences = TimeSentences(
     Res.string.incident_reported_just_now, Res.string.incident_reported_minutes_ago,
     Res.string.incident_reported_hours_ago, Res.string.incident_reported_today_at,
@@ -145,4 +178,10 @@ val ResolvedSentences = TimeSentences(
     Res.string.incident_resolved_just_now, Res.string.incident_resolved_minutes_ago,
     Res.string.incident_resolved_hours_ago, Res.string.incident_resolved_today_at,
     Res.string.incident_resolved_yesterday_at, Res.string.incident_resolved_on_date
+)
+
+/** Solo el cuándo, sin «Reportada»: «hace 2 h», «ayer a las 18:45». Para «Pendiente» (spec 020). */
+val TimeAgoSentences = TimeSentences(
+    Res.string.time_just_now, Res.string.time_minutes_ago, Res.string.time_hours_ago,
+    Res.string.time_today_at, Res.string.time_yesterday_at, Res.string.time_on_date
 )

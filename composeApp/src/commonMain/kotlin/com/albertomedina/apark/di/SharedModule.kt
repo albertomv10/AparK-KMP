@@ -68,6 +68,7 @@ import com.albertomedina.apark.presentation.account.ChangeEmailViewModel
 import com.albertomedina.apark.presentation.account.ChangePasswordViewModel
 import com.albertomedina.apark.presentation.account.DeleteAccountViewModel
 import com.albertomedina.apark.presentation.navigation.SessionViewModel
+import com.albertomedina.apark.presentation.navigation.PendingCountViewModel
 import com.albertomedina.apark.presentation.splash.SplashViewModel
 import com.albertomedina.apark.presentation.vehicles.VehiclesViewModel
 import com.albertomedina.apark.presentation.vehicledetail.VehicleDetailViewModel
@@ -193,6 +194,7 @@ val sharedModule = module {
             authRepository = get(),
             getVehicleListUseCase = get(),
             setVehicleOrderUseCase = get(),
+            observeOpenIncidents = get(),
             crashReporter = get()
         )
     }
@@ -242,6 +244,15 @@ val sharedModule = module {
     }
 
     viewModel {
+        PendingCountViewModel(
+            authRepository = get(),
+            getVehicleListUseCase = get(),
+            observeOpenIncidents = get(),
+            crashReporter = get()
+        )
+    }
+
+    viewModel {
         LoginViewModel(
             loginUseCase = get(),
             loginGoogleUseCase = get(),
@@ -277,6 +288,7 @@ val sharedModule = module {
             updateVehicleLocationUseCase = get(),
             getVehicleListUseCase = get(),
             locateUserUseCase = get(),
+            observeOpenIncidents = get(),
             crashReporter = get()
         )
     }
