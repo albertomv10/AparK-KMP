@@ -10,7 +10,6 @@ import dev.gitlive.firebase.firestore.ServerTimestampBehavior
 import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.fromMilliseconds
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlin.coroutines.cancellation.CancellationException
@@ -31,9 +30,9 @@ class FirestoreIncidentRepository(
      * Las horas del servidor que aún no han llegado se leen **estimadas**: sin conexión, una
      * incidencia recién reportada dice «hace un momento» en vez de no tener fecha.
      *
-     * Si quien mira deja de ser miembro, o el vehículo se borra, las reglas cortan la escucha con
-     * PERMISSION_DENIED: se emite una lista vacía en vez de dejar que el error tumbe la pantalla, que
-     * ya se encarga de decir que no hay acceso.
+     * Un error de la escucha **se propaga**: lo recoge `IncidentsViewModel` con
+     * `catchListenerFailure` (spec 021). Tragárselo aquí con una lista vacía escondía también los
+     * fallos de verdad, como unas reglas sin desplegar, detrás de «Sin incidencias abiertas».
      */
     override fun observe(vehicleId: String): Flow<List<Incident>> = incidents(vehicleId)
         .snapshots
@@ -41,10 +40,6 @@ class FirestoreIncidentRepository(
             snapshot.documents.map { doc ->
                 doc.data(IncidentDocument.serializer(), ServerTimestampBehavior.ESTIMATE).toDomain(doc.id)
             }
-        }
-        .catch { error ->
-            if (error is CancellationException) throw error
-            emit(emptyList())
         }
 
     /**
@@ -54,13 +49,13 @@ class FirestoreIncidentRepository(
     override suspend fun report(
         vehicleId: String,
         reportedBy: String,
-        category: String,
-        tag: String,
+        type: String,
+        title: String,
         note: String
     ): Result<Unit> = write {
         incidents(vehicleId).document.set(
             NewIncident.serializer(),
-            NewIncident(category = category, tag = tag, note = note, reportedBy = reportedBy)
+            NewIncident(type = type, title = title, note = note, reportedBy = reportedBy)
         ) { encodeDefaults = true }
     }
 
@@ -111,8 +106,8 @@ class FirestoreIncidentRepository(
 /** Lo que se lee. Los campos de la resolución faltan mientras está abierta, de ahí los valores por defecto. */
 @Serializable
 private data class IncidentDocument(
-    val category: String = "",
-    val tag: String = "",
+    val type: String = "",
+    val title: String = "",
     val note: String = "",
     val status: String = Incident.STATUS_OPEN,
     val reportedBy: String = "",
@@ -123,8 +118,8 @@ private data class IncidentDocument(
 ) {
     fun toDomain(id: String) = Incident(
         id = id,
-        category = category,
-        tag = tag,
+        type = type,
+        title = title,
         note = note,
         status = status,
         reportedBy = reportedBy,
@@ -140,8 +135,8 @@ private data class IncidentDocument(
  */
 @Serializable
 private data class NewIncident(
-    val category: String,
-    val tag: String,
+    val type: String,
+    val title: String,
     val note: String,
     val status: String = Incident.STATUS_OPEN,
     val reportedBy: String,

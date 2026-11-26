@@ -13,7 +13,8 @@ interface IncidentRepository {
     /** Todas las del vehículo, en tiempo real. Si se pierde el acceso, una lista vacía. */
     fun observe(vehicleId: String): Flow<List<Incident>>
 
-    suspend fun report(vehicleId: String, reportedBy: String, category: String, tag: String, note: String): Result<Unit>
+    /** [title] es el nombre de una personalizada, y `""` en los demás tipos: lo exigen las reglas. */
+    suspend fun report(vehicleId: String, reportedBy: String, type: String, title: String, note: String): Result<Unit>
 
     suspend fun resolve(vehicleId: String, incidentId: String, resolvedBy: String, expiresAtMillis: Long): Result<Unit>
 

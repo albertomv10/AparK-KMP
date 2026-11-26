@@ -1,29 +1,29 @@
 package com.albertomedina.apark.domain.model
 
 /**
- * De qué va una incidencia (spec 019): una categoría, obligatoria, y si se quiere una etiqueta más
- * concreta de esa categoría. Como las listas de la spec 015, en el documento se guarda el [code] en
- * texto y se lee con `fromCode`, así que un código que esta versión no conoce no rompe nada. Las
- * reglas de Firestore validan los mismos códigos: **añadir uno es tocar el `enum` y las reglas en la
- * misma versión**.
+ * Las categorías de las incidencias (spec 019). **Solo agrupan** las opciones del formulario: no se
+ * guardan, porque cada tipo pertenece a una sola. El orden es el de los chips.
  */
-enum class IncidentCategory(val code: String) {
-    LEVELS("levels"),
-    MECHANICS("mechanics"),
-    TYRES("tyres"),
-    BODY("body"),
-    OTHER("other");
+enum class IncidentCategory {
+    LEVELS,
+    MECHANICS,
+    TYRES,
+    BODY;
 
-    /** Las etiquetas de esta categoría, en el orden en que se ofrecen. «Otro» no tiene. */
-    val tags: List<IncidentTag> get() = IncidentTag.entries.filter { it.category == this }
-
-    companion object {
-        /** Una categoría desconocida —o vacía— se enseña como «Otro»: siempre hay algo que mostrar. */
-        fun fromCode(code: String): IncidentCategory = entries.firstOrNull { it.code == code } ?: OTHER
-    }
+    /** Sus tipos, en el orden en que se ofrecen. */
+    val types: List<IncidentType> get() = IncidentType.entries.filter { it.category == this }
 }
 
-enum class IncidentTag(val code: String, val category: IncidentCategory) {
+/**
+ * Qué le pasa al vehículo (spec 019): la incidencia **es** su tipo. Como las listas de la spec 015,
+ * en el documento se guarda el [code] en texto y se lee con [fromCode], así que un código que esta
+ * versión no conoce no rompe nada. Las reglas de Firestore validan los mismos códigos: **añadir uno
+ * es tocar el `enum` y las reglas en la misma versión**.
+ *
+ * [CUSTOM] es lo que no encaja en ninguno: no tiene categoría, y es el único que guarda un nombre,
+ * porque los demás los traduce la app al idioma de quien mira.
+ */
+enum class IncidentType(val code: String, val category: IncidentCategory?) {
     LOW_FUEL("low_fuel", IncidentCategory.LEVELS),
     LOW_CHARGE("low_charge", IncidentCategory.LEVELS),
     OIL("oil", IncidentCategory.LEVELS),
@@ -39,11 +39,12 @@ enum class IncidentTag(val code: String, val category: IncidentCategory) {
     TYRE_WEAR("tyre_wear", IncidentCategory.TYRES),
     DAMAGE("damage", IncidentCategory.BODY),
     CLEANING("cleaning", IncidentCategory.BODY),
-    ITEMS_INSIDE("items_inside", IncidentCategory.BODY);
+    ITEMS_INSIDE("items_inside", IncidentCategory.BODY),
+    CUSTOM("custom", null);
 
     /**
      * Si tiene sentido para un vehículo con este sistema y este combustible (spec 015): en un
-     * eléctrico no se ofrece «Poco combustible», y «AdBlue» solo en un diésel. Sin datos, todas: no
+     * eléctrico no se ofrece «Poco combustible», y «AdBlue» solo en un diésel. Sin datos, todos: no
      * se esconde nada por no saber.
      */
     fun appliesTo(powertrain: Powertrain?, fuel: Fuel?): Boolean = when (this) {
@@ -62,7 +63,10 @@ enum class IncidentTag(val code: String, val category: IncidentCategory) {
     }
 
     companion object {
-        /** Una etiqueta desconocida no se enseña: la categoría ya dice de qué va. */
-        fun fromCode(code: String): IncidentTag? = entries.firstOrNull { it.code == code }
+        /**
+         * Un tipo desconocido —de una versión más nueva, o vacío— se enseña como una personalizada
+         * sin nombre: «Incidencia». Siempre hay algo que mostrar.
+         */
+        fun fromCode(code: String): IncidentType = entries.firstOrNull { it.code == code } ?: CUSTOM
     }
 }
