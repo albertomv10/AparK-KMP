@@ -2,10 +2,12 @@ package com.albertomedina.apark.presentation.vehicles
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.albertomedina.apark.domain.logging.CrashReporter
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
 import com.albertomedina.apark.domain.usecase.SetVehicleOrderUseCase
+import com.albertomedina.apark.utils.catchListenerFailure
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +22,8 @@ import kotlinx.coroutines.launch
 class VehiclesViewModel(
     private val authRepository: AuthRepository,
     private val getVehicleListUseCase: GetVehicleListUseCase,
-    private val setVehicleOrderUseCase: SetVehicleOrderUseCase
+    private val setVehicleOrderUseCase: SetVehicleOrderUseCase,
+    private val crashReporter: CrashReporter
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(VehiclesUiState())
@@ -46,7 +49,17 @@ class VehiclesViewModel(
                     _uiState.update {
                         it.copy(currentUserId = userId, isReordering = false, orderOverride = null)
                     }
-                    if (userId.isNullOrBlank()) flowOf(emptyList()) else getVehicleListUseCase(userId)
+                    if (userId.isNullOrBlank()) {
+                        flowOf(emptyList())
+                    } else {
+                        // Si la escucha falla, se queda la lista que hubiera y se avisa (spec 021). Deja
+                        // de cargar: si no había nada en caché, la lista ya no va a llegar.
+                        getVehicleListUseCase(userId)
+                            .catchListenerFailure({ authRepository.getCurrentUser() != null }) { error ->
+                                crashReporter.recordError(error, VEHICLES_LISTENER_CONTEXT)
+                                _uiState.update { it.copy(isLoading = false, errorKey = ERROR_LOAD_KEY) }
+                            }
+                    }
                 }
                 .collect { vehicles -> _uiState.update { it.withVehicles(vehicles) } }
         }
@@ -98,6 +111,8 @@ class VehiclesViewModel(
 
     companion object {
         const val ERROR_REORDER_KEY = "reorder_error"
+        const val ERROR_LOAD_KEY = "load_error"
+        private const val VEHICLES_LISTENER_CONTEXT = "vehicles_list_listener"
     }
 }
 

@@ -60,12 +60,17 @@ fun VehiclesScreen(
     val vehicles = state.shownVehicles
     val snackbarHostState = remember { SnackbarHostState() }
     val reorderError = stringResource(Res.string.reorder_error)
+    val loadError = stringResource(Res.string.vehicles_load_error)
 
     LaunchedEffect(state.errorKey) {
-        if (state.errorKey != null) {
-            snackbarHostState.showSnackbar(reorderError, withDismissAction = true)
-            viewModel.onEvent(VehiclesEvent.MessageShown)
+        val (text, duration) = when (state.errorKey) {
+            null -> return@LaunchedEffect
+            // Como en *Inicio*: es lo que explica una lista vacía, así que se queda más tiempo.
+            VehiclesViewModel.ERROR_LOAD_KEY -> loadError to SnackbarDuration.Long
+            else -> reorderError to SnackbarDuration.Short
         }
+        snackbarHostState.showSnackbar(text, withDismissAction = true, duration = duration)
+        viewModel.onEvent(VehiclesEvent.MessageShown)
     }
 
     // Atrás termina de ordenar, igual que «Hecho»: lo movido no se pierde.

@@ -85,6 +85,7 @@ fun HomeScreen(
         "error_location_save" -> stringResource(Res.string.error_location_save)
         "error_gps_permissions" -> stringResource(Res.string.error_gps_permissions)
         "error_undo_failed" -> stringResource(Res.string.error_undo_failed)
+        "error_vehicles_load" -> stringResource(Res.string.vehicles_load_error)
         else -> state.snackbarMessage?.message
     }
 
