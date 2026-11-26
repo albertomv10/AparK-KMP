@@ -44,6 +44,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -81,6 +82,7 @@ import com.albertomedina.apark.presentation.vehicleform.swatch
 import com.albertomedina.apark.presentation.components.AparKConfirmDialog
 import com.albertomedina.apark.presentation.components.ParkedText
 import com.albertomedina.apark.presentation.components.StandardAparKButton
+import com.albertomedina.apark.presentation.incidents.IncidentsSection
 import com.albertomedina.apark.utils.ShareTextHandler
 import com.albertomedina.apark.utils.SnackbarMessage
 import kotlinx.coroutines.delay
@@ -88,9 +90,9 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
- * El detalle de un vehículo (spec 014), por secciones: dónde está, quién lo comparte y, al final, lo
- * que saca de él. La fase 3 añadirá las suyas —incidencias, ITV, mantenimiento— entre medias, sin
- * tocar estas.
+ * El detalle de un vehículo (spec 014), por secciones: dónde está, qué le pasa (spec 019), quién lo
+ * comparte y, al final, lo que saca de él. La fase 3 añadirá las suyas —ITV, mantenimiento— entre
+ * medias, sin tocar estas.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,6 +115,19 @@ fun VehicleDetailScreen(
     LaunchedEffect(vehicleId) {
         viewModel.onEvent(VehicleDetailEvent.Load(vehicleId))
     }
+
+    // Las incidencias (spec 019) sacan sus avisos por el mismo hueco, y el de resolver lleva «Deshacer».
+    val showSnackbar: suspend (SnackbarMessage) -> SnackbarResult = { message ->
+        activeSnackbarMessage = message
+        snackbarHostState.showSnackbar(
+            message.message,
+            actionLabel = message.actionLabel,
+            withDismissAction = true,
+            duration = SnackbarDuration.Long
+        )
+    }
+    // El nombre de quien reportó o resolvió sale de aquí: si ya no es miembro, no está (spec 019).
+    val memberNames = (state.members as? MembersState.Loaded)?.members.orEmpty().associate { it.uid to it.displayName }
 
     LaunchedEffect(state.closeRequested) {
         if (state.closeRequested) onBack()
@@ -190,6 +205,14 @@ fun VehicleDetailScreen(
                 if (state.isWorking) LinearProgressIndicator(Modifier.fillMaxWidth())
                 Header(vehicle)
                 LocationSection(vehicle, state.currentUserId, onShowOnMap = { onShowOnMap(vehicle.id) })
+                HorizontalDivider(Modifier.padding(top = 12.dp))
+                IncidentsSection(
+                    vehicle = vehicle,
+                    isOwner = state.isOwner,
+                    names = memberNames,
+                    title = { SectionTitle(stringResource(Res.string.incidents_title)) },
+                    showSnackbar = showSnackbar
+                )
                 if (vehicle.hasDetails || state.isOwner) {
                     HorizontalDivider(Modifier.padding(top = 12.dp))
                     DataSection(vehicle, isOwner = state.isOwner, onEdit = { onEdit(vehicle.id) })
