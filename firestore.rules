@@ -160,20 +160,21 @@ service cloud.firestore {
         function isVehicleMember() {
           return request.auth != null && request.auth.uid in vehicle().memberIds;
         }
-        function incidentCategoryOk(d) {
-          return d.category in ['levels', 'mechanics', 'tyres', 'body', 'other'];
+        // The incident is its type (spec 019): the category only groups the options in the form and
+        // is not stored. 'custom' is the one type with a name of its own; every other type is
+        // translated by the app, so it stores no text, and `title` is "" — always present, never
+        // missing, like the vehicle's "" for "no data".
+        function incidentTypeOk(d) {
+          return d.type in ['low_fuel', 'low_charge', 'oil', 'washer_fluid', 'adblue',
+                            'warning_light', 'wont_start', 'breakdown', 'strange_noise', 'bulb_out',
+                            'puncture', 'low_pressure', 'tyre_wear',
+                            'damage', 'cleaning', 'items_inside',
+                            'custom'];
         }
-        // A tag is optional, and when present it must belong to the incident's category.
-        function incidentTagOk(d) {
-          return d.tag == ''
-              || (d.category == 'levels'
-                  && d.tag in ['low_fuel', 'low_charge', 'oil', 'washer_fluid', 'adblue'])
-              || (d.category == 'mechanics'
-                  && d.tag in ['warning_light', 'wont_start', 'breakdown', 'strange_noise', 'bulb_out'])
-              || (d.category == 'tyres'
-                  && d.tag in ['puncture', 'low_pressure', 'tyre_wear'])
-              || (d.category == 'body'
-                  && d.tag in ['damage', 'cleaning', 'items_inside']);
+        function incidentTitleOk(d) {
+          return d.title is string
+              && ((d.type == 'custom' && d.title.trim().size() > 0 && d.title.size() <= 40)
+                  || (d.type != 'custom' && d.title == ''));
         }
         function resolutionKeys() {
           return ['status', 'resolvedBy', 'resolvedAt', 'expiresAt'];
@@ -185,10 +186,9 @@ service cloud.firestore {
         // the server's so that a report written offline still passes when it reaches the server.
         allow create: if isVehicleMember()
                       && request.resource.data.keys().hasOnly(
-                           ['category', 'tag', 'note', 'status', 'reportedBy', 'createdAt'])
-                      && incidentCategoryOk(request.resource.data)
-                      && request.resource.data.tag is string
-                      && incidentTagOk(request.resource.data)
+                           ['type', 'title', 'note', 'status', 'reportedBy', 'createdAt'])
+                      && incidentTypeOk(request.resource.data)
+                      && incidentTitleOk(request.resource.data)
                       && request.resource.data.note is string
                       && request.resource.data.note.size() <= 280
                       && request.resource.data.status == 'open'

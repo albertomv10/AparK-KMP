@@ -58,8 +58,8 @@ beforeEach(async () => {
         });
         // Una incidencia abierta, reportada por MEMBER.
         await setDoc(doc(db, "vehicles", VEHICLE, "incidents", INCIDENT), {
-            category: "levels",
-            tag: "low_fuel",
+            type: "low_fuel",
+            title: "",
             note: "",
             status: "open",
             reportedBy: MEMBER,
@@ -74,8 +74,8 @@ const incident = (uid: string, id = INCIDENT) => doc(db(uid), "vehicles", VEHICL
 
 const report = (uid: string, extra: Record<string, unknown> = {}) =>
     setDoc(doc(incidents(uid)), {
-        category: "body",
-        tag: "cleaning",
+        type: "cleaning",
+        title: "",
         note: "Hay arena en los asientos",
         status: "open",
         reportedBy: uid,
@@ -111,22 +111,52 @@ describe("reportar", () => {
         await assertSucceeds(report(MEMBER));
     });
 
-    it("sin etiqueta ni nota también vale", async () => {
-        await assertSucceeds(report(OWNER, { category: "other", tag: "", note: "" }));
+    it("sin nota también vale", async () => {
+        await assertSucceeds(report(OWNER, { note: "" }));
+    });
+
+    it("una personalizada, con su nombre", async () => {
+        await assertSucceeds(report(MEMBER, { type: "custom", title: "Silla del bebé desmontada" }));
+        await assertSucceeds(report(MEMBER, { type: "custom", title: "x".repeat(40) }));
     });
 
     it("quien no es miembro NO reporta", async () => {
         await assertFails(report(STRANGER));
     });
 
-    it("NO con una categoría o una etiqueta que no existen", async () => {
-        await assertFails(report(MEMBER, { category: "engine" }));
-        await assertFails(report(MEMBER, { tag: "flat_battery" }));
+    it("NO con un tipo que no existe", async () => {
+        await assertFails(report(MEMBER, { type: "engine" }));
+        await assertFails(report(MEMBER, { type: "" }));
     });
 
-    it("NO con una etiqueta de otra categoría", async () => {
-        await assertFails(report(MEMBER, { category: "tyres", tag: "cleaning" }));
-        await assertFails(report(MEMBER, { category: "other", tag: "low_fuel" }));
+    it("NO una personalizada sin nombre, o solo con espacios", async () => {
+        await assertFails(report(MEMBER, { type: "custom", title: "" }));
+        await assertFails(report(MEMBER, { type: "custom", title: "   " }));
+    });
+
+    it("NO con un nombre de más de 40", async () => {
+        await assertFails(report(MEMBER, { type: "custom", title: "x".repeat(41) }));
+    });
+
+    it("NO con nombre en un tipo de la lista: ese lo traduce la app", async () => {
+        await assertFails(report(MEMBER, { title: "Limpieza a fondo" }));
+    });
+
+    it("NO sin el campo del nombre", async () => {
+        await assertFails(
+            setDoc(doc(incidents(MEMBER)), {
+                type: "cleaning",
+                note: "",
+                status: "open",
+                reportedBy: MEMBER,
+                createdAt: serverTimestamp(),
+            })
+        );
+    });
+
+    it("NO con los campos de antes del cambio (category y tag)", async () => {
+        await assertFails(report(MEMBER, { category: "body" }));
+        await assertFails(report(MEMBER, { tag: "cleaning" }));
     });
 
     it("NO con una nota de más de 280", async () => {
@@ -168,7 +198,7 @@ describe("resolver y deshacer", () => {
 
     it("NO cambia nada más: una incidencia no se edita", async () => {
         await assertFails(updateDoc(incident(MEMBER), { note: "Otra cosa" }));
-        await assertFails(resolve(MEMBER, { category: "body" }));
+        await assertFails(resolve(MEMBER, { type: "damage" }));
     });
 
     it("Deshacer la vuelve a abrir y quita la resolución", async () => {
