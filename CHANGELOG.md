@@ -189,6 +189,13 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   y con él se va la vía de respaldo que todavía lo leía en la función de limpieza de vehículos.
 
 ### Fixed
+- **En iPhone, cambiar de tema ya no mueve las pantallas**
+  ([spec 023](docs/specs/023-tab-insets-after-theme-change/spec.md)).
+  - Al pasar el móvil a oscuro o a claro con el mapa abierto, el carrusel y el logo de Google subían
+    34 pt, lo que mide el indicador de inicio, y se quedaban ahí hasta salir de la pantalla. Cambiar
+    el tema desde *Cuenta* dejaba un hueco al final de *Cuenta*.
+  - Las pantallas de dentro de las pestañas ya no reservan el indicador de inicio: lo hace solo la
+    barra de pestañas, que es quien lo tiene debajo.
 - **La debug de Android ya puede entrar contra los emuladores de Firebase.**
   - Android bloquea el HTTP sin cifrar desde la 9, los emuladores hablan HTTP y el proyecto nunca lo
     había permitido. Así que el inicio de sesión fallaba con «Ha ocurrido un error inesperado».

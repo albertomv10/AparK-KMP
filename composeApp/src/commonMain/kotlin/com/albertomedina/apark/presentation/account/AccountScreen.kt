@@ -1,6 +1,7 @@
 package com.albertomedina.apark.presentation.account
 
 import com.albertomedina.apark.presentation.components.SectionTitle
+import com.albertomedina.apark.presentation.navigation.TabShellDefaults
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -67,6 +68,7 @@ fun AccountScreen(
     }
 
     Scaffold(
+        contentWindowInsets = TabShellDefaults.contentWindowInsets,
         topBar = { TopAppBar(title = { Text(stringResource(Res.string.tab_account)) }) }
     ) { padding ->
         Column(

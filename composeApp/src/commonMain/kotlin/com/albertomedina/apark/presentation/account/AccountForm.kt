@@ -34,6 +34,7 @@ import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.back
 import apark.composeapp.generated.resources.done
 import com.albertomedina.apark.presentation.components.StandardAparKButton
+import com.albertomedina.apark.presentation.navigation.TabShellDefaults
 import com.albertomedina.apark.utils.getErrorMessage
 import org.jetbrains.compose.resources.stringResource
 
@@ -49,6 +50,7 @@ internal fun AccountFormScaffold(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Scaffold(
+        contentWindowInsets = TabShellDefaults.contentWindowInsets,
         topBar = {
             TopAppBar(
                 title = { Text(title) },

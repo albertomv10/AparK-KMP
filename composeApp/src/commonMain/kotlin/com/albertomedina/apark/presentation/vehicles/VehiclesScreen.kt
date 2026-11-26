@@ -34,6 +34,7 @@ import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.domain.model.Pending
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.presentation.components.ParkedText
+import com.albertomedina.apark.presentation.navigation.TabShellDefaults
 import com.albertomedina.apark.presentation.components.SectionTitle
 import com.albertomedina.apark.presentation.vehicleform.VehicleAvatar
 import com.albertomedina.apark.presentation.vehicleform.hasAvatar
@@ -84,6 +85,7 @@ fun VehiclesScreen(
     }
 
     Scaffold(
+        contentWindowInsets = TabShellDefaults.contentWindowInsets,
         topBar = { TopAppBar(title = { Text(stringResource(Res.string.tab_vehicles)) }) },
         floatingActionButton = {
             if (!state.isReordering) {

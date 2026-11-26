@@ -163,6 +163,11 @@ Se oculta solo en lo que es **una tarea de pantalla completa**, con principio y 
 - Splash, login, registro, verificación de email, recuperar contraseña
 - Añadir vehículo
 
+Con barra o sin ella, **lo de abajo es del shell**: toda pantalla que vive dentro de `TabShell` pasa
+`TabShellDefaults.contentWindowInsets` a su `Scaffold`, que pide solo los márgenes de arriba y de los
+lados. Sin eso, en iPhone, cambiar de tema le hace reservar otra vez el indicador de inicio y el
+contenido sube 34 pt ([spec 023](specs/023-tab-insets-after-theme-change/spec.md)).
+
 ---
 
 ## Decisiones tomadas, y lo que cuestan

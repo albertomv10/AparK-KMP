@@ -40,6 +40,7 @@ import apark.composeapp.generated.resources.back
 import apark.composeapp.generated.resources.edit_vehicle_error
 import apark.composeapp.generated.resources.edit_vehicle_title
 import com.albertomedina.apark.presentation.components.StandardAparKButton
+import com.albertomedina.apark.presentation.navigation.TabShellDefaults
 import com.albertomedina.apark.presentation.vehicleform.VehicleForm
 import com.albertomedina.apark.utils.SnackbarMessage
 import org.jetbrains.compose.resources.stringResource
@@ -77,6 +78,7 @@ fun EditVehicleScreen(
     }
 
     Scaffold(
+        contentWindowInsets = TabShellDefaults.contentWindowInsets,
         snackbarHost = {
             SnackbarHost(snackbarHostState) { data ->
                 activeSnackbarMessage?.let {

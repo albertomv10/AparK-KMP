@@ -1,7 +1,7 @@
 # Spec: Que nada se mueva al cambiar de tema en iPhone
 
 - **ID**: 023-tab-insets-after-theme-change
-- **Estado**: Aprobada — diseño en [design.md](design.md)
+- **Estado**: Implementada — diseño en [design.md](design.md)
 - **Fecha**: 2026-11-26
 
 ## Problema / Por qué
