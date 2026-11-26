@@ -4,6 +4,7 @@ import com.albertomedina.apark.data.repository.FirestoreIncidentRepository
 import com.albertomedina.apark.domain.repository.IncidentRepository
 import com.albertomedina.apark.domain.usecase.DeleteIncidentUseCase
 import com.albertomedina.apark.domain.usecase.ObserveIncidentsUseCase
+import com.albertomedina.apark.domain.usecase.ObserveOpenIncidentsUseCase
 import com.albertomedina.apark.domain.usecase.ReopenIncidentUseCase
 import com.albertomedina.apark.domain.usecase.ReportIncidentUseCase
 import com.albertomedina.apark.domain.usecase.ResolveIncidentUseCase
@@ -179,6 +180,7 @@ val sharedModule = module {
     factory { GetCurrentLocationUseCase(repository = get()) }
     factory { LocateUserUseCase(repository = get()) }
     factory { ObserveIncidentsUseCase(repository = get()) }
+    factory { ObserveOpenIncidentsUseCase(repository = get()) }
     factory { ReportIncidentUseCase(repository = get()) }
     factory { ResolveIncidentUseCase(repository = get()) }
     factory { ReopenIncidentUseCase(repository = get()) }
