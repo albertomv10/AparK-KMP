@@ -27,6 +27,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -34,12 +36,16 @@ import kotlinx.coroutines.flow.drop
 import androidx.compose.ui.zIndex
 import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.*
+import com.albertomedina.apark.domain.model.Incident
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.domain.model.VehicleType
 import com.albertomedina.apark.presentation.components.AparKMap
 import com.albertomedina.apark.presentation.components.LocationPermissionHandler
 import com.albertomedina.apark.presentation.components.ParkedText
 import com.albertomedina.apark.presentation.components.mapLocation
+import com.albertomedina.apark.presentation.incidents.IncidentTypeIcon
+import com.albertomedina.apark.presentation.incidents.cardIncidents
+import com.albertomedina.apark.presentation.incidents.displayName
 import com.albertomedina.apark.presentation.vehicleform.icon
 import com.albertomedina.apark.utils.OpenAppSettingsHandler
 import com.albertomedina.apark.utils.SnackbarMessage
@@ -313,6 +319,7 @@ fun HomeScreen(
                         } else {
                             VehicleCard(
                                 vehicle = vehicle,
+                                incidents = state.openIncidentsOf(vehicle.id),
                                 currentUserId = state.currentUserId,
                                 isLoading = state.isLoading,
                                 isSpecificLoading = state.updatingVehicleId == vehicle.id,
@@ -349,6 +356,8 @@ private val CardMinHeight = 148.dp
 @Composable
 fun VehicleCard(
     vehicle: Vehicle,
+    /** Sus incidencias abiertas (spec 020): un icono por tipo, entre el nombre y la flecha. */
+    incidents: List<Incident>,
     currentUserId: String?,
     /** Hay una operación en marcha, de este vehículo o de otro: aparcar queda deshabilitado. */
     isLoading: Boolean,
@@ -372,9 +381,9 @@ fun VehicleCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // El nombre y la flecha que dice que la tarjeta abre el detalle. Entre los dos irán los
-            // iconos de lo pendiente (fase 3, ver NAVIGATION.md): el nombre ya se corta antes de ella.
-            // Mide al menos lo que el avatar, para que con avatar y sin él las tarjetas midan igual.
+            // El nombre y la flecha que dice que la tarjeta abre el detalle, y entre los dos los iconos
+            // de lo pendiente (spec 020): el nombre se corta antes que ellos. Mide al menos lo que el
+            // avatar, para que con avatar y sin él —y con iconos y sin ellos— las tarjetas midan igual.
             Row(
                 modifier = Modifier.fillMaxWidth().heightIn(min = 32.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -390,6 +399,9 @@ fun VehicleCard(
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.weight(1f)
                 )
+                if (incidents.isNotEmpty()) {
+                    IncidentIcons(incidents, Modifier.padding(start = 8.dp))
+                }
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
@@ -417,6 +429,33 @@ fun VehicleCard(
                     Text(stringResource(Res.string.home_park_here))
                 }
             }
+        }
+    }
+}
+
+/**
+ * Lo que tiene pendiente un vehículo, en su tarjeta (spec 020): un icono por tipo, como mucho tres, y
+ * «+N» con los tipos que no caben. Iconos y no un número, porque «⛽» dice qué le pasa sin abrir nada.
+ * Para el lector de pantalla es una sola frase: «Poco combustible, Pinchazo y 2 más».
+ */
+@Composable
+private fun IncidentIcons(incidents: List<Incident>, modifier: Modifier = Modifier) {
+    val card = cardIncidents(incidents)
+    val names = card.shown.map { it.displayName() }.joinToString(", ")
+    val description = if (card.more > 0) stringResource(Res.string.incidents_card_more, names, card.more) else names
+    Row(
+        modifier = modifier.clearAndSetSemantics { contentDescription = description },
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        card.shown.forEach { IncidentTypeIcon(it.kind, size = 24.dp, iconSize = 16.dp) }
+        if (card.more > 0) {
+            Text(
+                "+${card.more}",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 2.dp)
+            )
         }
     }
 }

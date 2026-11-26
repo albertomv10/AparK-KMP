@@ -334,4 +334,18 @@
     <string name="incident_resolved_today_at">Resuelta hoy a las %1$s</string>
     <string name="incident_resolved_yesterday_at">Resuelta ayer a las %1$s</string>
     <string name="incident_resolved_on_date">Resuelta el %1$s %2$s</string>
+
+    <!-- Spec 020: lo pendiente de todos los vehículos, la tarjeta y la chapita -->
+    <string name="pending_title">Pendiente</string>
+    <string name="pending_all_clear">Todo en orden</string>
+    <string name="pending_load_error">No se han podido cargar todas las incidencias</string>
+    <string name="vehicles_list_title">Tus vehículos</string>
+    <string name="time_just_now">hace un momento</string>
+    <string name="time_minutes_ago">hace %1$d min</string>
+    <string name="time_hours_ago">hace %1$d h</string>
+    <string name="time_today_at">hoy a las %1$s</string>
+    <string name="time_yesterday_at">ayer a las %1$s</string>
+    <string name="time_on_date">el %1$s %2$s</string>
+    <string name="incidents_card_more">%1$s y %2$d más</string>
+    <string name="tab_badge_incidents">Incidencias abiertas: %1$d</string>
 </resources>

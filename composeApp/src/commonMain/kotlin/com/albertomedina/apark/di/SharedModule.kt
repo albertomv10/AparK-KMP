@@ -4,6 +4,7 @@ import com.albertomedina.apark.data.repository.FirestoreIncidentRepository
 import com.albertomedina.apark.domain.repository.IncidentRepository
 import com.albertomedina.apark.domain.usecase.DeleteIncidentUseCase
 import com.albertomedina.apark.domain.usecase.ObserveIncidentsUseCase
+import com.albertomedina.apark.domain.usecase.ObserveOpenIncidentsUseCase
 import com.albertomedina.apark.domain.usecase.ReopenIncidentUseCase
 import com.albertomedina.apark.domain.usecase.ReportIncidentUseCase
 import com.albertomedina.apark.domain.usecase.ResolveIncidentUseCase
@@ -67,6 +68,7 @@ import com.albertomedina.apark.presentation.account.ChangeEmailViewModel
 import com.albertomedina.apark.presentation.account.ChangePasswordViewModel
 import com.albertomedina.apark.presentation.account.DeleteAccountViewModel
 import com.albertomedina.apark.presentation.navigation.SessionViewModel
+import com.albertomedina.apark.presentation.navigation.PendingCountViewModel
 import com.albertomedina.apark.presentation.splash.SplashViewModel
 import com.albertomedina.apark.presentation.vehicles.VehiclesViewModel
 import com.albertomedina.apark.presentation.vehicledetail.VehicleDetailViewModel
@@ -179,6 +181,7 @@ val sharedModule = module {
     factory { GetCurrentLocationUseCase(repository = get()) }
     factory { LocateUserUseCase(repository = get()) }
     factory { ObserveIncidentsUseCase(repository = get()) }
+    factory { ObserveOpenIncidentsUseCase(repository = get()) }
     factory { ReportIncidentUseCase(repository = get()) }
     factory { ResolveIncidentUseCase(repository = get()) }
     factory { ReopenIncidentUseCase(repository = get()) }
@@ -191,6 +194,7 @@ val sharedModule = module {
             authRepository = get(),
             getVehicleListUseCase = get(),
             setVehicleOrderUseCase = get(),
+            observeOpenIncidents = get(),
             crashReporter = get()
         )
     }
@@ -240,6 +244,15 @@ val sharedModule = module {
     }
 
     viewModel {
+        PendingCountViewModel(
+            authRepository = get(),
+            getVehicleListUseCase = get(),
+            observeOpenIncidents = get(),
+            crashReporter = get()
+        )
+    }
+
+    viewModel {
         LoginViewModel(
             loginUseCase = get(),
             loginGoogleUseCase = get(),
@@ -275,6 +288,7 @@ val sharedModule = module {
             updateVehicleLocationUseCase = get(),
             getVehicleListUseCase = get(),
             locateUserUseCase = get(),
+            observeOpenIncidents = get(),
             crashReporter = get()
         )
     }

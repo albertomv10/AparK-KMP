@@ -130,13 +130,13 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 | `domain.repository` | Repository interfaces |
 | `domain.usecase` | One `operator fun invoke()` each |
 | `presentation.splash` · `presentation.auth.*` | Splash, login, register, verification, reset |
-| `presentation.home` | Map + vehicle carousel: park, and open the detail. No edit mode since spec 016 |
-| `presentation.vehicles` · `presentation.account` | The vehicle list, where vehicles are reordered (spec 016); and the account: name, email, password, theme, sign out, delete |
+| `presentation.home` | Map + vehicle carousel: park, and open the detail. No edit mode since spec 016. Each card shows one icon per open incident type (spec 020) |
+| `presentation.vehicles` · `presentation.account` | The vehicle list, with «Pendiente» on top — every vehicle's open incidents (spec 020) — and where vehicles are reordered (spec 016); and the account: name, email, password, theme, sign out, delete |
 | `presentation.addvehicle` · `presentation.editvehicle` · `presentation.vehicledetail` | Create/join, edit, and the detail: where it is, its incidents, its data, its members, transfer and remove |
-| `presentation.incidents` | The incidents section of the detail (spec 019): the list, the report sheet, resolve with «Deshacer», the folded resolved ones, and each code's label and icon |
+| `presentation.incidents` | The incidents section of the detail (spec 019): the list, the report sheet, resolve with «Deshacer», the folded resolved ones, and each code's label, icon, colour and `IncidentTypeIcon`; and `cardIncidents`, what the map card shows (spec 020) |
 | `presentation.vehicleform` | The form shared by create and edit, its pure reducer, and the labels, icons and swatches of each code |
-| `presentation.components` | Shared composables: map, buttons, dialog, permission handlers, and `ParkedText` — «Aparcado hace 5 min por Edu», the one sentence the card, the list and the detail share |
-| `presentation.navigation` | Navigation 3 setup |
+| `presentation.components` | Shared composables: map, buttons, dialog, permission handlers, `SectionTitle`, the tab bar with its badges, and `ParkedText` — «Aparcado hace 5 min por Edu», the one sentence the card, the list and the detail share |
+| `presentation.navigation` | Navigation 3 setup; `SessionViewModel`, the one exit; `PendingCountViewModel`, the badge on *Vehículos* (spec 020) |
 | `di` · `ui.theme` · `utils` | Koin modules, Material 3 theme, helpers |
 
 ### Firestore collections (as they are today)
@@ -351,6 +351,23 @@ graphify path "A" "B" --undirected
   document, and offline it never returns. Server timestamps are read with
   `ServerTimestampBehavior.ESTIMATE`, so an incident reported offline says «hace un momento» instead
   of having no date.
+- **Every vehicle's open incidents come from one listener per vehicle** (spec 020), the same query
+  the detail opens: `ObserveOpenIncidentsUseCase`, used by *Inicio*, *Vehículos* and the badge. The
+  Firestore SDK shares identical queries, so three screens do not mean three times the reads. Each
+  caller opens them inside a `flatMapLatest` on **the set of vehicle ids**, never on the vehicle
+  list: the list emits every time someone parks, and keying on it would reopen every listener for
+  nothing. Each listener catches its own error, so one failing vehicle does not end the `combine`;
+  and what is shown is always joined against the current vehicle list (`pendingOf`), so a vehicle
+  you were removed from disappears at once. Removing a member in the emulators produced no
+  `Listen … failed` on either platform: the list drops the vehicle and its listener closes first.
+- **Prepending items to a `LazyColumn` that is already drawn scrolls the new ones out of view.** It
+  keeps the first visible item, by key, where it was. «Pendiente» appears above the vehicles once its
+  incidents arrive, and the screen opened with it hidden under the top bar. `VehiclesScreen` calls
+  `requestScrollToItem(0)` during composition, before the new rows are measured, when the list was
+  at the very top.
+- **`NavigationBarItem` clears the icon's semantics when the item has a label**, so it is not read
+  twice — and a `Badge` inside the icon goes with it. The badge's description lives on the label
+  (`AparkBottomNavigationBar`), so TalkBack says «Vehículos, Incidencias abiertas: 3».
 - **A listener error that escapes `viewModelScope` closes the app, on both platforms** (spec 021).
   When the session ends, Firestore re-sends every listener without credentials and the rules answer
   PERMISSION_DENIED — often *before* `authStateChanges` emits `null` and `flatMapLatest` cancels

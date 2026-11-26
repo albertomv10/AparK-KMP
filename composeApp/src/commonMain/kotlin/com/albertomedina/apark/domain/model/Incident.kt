@@ -53,9 +53,13 @@ data class IncidentsView(val open: List<Incident>, val resolved: List<Incident>)
 fun incidentsView(incidents: List<Incident>, nowMillis: Long): IncidentsView {
     val retention = Incident.RESOLVED_RETENTION.inWholeMilliseconds
     return IncidentsView(
-        open = incidents.filterNot { it.isResolved }.sortedByDescending { it.createdAt },
+        open = incidents.openNewestFirst(),
         resolved = incidents
             .filter { it.isResolved && nowMillis - it.resolvedAt < retention }
             .sortedByDescending { it.resolvedAt }
     )
 }
+
+/** Las abiertas, de la más reciente a la más antigua: el orden del detalle y de «Pendiente». */
+fun List<Incident>.openNewestFirst(): List<Incident> =
+    filterNot { it.isResolved }.sortedByDescending { it.createdAt }

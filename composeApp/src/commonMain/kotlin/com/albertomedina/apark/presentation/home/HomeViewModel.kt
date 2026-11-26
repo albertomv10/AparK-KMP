@@ -2,11 +2,14 @@ package com.albertomedina.apark.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.albertomedina.apark.domain.model.Incident
+import com.albertomedina.apark.domain.model.OpenIncidents
 import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.domain.logging.CrashReporter
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
 import com.albertomedina.apark.domain.usecase.LocateUserUseCase
+import com.albertomedina.apark.domain.usecase.ObserveOpenIncidentsUseCase
 import com.albertomedina.apark.domain.usecase.UpdateVehicleLocationUseCase
 import com.albertomedina.apark.presentation.components.CLOSE_ZOOM
 import com.albertomedina.apark.presentation.components.CameraMove
@@ -38,6 +41,7 @@ class HomeViewModel(
     private val updateVehicleLocationUseCase: UpdateVehicleLocationUseCase,
     private val getVehicleListUseCase: GetVehicleListUseCase,
     private val locateUserUseCase: LocateUserUseCase,
+    private val observeOpenIncidents: ObserveOpenIncidentsUseCase,
     private val crashReporter: CrashReporter
 ) : ViewModel() {
 
@@ -60,6 +64,27 @@ class HomeViewModel(
 
     init {
         observeAuthState()
+        observeIncidents()
+    }
+
+    /**
+     * Las incidencias abiertas de cada vehículo, para los iconos de su tarjeta (spec 020). Igual que en
+     * *Vehículos*: las escuchas se reabren solo cuando cambia **el conjunto** de vehículos, no cada vez
+     * que alguien aparca, que es lo que más cambia aquí.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeIncidents() {
+        viewModelScope.launch {
+            _uiState
+                .map { state -> state.vehicles.mapTo(mutableSetOf(), Vehicle::id) }
+                .distinctUntilChanged()
+                .flatMapLatest { ids ->
+                    observeOpenIncidents(ids, { authRepository.getCurrentUser() != null }) { error ->
+                        crashReporter.recordError(error, INCIDENTS_LISTENER_CONTEXT)
+                    }
+                }
+                .collect { open -> _uiState.update { it.copy(openIncidents = it.openIncidents + open) } }
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -73,8 +98,9 @@ class HomeViewModel(
                 // suscripciones reiniciadas y una relectura completa a cambio de nada.
                 .distinctUntilChanged()
                 .flatMapLatest { userId ->
-                    // Keep the uid around: the UI needs it to tell owner from shared member.
-                    _uiState.update { it.copy(currentUserId = userId) }
+                    // Keep the uid around: the UI needs it to tell owner from shared member. Lo que se
+                    // supiera de las incidencias era del usuario anterior.
+                    _uiState.update { it.copy(currentUserId = userId, openIncidents = emptyMap()) }
                     // Ata los informes de fallo a un usuario — el uid, nunca el email — y los
                     // desata al cerrar sesión. Va aquí porque es donde el estado de auth ya fluye.
                     crashReporter.setUserId(userId)
@@ -295,6 +321,9 @@ private fun HomeUiState.withVehicles(list: List<Vehicle>): HomeUiState {
 /** Agrupa en Crashlytics los fallos de la escucha de la lista (spec 021). */
 private const val VEHICLES_LISTENER_CONTEXT = "home_vehicles_listener"
 
+/** Y los de las incidencias de la tarjeta (spec 020). */
+private const val INCIDENTS_LISTENER_CONTEXT = "home_incidents_listener"
+
 data class HomeUiState(
     val currentUserId: String? = null,
     val vehicles: List<Vehicle> = emptyList(),
@@ -307,8 +336,17 @@ data class HomeUiState(
     val updatingVehicleId: String? = null,
     val openSettingsTrigger: Int = 0,
     val locationUpdateSuccessData: UndoLocationData? = null,
-    val snackbarMessage: SnackbarMessage? = null
-)
+    val snackbarMessage: SnackbarMessage? = null,
+    /** Lo que se sabe de las incidencias abiertas de cada vehículo, por su id (spec 020). */
+    val openIncidents: Map<String, OpenIncidents> = emptyMap()
+) {
+    /**
+     * Las abiertas de un vehículo, para su tarjeta. Si no se han podido cargar, ninguna: la tarjeta es
+     * para el día a día, y el fallo ya lo dice «Pendiente», en *Vehículos*.
+     */
+    fun openIncidentsOf(vehicleId: String): List<Incident> =
+        (openIncidents[vehicleId] as? OpenIncidents.Loaded)?.incidents.orEmpty()
+}
 
 data class UndoLocationData(
     val vehicleId: String,

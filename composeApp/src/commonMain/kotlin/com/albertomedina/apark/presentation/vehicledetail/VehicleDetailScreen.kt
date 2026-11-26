@@ -79,6 +79,7 @@ import com.albertomedina.apark.presentation.vehicleform.badgeColor
 import com.albertomedina.apark.presentation.vehicleform.hasAvatar
 import com.albertomedina.apark.presentation.vehicleform.label
 import com.albertomedina.apark.presentation.vehicleform.swatch
+import com.albertomedina.apark.presentation.components.SectionTitle
 import com.albertomedina.apark.presentation.components.AparKConfirmDialog
 import com.albertomedina.apark.presentation.components.ParkedText
 import com.albertomedina.apark.presentation.components.StandardAparKButton
@@ -493,16 +494,6 @@ private fun Message(title: String, body: String?, onBack: () -> Unit, modifier: 
         Spacer(Modifier.height(24.dp))
         StandardAparKButton(onClick = onBack) { Text(stringResource(Res.string.back)) }
     }
-}
-
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 24.dp, top = 20.dp, bottom = 4.dp)
-    )
 }
 
 /** Lo que saca de algo: en rojo, con su icono, como en *Cuenta*. */

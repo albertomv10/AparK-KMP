@@ -1,7 +1,5 @@
 package com.albertomedina.apark.presentation.incidents
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -235,15 +233,8 @@ private fun IncidentItem(
             }
         },
         leadingContent = {
-            // El icono en un círculo del color de su categoría: se distinguen de un vistazo. Las
-            // resueltas, en gris, que ya no piden atención.
-            val color = if (resolved) dimmed else incident.kind.color
-            Box(
-                Modifier.size(40.dp).background(color.copy(alpha = 0.16f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(incident.icon, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
-            }
+            // Las resueltas, en gris, que ya no piden atención.
+            IncidentTypeIcon(incident.kind, color = if (resolved) dimmed else incident.kind.color)
         },
         trailingContent = if (onResolve == null && !canDelete) null else {
             {

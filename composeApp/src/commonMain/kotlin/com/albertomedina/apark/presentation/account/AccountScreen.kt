@@ -1,5 +1,6 @@
 package com.albertomedina.apark.presentation.account
 
+import com.albertomedina.apark.presentation.components.SectionTitle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -209,16 +210,6 @@ fun AccountScreen(
             )
         }
     }
-}
-
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 24.dp, top = 20.dp, bottom = 4.dp)
-    )
 }
 
 /** Una acción que saca de algo, la sesión o la cuenta: en rojo, con su icono, sin flecha. */
