@@ -130,6 +130,11 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   `docs/specs/_template/` y este `CHANGELOG.md`.
 
 ### Changed
+- **La tarjeta del mapa, una fila para cada cosa** ([spec 022](docs/specs/022-vehicle-card-layout/spec.md)):
+  arriba el vehículo, con su nombre entero; en medio, cuándo y quién lo aparcó —«Hace 5 min · Edu»—
+  y los iconos de lo que tiene pendiente; abajo, «Aparcar». Antes los iconos compartían fila con el
+  nombre y lo cortaban. Sin la flecha: toda la tarjeta abre el detalle. La tarjeta «+» ya mide lo
+  mismo que las demás; se quedaba 8 dp más baja.
 - **El splash de Android, como el de iOS** ([spec 018](docs/specs/018-splash/spec.md)): fondo blanco
   y el logo nítido en el centro, también en modo oscuro (salvo en Xiaomi con HyperOS, que oscurece el
   fondo por su cuenta). Ahora usa la librería de splash de Android,
