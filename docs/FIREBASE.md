@@ -61,6 +61,7 @@ política TTL (ver [spec 007](specs/007-invite-cleanup/spec.md)).
 | 7 | Descargar las configuraciones | `firebase apps:sdkconfig ANDROID/IOS <appId> --out <ruta>` — **crea antes el directorio**: `--out` no lo hace, y si no existe el comando falla sin dejar fichero |
 | 8 | Desplegar reglas y funciones | `firebase deploy --only firestore:rules,functions` |
 | 9 | Crear la **política TTL** de `invites` sobre `expiresAt` | **Consola** — `firebase-tools` no tiene comando de TTL. Sin ella, las invitaciones se acumulan para siempre |
+| 10 | Crear la **política TTL** del grupo de colecciones `incidents` sobre `expiresAt` | **Consola**, igual que el paso 9. Solo llevan `expiresAt` las incidencias resueltas: se borran 30 días después de resolverlas (spec 019). Sin ella se acumulan, aunque la app ya no las enseña |
 
 La huella SHA del paso 5 se saca del keystore de debug:
 
@@ -119,6 +120,8 @@ minutos**. El error dice exactamente cuántos segundos faltan.
 - [x] Paso 6 — proveedores de Auth: email, Google y Apple
 - [x] Paso 9 — política TTL de `invites` sobre `expiresAt` (hubo que rehacerla: la primera se fue
       con la base que se borró). Tarda en pasar de «creando» a activa; Google admite hasta 24 h
+- [ ] Paso 10 — política TTL de `incidents` sobre `expiresAt` (spec 019), en `apark-dev` y en
+      `apark-617fd`
 - [x] Reglas desplegadas a `apark-dev` y verificadas contra el proyecto activo
 - [x] Funciones desplegadas en `europe-west4`: `cleanupVehicleReferences` (trigger),
       `createVehicleInvite` y `joinVehicleWithCode` (callables)

@@ -23,6 +23,8 @@ const USERS_COLLECTION = "users";
 const USER_VEHICLES_FIELD = "userVehicles";
 const INVITES_COLLECTION = "invites";
 const VEHICLE_ID_FIELD = "vehicleId";
+const VEHICLES_COLLECTION = "vehicles";
+const INCIDENTS_COLLECTION = "incidents";
 
 /**
  * Drops a deleted vehicle's id from the `userVehicles` array of every member.
@@ -114,8 +116,27 @@ async function deleteVehicleInvites(vehicleId: string): Promise<void> {
 }
 
 /**
- * Both cleanups are attempted even if one fails, and neither depends on the other: the member
- * cleanup needs the deleted document's data, while the invitation cleanup only needs its id.
+ * Deletes a removed vehicle's incidents (spec 019).
+ *
+ * Firestore does not delete subcollections with their parent: without this, the incidents would
+ * outlive the vehicle as documents nobody can read — the rules check membership through the
+ * parent, which is gone — but that still count as storage. `recursiveDelete` batches the deletes
+ * itself and does nothing on an empty collection, so a retried invocation is harmless.
+ */
+async function deleteVehicleIncidents(vehicleId: string): Promise<void> {
+    const firestore = getFirestore();
+    const incidents = firestore
+        .collection(VEHICLES_COLLECTION)
+        .doc(vehicleId)
+        .collection(INCIDENTS_COLLECTION);
+    await firestore.recursiveDelete(incidents);
+    logger.info("Deleted incidents for a removed vehicle", { vehicleId });
+}
+
+/**
+ * The three cleanups are attempted even if one fails, and none depends on another: the member
+ * cleanup needs the deleted document's data, while the invitation and incident cleanups only need
+ * its id.
  */
 export const cleanupVehicleReferences = onDocumentDeleted(
     { document: "vehicles/{vehicleId}", region: REGION },
@@ -123,6 +144,7 @@ export const cleanupVehicleReferences = onDocumentDeleted(
         await Promise.all([
             removeVehicleFromMembers(event),
             deleteVehicleInvites(event.params.vehicleId),
+            deleteVehicleIncidents(event.params.vehicleId),
         ]);
     }
 );

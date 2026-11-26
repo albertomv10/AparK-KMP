@@ -20,28 +20,70 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-/** Quién aparcó, visto desde quien mira (spec 016). */
-sealed interface WhoParked {
-    data object You : WhoParked
-    data class Named(val name: String) : WhoParked
-    /** Nadie a quien nombrar: quien aparcó borró su cuenta y el servidor quitó quién fue (spec 012). */
-    data object Unknown : WhoParked
+/**
+ * Quién hizo algo —aparcar, reportar o resolver una incidencia—, visto desde quien mira (specs 016 y
+ * 019): «por ti», «por Edu», o nada si no hay a quién nombrar.
+ */
+sealed interface Who {
+    data object You : Who
+    data class Named(val name: String) : Who
+    /** Nadie a quien nombrar: borró su cuenta, o ya no es miembro y no se sabe su nombre. */
+    data object Unknown : Who
 }
 
-fun whoParked(location: Vehicle.LocationModel, currentUserId: String?): WhoParked {
-    val user = location.user ?: return WhoParked.Unknown
-    if (!currentUserId.isNullOrBlank() && user.uid == currentUserId) return WhoParked.You
+fun whoParked(location: Vehicle.LocationModel, currentUserId: String?): Who {
+    val user = location.user ?: return Who.Unknown
+    if (!currentUserId.isNullOrBlank() && user.uid == currentUserId) return Who.You
     // El nombre, o el email si nunca puso uno: el mismo criterio que la lista de miembros.
     val name = user.name.takeIf { it.isNotBlank() } ?: user.email.takeIf { it.isNotBlank() }
-    return name?.let(WhoParked::Named) ?: WhoParked.Unknown
+    return name?.let(Who::Named) ?: Who.Unknown
+}
+
+/**
+ * Quién es un uid, con los nombres de los miembros del vehículo (spec 019). Las incidencias solo
+ * guardan el uid: si ya no está entre los miembros —se fue, o borró su cuenta—, no se nombra a nadie.
+ */
+fun whoIs(uid: String, currentUserId: String?, names: Map<String, String>): Who {
+    if (uid.isBlank()) return Who.Unknown
+    if (uid == currentUserId) return Who.You
+    return names[uid]?.takeIf { it.isNotBlank() }?.let(Who::Named) ?: Who.Unknown
+}
+
+/**
+ * Las frases de un «cuándo»: una por tipo de tiempo, porque lo que va delante cambia con cada uno
+ * —«hace 5 min», «hoy a las 18:45», «el 01 ene»—. Aparcar, reportar y resolver tienen las suyas.
+ */
+class TimeSentences(
+    val justNow: StringResource,
+    val minutesAgo: StringResource,
+    val hoursAgo: StringResource,
+    val todayAt: StringResource,
+    val yesterdayAt: StringResource,
+    val onDate: StringResource
+)
+
+val ParkedSentences = TimeSentences(
+    Res.string.parked_just_now, Res.string.parked_minutes_ago, Res.string.parked_hours_ago,
+    Res.string.parked_today_at, Res.string.parked_yesterday_at, Res.string.parked_on_date
+)
+
+/**
+ * «Aparcado hace 5 min por Edu», «Reportada ayer a las 18:45 por ti», «Resuelta el 12 nov»: el cuándo
+ * con las frases de [sentences], y el quién si lo hay. Se refresca cada minuto.
+ */
+@Composable
+fun whenWhoText(timestamp: Long, who: Who, sentences: TimeSentences): String {
+    val whenText = sentenceFor(rememberRelativeTime(timestamp), sentences)
+    return when (who) {
+        Who.You -> stringResource(Res.string.parked_by_you, whenText)
+        is Who.Named -> stringResource(Res.string.parked_by, whenText, who.name)
+        Who.Unknown -> whenText
+    }
 }
 
 /**
  * «Aparcado hace 5 min por Edu», en una línea (spec 016): lo que dicen la tarjeta del mapa, la lista de
  * *Vehículos* y el detalle. Sin ubicación, «Aún no aparcado». Si quien aparcó fue quien mira, «por ti».
- *
- * Una frase por tipo de tiempo, y no «Aparcado» + la hora, porque lo que va delante cambia con cada
- * uno: «hace 5 min», «hoy a las 18:45», «el 01 ene». Se refresca cada minuto.
  */
 @Composable
 fun ParkedText(
@@ -55,12 +97,7 @@ fun ParkedText(
     val text = if (location == null || location.timestamp == 0L) {
         stringResource(Res.string.home_not_parked_yet)
     } else {
-        val whenParked = parkedWhen(rememberRelativeTime(location.timestamp))
-        when (val who = whoParked(location, currentUserId)) {
-            WhoParked.You -> stringResource(Res.string.parked_by_you, whenParked)
-            is WhoParked.Named -> stringResource(Res.string.parked_by, whenParked, who.name)
-            WhoParked.Unknown -> whenParked
-        }
+        whenWhoText(location.timestamp, whoParked(location, currentUserId), ParkedSentences)
     }
     Text(text, modifier, color = color, style = style, maxLines = maxLines, overflow = TextOverflow.Ellipsis)
 }
@@ -79,14 +116,14 @@ private fun rememberRelativeTime(timestamp: Long): RelativeTime {
 }
 
 @Composable
-private fun parkedWhen(time: RelativeTime): String = when (time) {
-    RelativeTime.JustNow -> stringResource(Res.string.parked_just_now)
-    is RelativeTime.MinutesAgo -> stringResource(Res.string.parked_minutes_ago, time.minutes)
-    is RelativeTime.HoursAgo -> stringResource(Res.string.parked_hours_ago, time.hours)
-    is RelativeTime.TodayAt -> stringResource(Res.string.parked_today_at, time.time)
-    is RelativeTime.YesterdayAt -> stringResource(Res.string.parked_yesterday_at, time.time)
+private fun sentenceFor(time: RelativeTime, sentences: TimeSentences): String = when (time) {
+    RelativeTime.JustNow -> stringResource(sentences.justNow)
+    is RelativeTime.MinutesAgo -> stringResource(sentences.minutesAgo, time.minutes)
+    is RelativeTime.HoursAgo -> stringResource(sentences.hoursAgo, time.hours)
+    is RelativeTime.TodayAt -> stringResource(sentences.todayAt, time.time)
+    is RelativeTime.YesterdayAt -> stringResource(sentences.yesterdayAt, time.time)
     is RelativeTime.AbsoluteDate ->
-        stringResource(Res.string.parked_on_date, time.day, monthOf(time.monthKey)?.let { stringResource(it) } ?: "")
+        stringResource(sentences.onDate, time.day, monthOf(time.monthKey)?.let { stringResource(it) } ?: "")
 }
 
 private fun monthOf(key: String): StringResource? = when (key) {

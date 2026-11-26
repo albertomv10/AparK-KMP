@@ -3,7 +3,8 @@
  *
  * El objetivo es que la app se pueda recorrer entera sin tocar ningún proyecto real: dos cuentas,
  * tres vehículos, y uno de ellos **compartido entre las dos** — que es el caso que distingue a
- * AparK y el que más cuesta montar a mano.
+ * AparK y el que más cuesta montar a mano. Y unas incidencias (spec 019): abiertas, resueltas, y
+ * una de alguien que ya no es miembro.
  *
  * Se escribe con el Admin SDK, que **se salta las reglas**. Eso es cómodo y es un riesgo: podría
  * sembrar estados que `firestore.rules` jamás permitiría, y entonces lo que se pruebe encima no se
@@ -19,11 +20,12 @@
 import { pathToFileURL } from "node:url";
 import { initializeApp } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
-import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import { getFirestore, Timestamp, type Firestore } from "firebase-admin/firestore";
 
 const PROJECT = "apark-dev";
 const USERS = "users";
 const VEHICLES = "vehicles";
+const INCIDENTS = "incidents";
 
 /** La contraseña es la misma para los dos: esto no sale de tu máquina ni toca ninguna cuenta real. */
 const PASSWORD = "Emulador1234";
@@ -144,7 +146,77 @@ export function buildVehicles(): SeedVehicle[] {
  * No pretende reimplementar las reglas —para eso están los tests de `tools/test/`— sino evitar
  * sembrar un estado imposible, que es el error que haría que todo lo probado encima no valiese.
  */
-export function assertInvariants(vehicles: SeedVehicle[], users: SeedUser[]): void {
+/**
+ * Las incidencias de la spec 019, en `vehicles/{id}/incidents`.
+ *
+ * **Sus fechas van respecto a hoy, no a `T0`**: las resueltas se ven 30 días, y con fechas fijas
+ * estarían todas ocultas. Así que dos siembras dan las mismas incidencias, pero no las mismas horas.
+ */
+export interface SeedIncident {
+    vehicleId: string;
+    id: string;
+    /** Un tipo de la lista, o `custom`. */
+    type: string;
+    /** El nombre de una personalizada; `""` en los demás tipos, como exigen las reglas. */
+    title: string;
+    note: string;
+    reportedBy: string;
+    /** Hace cuánto se reportó. */
+    reportedAgo: number;
+    /** Hace cuánto se resolvió, y quién; sin esto, está abierta. */
+    resolved?: { by: string; ago: number };
+}
+
+const HOUR = 60 * 60 * 1000;
+const DAY = 24 * HOUR;
+
+/** Alguien que fue miembro y ya no lo es: su incidencia sale sin nombre (criterio 2). */
+const FORMER_MEMBER = "seed-antiguo-miembro";
+
+/** La misma lista que `firestore.rules`: la siembra no debe poder saltársela sin que se note. */
+const INCIDENT_TYPES = [
+    "low_fuel", "low_charge", "oil", "washer_fluid", "adblue",
+    "warning_light", "wont_start", "breakdown", "strange_noise", "bulb_out",
+    "puncture", "low_pressure", "tyre_wear",
+    "damage", "cleaning", "items_inside",
+    "custom",
+];
+
+export function buildIncidents(): SeedIncident[] {
+    const shared = "seed-vehicle-compartido";
+    return [
+        { vehicleId: shared, id: "seed-incident-gasolina", type: "low_fuel", title: "", note: "Queda para unos 50 km", reportedBy: EDU.uid, reportedAgo: 2 * HOUR },
+        { vehicleId: shared, id: "seed-incident-golpe", type: "damage", title: "", note: "Rayón en la puerta trasera derecha", reportedBy: ALBERTO.uid, reportedAgo: 3 * DAY },
+        { vehicleId: shared, id: "seed-incident-antiguo", type: "strange_noise", title: "", note: "Chirría al frenar", reportedBy: FORMER_MEMBER, reportedAgo: 12 * DAY },
+        // Una personalizada: lo que no encaja en ningún tipo lleva su propio nombre.
+        { vehicleId: shared, id: "seed-incident-silla", type: "custom", title: "Silla del bebé desmontada", note: "Está en el maletero", reportedBy: EDU.uid, reportedAgo: 5 * HOUR },
+        { vehicleId: shared, id: "seed-incident-presion", type: "low_pressure", title: "", note: "", reportedBy: ALBERTO.uid, reportedAgo: 6 * DAY, resolved: { by: EDU.uid, ago: 5 * DAY } },
+        // Resuelta hace más de 30 días: la app ya no la enseña, y en un proyecto real la caducidad
+        // de Firestore la habría borrado (criterio 10). El emulador no tiene caducidad.
+        { vehicleId: shared, id: "seed-incident-limpieza", type: "cleaning", title: "", note: "", reportedBy: EDU.uid, reportedAgo: 45 * DAY, resolved: { by: ALBERTO.uid, ago: 40 * DAY } },
+        { vehicleId: "seed-vehicle-sin-aparcar", id: "seed-incident-adblue", type: "adblue", title: "", note: "Se ha encendido el aviso", reportedBy: ALBERTO.uid, reportedAgo: 1 * DAY },
+    ];
+}
+
+function incidentDocument(i: SeedIncident, now: number): Record<string, unknown> {
+    const document: Record<string, unknown> = {
+        type: i.type,
+        title: i.title,
+        note: i.note,
+        status: i.resolved ? "resolved" : "open",
+        reportedBy: i.reportedBy,
+        createdAt: Timestamp.fromMillis(now - i.reportedAgo),
+    };
+    if (i.resolved) {
+        const resolvedAt = now - i.resolved.ago;
+        document.resolvedBy = i.resolved.by;
+        document.resolvedAt = Timestamp.fromMillis(resolvedAt);
+        document.expiresAt = Timestamp.fromMillis(resolvedAt + 30 * DAY);
+    }
+    return document;
+}
+
+export function assertInvariants(vehicles: SeedVehicle[], users: SeedUser[], incidents: SeedIncident[] = []): void {
     const known = new Set(users.map((u) => u.uid));
 
     for (const v of vehicles) {
@@ -167,6 +239,23 @@ export function assertInvariants(vehicles: SeedVehicle[], users: SeedUser[]): vo
             throw new Error(`${v.id}: el nombre no cumple lo que exige la regla de creación`);
         }
     }
+
+    for (const i of incidents) {
+        const vehicle = vehicles.find((v) => v.id === i.vehicleId);
+        if (!vehicle) throw new Error(`${i.id}: es de ${i.vehicleId}, que no existe`);
+        if (!INCIDENT_TYPES.includes(i.type)) throw new Error(`${i.id}: el tipo ${i.type} no es de la lista`);
+        const custom = i.type === "custom";
+        if (custom && (i.title.trim() === "" || i.title.length > 40)) {
+            throw new Error(`${i.id}: una personalizada necesita un nombre de 1 a 40`);
+        }
+        if (!custom && i.title !== "") throw new Error(`${i.id}: solo las personalizadas llevan nombre`);
+        if (i.note.length > 280) throw new Error(`${i.id}: la nota pasa de 280`);
+        // Quien la reportó puede haberse ido después; quien la resuelve tiene que estar.
+        if (i.resolved && !vehicle.memberIds.includes(i.resolved.by)) {
+            throw new Error(`${i.id}: la resolvió ${i.resolved.by}, que no es miembro`);
+        }
+        if (i.resolved && i.resolved.ago > i.reportedAgo) throw new Error(`${i.id}: se resolvió antes de reportarse`);
+    }
 }
 
 function connect(): { db: Firestore; auth: Auth } {
@@ -186,19 +275,53 @@ function connect(): { db: Firestore; auth: Auth } {
     return { db: getFirestore(), auth: getAuth() };
 }
 
-/** Deja la colección como si fuera la primera vez: sembrar dos veces tiene que dar lo mismo. */
+/**
+ * Deja la colección como si fuera la primera vez: sembrar dos veces tiene que dar lo mismo. Con sus
+ * subcolecciones, o las incidencias de antes se quedarían colgando de vehículos que ya no existen.
+ */
 async function wipe(db: Firestore, collection: string): Promise<void> {
-    const snapshot = await db.collection(collection).get();
-    await Promise.all(snapshot.docs.map((d) => d.ref.delete()));
+    await db.recursiveDelete(db.collection(collection));
+}
+
+/**
+ * Apaga o enciende los disparadores de Functions en el emulador, a través de su Hub.
+ *
+ * Sembrar borra los vehículos y los vuelve a crear **con el mismo id**. Cada borrado dispara
+ * `cleanupVehicleReferences`, que corre en asíncrono y llega **después** de haberlos recreado:
+ * - se llevaba las incidencias recién sembradas;
+ * - y quitaba de `userVehicles` los ids que la siembra acababa de escribir.
+ *
+ * En producción un id no se reutiliza nunca, así que es una carrera solo de la siembra. Sin el
+ * emulador de Functions arrancado no hay nada que apagar.
+ */
+async function setBackgroundTriggers(enabled: boolean): Promise<void> {
+    const hub = process.env.FIREBASE_EMULATOR_HUB ?? "127.0.0.1:4400";
+    const action = enabled ? "enableBackgroundTriggers" : "disableBackgroundTriggers";
+    try {
+        const response = await fetch(`http://${hub}/functions/${action}`, { method: "PUT" });
+        if (!response.ok) console.warn(`El Hub respondió ${response.status} a ${action}`);
+    } catch {
+        console.warn(`No se pudo llamar a ${action}: ¿está arrancado el emulador de Functions?`);
+    }
 }
 
 export async function seed(): Promise<void> {
+    await setBackgroundTriggers(false);
+    try {
+        await seedData();
+    } finally {
+        await setBackgroundTriggers(true);
+    }
+}
+
+async function seedData(): Promise<void> {
     const { db, auth } = connect();
     const users = [ALBERTO, EDU];
     const vehicles = buildVehicles();
+    const incidents = buildIncidents();
 
     // Antes de tocar nada: si el estado que vamos a sembrar es imposible, mejor no sembrarlo.
-    assertInvariants(vehicles, users);
+    assertInvariants(vehicles, users, incidents);
 
     await Promise.all([wipe(db, USERS), wipe(db, VEHICLES)]);
     const existing = await auth.listUsers();
@@ -222,7 +345,12 @@ export async function seed(): Promise<void> {
         await db.collection(VEHICLES).doc(id).set(data);
     }
 
-    console.log(`\nSembrado: ${users.length} usuarios, ${vehicles.length} vehículos.`);
+    const now = Date.now();
+    for (const i of incidents) {
+        await db.collection(VEHICLES).doc(i.vehicleId).collection(INCIDENTS).doc(i.id).set(incidentDocument(i, now));
+    }
+
+    console.log(`\nSembrado: ${users.length} usuarios, ${vehicles.length} vehículos, ${incidents.length} incidencias.`);
     console.log(`Entra con cualquiera de estos y la contraseña ${PASSWORD}:`);
     for (const u of users) console.log(`  · ${u.email}`);
     console.log("\nEl email ya está verificado, así que la app va directa al mapa.");

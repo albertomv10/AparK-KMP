@@ -149,6 +149,82 @@ service cloud.firestore {
           && resource.data.memberIds.removeAll([request.auth.uid]) == request.resource.data.memberIds
         )
       );
+
+      // Incidents (spec 019): what is wrong with the vehicle, reported and resolved by its members.
+      // Every rule reads the parent vehicle with `get()` to check membership, so a vehicle that has
+      // been deleted takes its incidents' access with it — the cleanup function then deletes them.
+      match /incidents/{incidentId} {
+        function vehicle() {
+          return get(/databases/$(database)/documents/vehicles/$(vehicleId)).data;
+        }
+        function isVehicleMember() {
+          return request.auth != null && request.auth.uid in vehicle().memberIds;
+        }
+        // The incident is its type (spec 019): the category only groups the options in the form and
+        // is not stored. 'custom' is the one type with a name of its own; every other type is
+        // translated by the app, so it stores no text, and `title` is "" — always present, never
+        // missing, like the vehicle's "" for "no data".
+        function incidentTypeOk(d) {
+          return d.type in ['low_fuel', 'low_charge', 'oil', 'washer_fluid', 'adblue',
+                            'warning_light', 'wont_start', 'breakdown', 'strange_noise', 'bulb_out',
+                            'puncture', 'low_pressure', 'tyre_wear',
+                            'damage', 'cleaning', 'items_inside',
+                            'custom'];
+        }
+        function incidentTitleOk(d) {
+          return d.title is string
+              && ((d.type == 'custom' && d.title.trim().size() > 0 && d.title.size() <= 40)
+                  || (d.type != 'custom' && d.title == ''));
+        }
+        function resolutionKeys() {
+          return ['status', 'resolvedBy', 'resolvedAt', 'expiresAt'];
+        }
+
+        allow read: if isVehicleMember();
+
+        // Reporting: always open, always by the caller, always at the server's time. The time is
+        // the server's so that a report written offline still passes when it reaches the server.
+        allow create: if isVehicleMember()
+                      && request.resource.data.keys().hasOnly(
+                           ['type', 'title', 'note', 'status', 'reportedBy', 'createdAt'])
+                      && incidentTypeOk(request.resource.data)
+                      && incidentTitleOk(request.resource.data)
+                      && request.resource.data.note is string
+                      && request.resource.data.note.size() <= 280
+                      && request.resource.data.status == 'open'
+                      && request.resource.data.reportedBy == request.auth.uid
+                      && request.resource.data.createdAt == request.time;
+
+        // Any member may resolve an incident, or undo that. Nothing else about it ever changes:
+        // an incident is not edited, it is deleted and reported again.
+        allow update: if isVehicleMember()
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                           .hasOnly(resolutionKeys())
+                      && (
+                        (
+                          // Resolving. `expiresAt` is the TTL field: the resolved incident is
+                          // deleted 30 days later. The phone computes it, so it is only capped.
+                          resource.data.status == 'open'
+                          && request.resource.data.status == 'resolved'
+                          && request.resource.data.resolvedBy == request.auth.uid
+                          && request.resource.data.resolvedAt == request.time
+                          && request.resource.data.expiresAt is timestamp
+                          && request.resource.data.expiresAt <= request.time + duration.value(31, 'd')
+                        )
+                        ||
+                        (
+                          // Undoing: back to open, and without the three resolution fields.
+                          resource.data.status == 'resolved'
+                          && request.resource.data.status == 'open'
+                          && !request.resource.data.keys().hasAny(['resolvedBy', 'resolvedAt', 'expiresAt'])
+                        )
+                      );
+
+        // Deleting is for correcting mistakes: the reporter, or the vehicle's owner.
+        allow delete: if isVehicleMember()
+                      && (resource.data.reportedBy == request.auth.uid
+                          || vehicle().ownerId == request.auth.uid);
+      }
     }
   }
 }
