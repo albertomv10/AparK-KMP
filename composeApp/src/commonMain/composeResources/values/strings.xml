@@ -348,4 +348,13 @@
     <string name="time_on_date">el %1$s %2$s</string>
     <string name="incidents_card_more">%1$s y %2$d más</string>
     <string name="tab_badge_incidents">Incidencias abiertas: %1$d</string>
+
+    <!-- Spec 022: la frase corta de la tarjeta del mapa -->
+    <string name="card_time_just_now">Hace un momento</string>
+    <string name="card_time_minutes_ago">Hace %1$d min</string>
+    <string name="card_time_hours_ago">Hace %1$d h</string>
+    <string name="card_time_today_at">Hoy a las %1$s</string>
+    <string name="card_time_yesterday_at">Ayer a las %1$s</string>
+    <string name="card_time_on_date">El %1$s %2$s</string>
+    <string name="card_by_you">tú</string>
 </resources>

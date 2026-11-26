@@ -348,4 +348,13 @@
     <string name="time_on_date">le %1$s %2$s</string>
     <string name="incidents_card_more">%1$s et %2$d de plus</string>
     <string name="tab_badge_incidents">Incidents ouverts : %1$d</string>
+
+    <!-- Spec 022 -->
+    <string name="card_time_just_now">À l'instant</string>
+    <string name="card_time_minutes_ago">Il y a %1$d min</string>
+    <string name="card_time_hours_ago">Il y a %1$d h</string>
+    <string name="card_time_today_at">Aujourd'hui à %1$s</string>
+    <string name="card_time_yesterday_at">Hier à %1$s</string>
+    <string name="card_time_on_date">Le %1$s %2$s</string>
+    <string name="card_by_you">toi</string>
 </resources>
