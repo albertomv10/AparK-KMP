@@ -16,12 +16,12 @@ import com.albertomedina.apark.presentation.vehicleform.reduce
 import com.albertomedina.apark.presentation.vehicleform.toSave
 import com.albertomedina.apark.presentation.vehicleform.withNameError
 import com.albertomedina.apark.utils.SnackbarMessage
+import com.albertomedina.apark.utils.catchListenerFailure
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -83,7 +83,8 @@ class EditVehicleViewModel(
                     if (uid.isNullOrBlank()) flowOf(null to null)
                     else getVehicleListUseCase(uid).map { vehicles -> uid to vehicles.firstOrNull { it.id == vehicleId } }
                 }
-                .catch { error ->
+                // Si la sesión terminó, no es un fallo: la salida la lleva `SessionViewModel` (spec 021).
+                .catchListenerFailure({ authRepository.getCurrentUser() != null }) { error ->
                     crashReporter.recordFailure(LOAD_FAILED_CONTEXT, error.message)
                     _uiState.update { it.copy(closeRequested = true) }
                 }

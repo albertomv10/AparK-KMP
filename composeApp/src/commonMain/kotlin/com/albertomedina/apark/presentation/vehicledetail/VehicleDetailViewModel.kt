@@ -16,12 +16,12 @@ import com.albertomedina.apark.domain.usecase.RemoveUserFromVehicleUseCase
 import com.albertomedina.apark.domain.usecase.RemoveVehicleMemberUseCase
 import com.albertomedina.apark.domain.usecase.TransferVehicleOwnershipUseCase
 import com.albertomedina.apark.utils.SnackbarMessage
+import com.albertomedina.apark.utils.catchListenerFailure
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -96,7 +96,8 @@ class VehicleDetailViewModel(
                         getVehicleListUseCase(uid).map { vehicles -> uid to vehicles.firstOrNull { it.id == vehicleId } }
                     }
                 }
-                .catch { error ->
+                // Si la sesión terminó, no es un fallo: la salida la lleva `SessionViewModel` (spec 021).
+                .catchListenerFailure({ authRepository.getCurrentUser() != null }) { error ->
                     crashReporter.recordFailure(LOAD_FAILED_CONTEXT, error.message)
                     _uiState.update { it.copy(isLoading = false, loadFailed = true) }
                 }

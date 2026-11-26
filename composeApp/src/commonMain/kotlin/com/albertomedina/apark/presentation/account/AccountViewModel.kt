@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.albertomedina.apark.domain.auth.AuthFailure
 import com.albertomedina.apark.domain.auth.AuthFailureReason
 import com.albertomedina.apark.domain.auth.SignInProvider
+import com.albertomedina.apark.domain.logging.CrashReporter
 import com.albertomedina.apark.domain.repository.AuthRepository
 import com.albertomedina.apark.domain.settings.SettingsRepository
 import com.albertomedina.apark.domain.settings.ThemeMode
@@ -15,10 +16,10 @@ import com.albertomedina.apark.domain.usecase.SyncUserProfileUseCase
 import com.albertomedina.apark.domain.usecase.USER_NAME_MAX_LENGTH
 import com.albertomedina.apark.domain.usecase.UpdateUserNameUseCase
 import com.albertomedina.apark.domain.usecase.UserNameError
+import com.albertomedina.apark.utils.catchListenerFailure
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -28,7 +29,8 @@ class AccountViewModel(
     private val updateUserNameUseCase: UpdateUserNameUseCase,
     private val syncUserProfileUseCase: SyncUserProfileUseCase,
     private val signOutUseCase: SignOutUseCase,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val crashReporter: CrashReporter
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AccountUiState())
@@ -43,8 +45,12 @@ class AccountViewModel(
             viewModelScope.launch {
                 getUserUseCase(uid)
                     // Al cerrar sesión el listener recibe PERMISSION_DENIED antes de que la pantalla
-                    // se vaya. No es un fallo que contar: es la sesión terminando.
-                    .catch { }
+                    // se vaya: eso no es un fallo, es la sesión terminando. Con la sesión viva sí lo
+                    // es, y se registra; no se avisa, porque lo único que se escucha es el nombre
+                    // (spec 021).
+                    .catchListenerFailure({ authRepository.getCurrentUser() != null }) { error ->
+                        crashReporter.recordError(error, USER_LISTENER_CONTEXT)
+                    }
                     .collect { user -> _uiState.update { it.copy(name = user.name) } }
             }
         }
@@ -130,6 +136,9 @@ data class NameDialogState(
     val isSaving: Boolean = false,
     val errorKey: String? = null
 )
+
+/** Agrupa en Crashlytics los fallos de la escucha del nombre (spec 021). */
+private const val USER_LISTENER_CONTEXT = "account_user_listener"
 
 data class AccountUiState(
     val name: String = "",
