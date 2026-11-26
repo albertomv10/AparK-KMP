@@ -285,6 +285,13 @@ host**: sin él, la app habla con `apark-dev` como siempre.
 Una build de **release no puede encenderlos**: en Android el `BuildConfig` que lo lee solo se genera
 para la variante debug, y en iOS el código que lo lee está bajo `#if DEBUG`.
 
+**En Android, ese mismo valor permite el HTTP sin cifrar**, que los emuladores necesitan.
+- Android lo bloquea desde la 9, y sin permitirlo el inicio de sesión fallaba con «Cleartext HTTP
+  traffic to 10.0.2.2 not permitted».
+- Lo enciende el marcador `usesCleartextTraffic` del manifiesto, y solo en la variante debug con
+  `APARK_EMULATOR_HOST` puesto.
+- La debug de siempre, contra `apark-dev`, sigue sin HTTP, igual que la release.
+
 ### Lo que los emuladores NO dan
 
 - **Google y Apple no funcionan**: los SDK nativos devuelven un token real que el emulador no
