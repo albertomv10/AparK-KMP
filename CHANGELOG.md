@@ -166,6 +166,16 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   y con él se va la vía de respaldo que todavía lo leía en la función de limpieza de vehículos.
 
 ### Fixed
+- **La app ya no se cierra cuando una escucha de Firestore falla**
+  ([spec 021](docs/specs/021-session-listener-errors/spec.md)).
+  - Si la sesión terminaba desde fuera —contraseña o email cambiados en otro sitio, cuenta
+    deshabilitada o borrada—, las escuchas de *Inicio* y *Vehículos* podían recibir el rechazo antes
+    de enterarse de que ya no había sesión. Nadie recogía ese error, y la app se cerraba, incluso al
+    arrancar.
+  - Ahora lleva al login, como debía.
+  - Si una escucha falla con la sesión todavía viva, la app avisa con «No se han podido cargar tus
+    vehículos», se queda con lo que ya enseñaba, y el fallo llega a Crashlytics.
+  - Cuando la sesión termina, ya no se registra como fallo, tampoco desde el detalle ni desde editar.
 - **El logo del splash de Android se veía con los bordes dentados.** Era un PNG de 2000 px que Android
   ampliaba y luego reducía mucho; ahora es vectorial.
 - **La cámara del mapa volvía sola al vehículo elegido** cada vez que cambiaba cualquier dato: que

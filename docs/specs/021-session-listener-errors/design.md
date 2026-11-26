@@ -35,7 +35,7 @@ Recibe lambdas y no el repositorio, para poder probarla sin un `AuthRepository` 
 |---------|--------|
 | `utils/ListenerFailures.kt` (nuevo) | `catchListenerFailure` |
 | `presentation/home/HomeViewModel.kt` · `HomeScreen.kt` | La recoge dentro del `flatMapLatest`: registra y avisa con `error_vehicles_load`. Se queda la lista que hubiera |
-| `presentation/vehicles/VehiclesViewModel.kt` · `VehiclesScreen.kt` | Igual, con `errorKey = ERROR_LOAD_KEY`. La pantalla elige el texto según la clave, porque hasta ahora enseñaba siempre el de reordenar |
+| `presentation/vehicles/VehiclesViewModel.kt` · `VehiclesScreen.kt` | Igual, con `errorKey = ERROR_LOAD_KEY`, y deja de cargar (`isLoading = false`): sin nada en caché, la lista ya no va a llegar, y la ruedecita se quedaba para siempre. Se vio en Android, en una instalación nueva. La pantalla elige el texto según la clave, porque hasta ahora enseñaba siempre el de reordenar, y el de carga dura `Long`, como en *Inicio* |
 | `presentation/account/AccountViewModel.kt` | Su `.catch { }` pasa a la función común: registra, sin aviso |
 | `presentation/vehicledetail/VehicleDetailViewModel.kt` · `presentation/editvehicle/EditVehicleViewModel.kt` | Su `.catch` pasa a la función común. Hacen lo mismo que antes, pero ya no registran cuando la sesión terminó |
 | `di/SharedModule.kt` | `crashReporter` en `VehiclesViewModel` y `AccountViewModel` |

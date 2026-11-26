@@ -1,7 +1,7 @@
 # Spec: Que la app no se cierre cuando falla una escucha de Firestore
 
 - **ID**: 021-session-listener-errors
-- **Estado**: Aprobada — diseño en [design.md](design.md)
+- **Estado**: Implementada — diseño en [design.md](design.md)
 - **Fecha**: 2026-11-26
 
 > El número 020 está reservado para lo que la spec 019 deja pendiente de las incidencias. Esta
