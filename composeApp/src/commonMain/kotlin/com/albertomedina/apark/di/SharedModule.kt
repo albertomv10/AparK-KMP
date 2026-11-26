@@ -176,7 +176,8 @@ val sharedModule = module {
         VehiclesViewModel(
             authRepository = get(),
             getVehicleListUseCase = get(),
-            setVehicleOrderUseCase = get()
+            setVehicleOrderUseCase = get(),
+            crashReporter = get()
         )
     }
 
@@ -187,7 +188,8 @@ val sharedModule = module {
             updateUserNameUseCase = get(),
             syncUserProfileUseCase = get(),
             signOutUseCase = get(),
-            settingsRepository = get()
+            settingsRepository = get(),
+            crashReporter = get()
         )
     }
 

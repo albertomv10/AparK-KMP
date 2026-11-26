@@ -17,6 +17,7 @@ import com.albertomedina.apark.presentation.components.STREET_ZOOM
 import com.albertomedina.apark.presentation.components.cameraMoveFor
 import com.albertomedina.apark.presentation.components.mapLocation
 import com.albertomedina.apark.utils.SnackbarMessage
+import com.albertomedina.apark.utils.catchListenerFailure
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -78,7 +79,12 @@ class HomeViewModel(
                     // desata al cerrar sesión. Va aquí porque es donde el estado de auth ya fluye.
                     crashReporter.setUserId(userId)
                     if (!userId.isNullOrBlank()) {
+                        // Si la escucha falla, se queda la lista que hubiera y se avisa (spec 021).
                         getVehicleListUseCase(userId)
+                            .catchListenerFailure({ authRepository.getCurrentUser() != null }) { error ->
+                                crashReporter.recordError(error, VEHICLES_LISTENER_CONTEXT)
+                                _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_vehicles_load")) }
+                            }
                     } else {
                         flowOf(emptyList())
                     }
@@ -285,6 +291,9 @@ private fun HomeUiState.withVehicles(list: List<Vehicle>): HomeUiState {
     val index = followed ?: selectedVehicleIndex
     return copy(vehicles = list, selectedVehicleIndex = index, selectedVehicleId = list.getOrNull(index)?.id)
 }
+
+/** Agrupa en Crashlytics los fallos de la escucha de la lista (spec 021). */
+private const val VEHICLES_LISTENER_CONTEXT = "home_vehicles_listener"
 
 data class HomeUiState(
     val currentUserId: String? = null,
