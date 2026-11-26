@@ -63,14 +63,26 @@ El motivo de fondo es que la app es **compartida**. Su valor no es solo saber d�
 sino que todos sepan **qué le pasa**. Una chapita con los pendientes es lo que convierte eso en algo
 que se ve sin buscarlo — y eso el mapa no lo da.
 
-**Hasta que lleguen las incidencias, la pestaña aporta poco**, y se asume: lo único que solo se hace
-ahí es ordenar ([spec 016](specs/016-vehicle-cards/spec.md)). No se le inventan funciones para
-justificarla. La pestaña se justifica con lo que se describe a continuación.
+**Hasta que llegaron las incidencias, la pestaña aportaba poco**, y se asumió: lo único que solo se
+hacía ahí era ordenar ([spec 016](specs/016-vehicle-cards/spec.md)). No se le inventaron funciones
+para justificarla. Desde la [spec 020](specs/020-pending-incidents/spec.md) se justifica con lo que se
+describe a continuación.
 
 ### Cómo se verán los pendientes (decidido para la fase 3)
 
-Ni las incidencias ni los vencimientos existen todavía. Lo que sigue es dónde irán cuando existan,
-decidido de antemano para que la spec que las construya parta de aquí.
+> **Estado, 2026-11-26**: las incidencias ya se ven así, desde la
+> [spec 020](specs/020-pending-incidents/spec.md), con tres diferencias con lo que sigue:
+> - **las filas de los vehículos no llevan iconos**: lo pendiente ya está encima, y repetirlo en cada
+>   fila no aportaba;
+> - **«Pendiente» no dice quién reportó cada cosa**, solo el vehículo y cuándo. El nombre exigiría
+>   llamar a `getVehicleMembers` por cada vehículo al entrar en la pestaña; se ve en el detalle;
+> - **la pestaña sigue llamándose *Vehículos***: es la lista de vehículos, con lo pendiente encima.
+>
+> Los vencimientos (la ITV) todavía no existen; cuando existan, entrarán en la misma sección y en la
+> misma esquina de la tarjeta.
+
+Lo que sigue se decidió antes de que existieran las incidencias, para que la spec que las
+construyera partiera de aquí.
 
 **En *Vehículos*, primero lo pendiente de todos y después cada vehículo:**
 
@@ -112,8 +124,9 @@ se decide con las incidencias.
   obliguen a rehacer la tarjeta.
 
 **El coste**: pintar los tipos exige saber de qué tipo es cada incidencia abierta, no solo contarlas,
-así que el `count()` de [`DATA-MODEL.md`](DATA-MODEL.md) §5 no basta. Con diez vehículos como mucho,
-sirve una consulta de las incidencias abiertas por vehículo. Se decide en la spec de incidencias.
+así que el `count()` de [`DATA-MODEL.md`](DATA-MODEL.md) §5 no basta. La spec 020 abre una escucha
+por vehículo —la misma consulta que el detalle, que el SDK de Firestore comparte— y de ahí salen la
+sección, los iconos y la chapita.
 
 ---
 

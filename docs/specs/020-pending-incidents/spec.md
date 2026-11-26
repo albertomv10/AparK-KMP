@@ -1,7 +1,7 @@
 # Spec: Lo pendiente de los vehículos, a la vista
 
 - **ID**: 020-pending-incidents
-- **Estado**: Aprobada
+- **Estado**: Implementada — diseño en [design.md](design.md)
 - **Fecha**: 2026-11-26
 
 ## Problema / Por qué
@@ -68,7 +68,8 @@ está*— empieza a cumplirse con esto.
 3. **Dado** una fila de «Pendiente», **cuando** la toco, **entonces** se abre el detalle de su
    vehículo.
 4. **Dado** la lista de vehículos, **cuando** la veo, **entonces** sus filas son como hoy, y ordenar
-   funciona igual que antes.
+   funciona igual que antes. «Ordenar» está junto al título «Tus vehículos», y no en la barra de
+   arriba (cambio de Alberto al probarla).
 
 **La tarjeta del mapa**
 

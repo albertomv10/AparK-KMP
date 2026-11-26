@@ -256,7 +256,7 @@ cuando duela, no antes (decisión 4).
 | R3 ~~`incidents where status == open order by createdAt`~~ | **ninguno**: la spec 019 escucha la subcolección entera y separa abiertas y resueltas en el móvil. La TTL de las resueltas la mantiene pequeña |
 | R5 `maintenance order by performedAt` | automático |
 | S4 `collectionGroup(reminders) where dueDate <= X` | **grupo de colección** sobre `dueDate` |
-| R4 `collectionGroup(incidents) …` | pendiente, solo si se implementa |
+| R4 ~~`collectionGroup(incidents) …`~~ | **ninguno**: la spec 020 abre una escucha de la subcolección entera por vehículo, la misma que el detalle, y no usa `count()`. El SDK comparte las escuchas de una misma consulta |
 
 Todos deben acabar versionados en `firestore.indexes.json`, que hoy está vacío.
 

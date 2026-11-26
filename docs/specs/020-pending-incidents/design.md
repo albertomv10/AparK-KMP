@@ -116,3 +116,19 @@ más». Una personalizada se anuncia con su nombre.
   verificar.
 - **Tres ViewModels registran el mismo fallo**, cada uno con su contexto, igual que ya pasa con la
   lista de vehículos.
+
+## Lo que salió al probarla
+
+- **La carrera no pasó.** Al sacar a alguien de un vehículo en los emuladores, ni iOS ni Android
+  registraron `Listen … failed`, aunque sí lo registran cuando se deniega la lectura: la lista quita
+  el vehículo, y su escucha se cierra antes de que el servidor la rechace.
+- **La lista se abría con «Pendiente» tapado bajo la barra.** `LazyColumn` mantiene en su sitio la
+  fila que estaba arriba cuando aparece algo encima, y la sección llega después que los vehículos. Si
+  la lista estaba arriba del todo, `VehiclesScreen` pide `requestScrollToItem(0)` en la composición,
+  antes de medir las filas nuevas.
+- **«Ordenar» pasa al título «Tus vehículos»** (`SectionTitle` con `action`), a petición de Alberto:
+  es lo que ordena. «Hecho» sale en el mismo sitio, y el título se ve también mientras se ordena,
+  así que el botón no se mueve de la vista.
+- **El lector de pantalla no anunciaba la chapita.** Cuando la pestaña tiene etiqueta,
+  `NavigationBarItem` borra la semántica del icono, y la chapita va dentro. La descripción pasó a la
+  etiqueta: «Vehículos, Incidencias abiertas: 3».

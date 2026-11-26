@@ -9,6 +9,18 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **Lo pendiente de los vehículos, a la vista** ([spec 020](docs/specs/020-pending-incidents/spec.md)):
+  las incidencias ya no se ven solo abriendo cada vehículo.
+  - Arriba en *Vehículos*, **«Pendiente»**: las abiertas de todos tus vehículos, la más reciente
+    primero, con su icono, el vehículo y cuándo. Tocar una abre su detalle. Sin ninguna, «Todo en
+    orden»; si no se han podido cargar, lo dice en lugar de afirmarlo.
+  - En la **tarjeta del mapa**, un icono por tipo entre el nombre y la flecha, como mucho tres y
+    después «+N», sin cambiar el alto de la tarjeta.
+  - En la pestaña *Vehículos*, una **chapita** con las incidencias abiertas, visible desde cualquier
+    pestaña. Cuenta lo que está sin resolver, no lo que no has visto: solo baja al resolver o borrar.
+  - Todo en tiempo real y sin conexión, como el detalle.
+  - «Ordenar» pasa de la barra superior al título «Tus vehículos», que es lo que ordena; «Hecho»
+    sale en el mismo sitio.
 - **Las incidencias de un vehículo** ([spec 019](docs/specs/019-incidents/spec.md)): en el detalle,
   cualquier miembro puede reportar qué le pasa al vehículo.
   - Se elige qué le pasa de una lista separada por categorías —niveles y energía, mecánica y
