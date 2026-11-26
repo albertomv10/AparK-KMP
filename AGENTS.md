@@ -326,6 +326,16 @@ graphify path "A" "B" --undirected
   app, when the link is opened — and before this the app stayed on tabs where everything failed. When
   an operation on the current user comes back as a dead session, `FirebaseAuthRepository` signs out
   itself, which is what triggers the exit.
+- **A listener error that escapes `viewModelScope` closes the app, on both platforms** (spec 021).
+  When the session ends, Firestore re-sends every listener without credentials and the rules answer
+  PERMISSION_DENIED — often *before* `authStateChanges` emits `null` and `flatMapLatest` cancels
+  them. `HomeViewModel` and `VehiclesViewModel` did not catch it, and an app started with a session
+  the server no longer accepted crashed on launch. Every Firestore flow collected in a ViewModel goes
+  through `catchListenerFailure` (`utils/ListenerFailures.kt`), **inside** the `flatMapLatest` — outside,
+  the error would also end the session listener. It tells the two cases apart with
+  `getCurrentUser()`, not `authStateChanges`: Firebase clears the user before it tells Firestore, so
+  by the time the denial arrives the session is already known to be gone, and that is not a failure.
+  With the session alive it is one: it goes to Crashlytics, and Home and Vehicles say so.
 - **Parking signs `ParkedBy.email` with the email in the ID token** (`tokenEmail()`), not the one in
   `users` nor the profile's. The rule compares it with `request.auth.token.email`; the document lags
   behind after an email change, and **`reload()` updates the profile but not the token** — which is
