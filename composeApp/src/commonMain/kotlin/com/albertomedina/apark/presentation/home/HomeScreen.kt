@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
@@ -41,7 +40,7 @@ import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.domain.model.VehicleType
 import com.albertomedina.apark.presentation.components.AparKMap
 import com.albertomedina.apark.presentation.components.LocationPermissionHandler
-import com.albertomedina.apark.presentation.components.ParkedText
+import com.albertomedina.apark.presentation.components.ShortParkedText
 import com.albertomedina.apark.presentation.components.mapLocation
 import com.albertomedina.apark.presentation.incidents.IncidentTypeIcon
 import com.albertomedina.apark.presentation.incidents.cardIncidents
@@ -343,20 +342,28 @@ fun HomeScreen(
 
 /**
  * El alto mínimo de las tarjetas del carrusel (spec 016). Las de vehículo llegan a él por su propio
- * contenido, que es igual en todas —la fila del nombre, una línea y el botón—, así que todas miden lo
- * mismo y el carrusel no cambia de alto al deslizar. La de «+» lo usa para igualarse con ellas. No es
- * una altura fija: con la letra grande, las tarjetas de vehículo crecen todas a la vez.
+ * contenido, que es igual en todas —la fila del nombre, la del estado y el botón—, así que todas miden
+ * lo mismo y el carrusel no cambia de alto al deslizar. La de «+» lo usa para igualarse con ellas. No
+ * es una altura fija: con la letra grande, las tarjetas de vehículo crecen todas a la vez.
+ *
+ * 16 + 32 (nombre) + 12 + 24 (estado) + 12 + 48 (botón) + 16. La fila del estado mide 24 desde la spec
+ * 022, lo que los iconos de las incidencias. El botón dibuja 40, pero ocupa 48: Material 3 le reserva
+ * su zona táctil mínima. Antes se contaba con 40, y la tarjeta de «+» se quedaba 8 dp más baja.
  */
-private val CardMinHeight = 148.dp
+private val CardMinHeight = 160.dp
 
 /**
- * Lo que hace falta para el día a día, y nada más (spec 016): qué vehículo es, dónde se dejó y quién,
- * y aparcarlo. Borrar y ordenar viven en el detalle y en *Vehículos*.
+ * Lo que hace falta para el día a día, y nada más (spec 016), **una fila para cada cosa** (spec 022):
+ * quién es, cómo está —cuándo y quién lo aparcó, y qué le pasa— y aparcarlo. Borrar y ordenar viven en
+ * el detalle y en *Vehículos*.
+ *
+ * Sin flecha: toda la tarjeta abre el detalle, y el lector de pantalla lo anuncia. Le quitaba al nombre
+ * el sitio que necesitaba.
  */
 @Composable
 fun VehicleCard(
     vehicle: Vehicle,
-    /** Sus incidencias abiertas (spec 020): un icono por tipo, entre el nombre y la flecha. */
+    /** Sus incidencias abiertas (spec 020): un icono por tipo, en la fila del estado (spec 022). */
     incidents: List<Incident>,
     currentUserId: String?,
     /** Hay una operación en marcha, de este vehículo o de otro: aparcar queda deshabilitado. */
@@ -381,9 +388,8 @@ fun VehicleCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // El nombre y la flecha que dice que la tarjeta abre el detalle, y entre los dos los iconos
-            // de lo pendiente (spec 020): el nombre se corta antes que ellos. Mide al menos lo que el
-            // avatar, para que con avatar y sin él —y con iconos y sin ellos— las tarjetas midan igual.
+            // Quién es: el avatar y el nombre, solos, para que el nombre se vea entero. Mide al menos lo
+            // que el avatar, para que con avatar y sin él las tarjetas midan igual.
             Row(
                 modifier = Modifier.fillMaxWidth().heightIn(min = 32.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -399,22 +405,26 @@ fun VehicleCard(
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.weight(1f)
                 )
-                if (incidents.isNotEmpty()) {
-                    IncidentIcons(incidents, Modifier.padding(start = 8.dp))
-                }
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
 
-            ParkedText(
-                location = vehicle.lastLocation,
-                currentUserId = currentUserId,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            // Cómo está: cuándo y quién, y lo que tiene pendiente. Si no cabe, se corta la frase, nunca
+            // los iconos. Mide al menos lo que ellos, así que con iconos y sin ellos mide lo mismo.
+            Row(
+                modifier = Modifier.fillMaxWidth().heightIn(min = 24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ShortParkedText(
+                    location = vehicle.lastLocation,
+                    currentUserId = currentUserId,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                )
+                if (incidents.isNotEmpty()) {
+                    Spacer(Modifier.width(8.dp))
+                    IncidentIcons(incidents)
+                }
+            }
 
             // Mientras aparca, el indicador va dentro del botón: cambiar el botón por un indicador
             // suelto cambiaba el alto de la tarjeta.

@@ -10,6 +10,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import apark.composeapp.generated.resources.*
@@ -72,18 +74,20 @@ val ParkedSentences = TimeSentences(
  * con las frases de [sentences], y el quién si lo hay. Se refresca cada minuto.
  */
 @Composable
-fun whenWhoText(timestamp: Long, who: Who, sentences: TimeSentences): String {
-    val whenText = sentenceFor(rememberRelativeTime(timestamp), sentences)
-    return when (who) {
-        Who.You -> stringResource(Res.string.parked_by_you, whenText)
-        is Who.Named -> stringResource(Res.string.parked_by, whenText, who.name)
-        Who.Unknown -> whenText
-    }
+fun whenWhoText(timestamp: Long, who: Who, sentences: TimeSentences): String =
+    withWho(sentenceFor(rememberRelativeTime(timestamp), sentences), who)
+
+@Composable
+private fun withWho(whenText: String, who: Who): String = when (who) {
+    Who.You -> stringResource(Res.string.parked_by_you, whenText)
+    is Who.Named -> stringResource(Res.string.parked_by, whenText, who.name)
+    Who.Unknown -> whenText
 }
 
 /**
- * «Aparcado hace 5 min por Edu», en una línea (spec 016): lo que dicen la tarjeta del mapa, la lista de
- * *Vehículos* y el detalle. Sin ubicación, «Aún no aparcado». Si quien aparcó fue quien mira, «por ti».
+ * «Aparcado hace 5 min por Edu», en una línea (spec 016): lo que dicen la lista de *Vehículos* y el
+ * detalle. Sin ubicación, «Aún no aparcado». Si quien aparcó fue quien mira, «por ti». La tarjeta del
+ * mapa usa la corta, [ShortParkedText].
  */
 @Composable
 fun ParkedText(
@@ -100,6 +104,61 @@ fun ParkedText(
         whenWhoText(location.timestamp, whoParked(location, currentUserId), ParkedSentences)
     }
     Text(text, modifier, color = color, style = style, maxLines = maxLines, overflow = TextOverflow.Ellipsis)
+}
+
+/**
+ * Las frases de la tarjeta del mapa (spec 022): solo el cuándo, con mayúscula inicial y sin
+ * «Aparcado», que en una tarjeta de aparcar se sobreentiende. Las de «Pendiente» no sirven: empiezan
+ * en minúscula, y en inglés llevan «on».
+ */
+val CardTimeSentences = TimeSentences(
+    Res.string.card_time_just_now, Res.string.card_time_minutes_ago, Res.string.card_time_hours_ago,
+    Res.string.card_time_today_at, Res.string.card_time_yesterday_at, Res.string.card_time_on_date
+)
+
+/**
+ * «Hace 5 min · Edu», «Ayer a las 18:45 · tú», o solo el cuándo si no hay a quién nombrar (spec 022).
+ * [you] es como se nombra a quien mira, ya traducido.
+ */
+fun shortParkedLine(whenText: String, who: Who, you: String): String = when (who) {
+    Who.You -> "$whenText · $you"
+    is Who.Named -> "$whenText · ${who.name}"
+    Who.Unknown -> whenText
+}
+
+/**
+ * La frase de la tarjeta del mapa (spec 022): «Hace 5 min · Edu». Corta para que quepan los iconos de
+ * las incidencias a su lado, y siempre corta, con iconos o sin ellos, para que no cambie de forma al
+ * deslizar. Sin ubicación, «Aún no aparcado».
+ *
+ * El lector de pantalla dice la frase larga de siempre, «Aparcado hace 5 min por Edu»: el «·» no se lee
+ * bien, y fuera de la vista el verbo sí hace falta.
+ */
+@Composable
+fun ShortParkedText(
+    location: Vehicle.LocationModel?,
+    currentUserId: String?,
+    modifier: Modifier = Modifier,
+    style: TextStyle = LocalTextStyle.current,
+    color: Color = Color.Unspecified
+) {
+    if (location == null || location.timestamp == 0L) {
+        val text = stringResource(Res.string.home_not_parked_yet)
+        Text(text, modifier, color = color, style = style, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        return
+    }
+    val who = whoParked(location, currentUserId)
+    val time = rememberRelativeTime(location.timestamp)
+    val short = shortParkedLine(sentenceFor(time, CardTimeSentences), who, stringResource(Res.string.card_by_you))
+    val long = withWho(sentenceFor(time, ParkedSentences), who)
+    Text(
+        short,
+        modifier.semantics { contentDescription = long },
+        color = color,
+        style = style,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
 }
 
 @Composable
