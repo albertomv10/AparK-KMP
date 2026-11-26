@@ -112,6 +112,10 @@ se decide con las incidencias.
 
 **En la tarjeta del mapa, iconos por tipo en la esquina de arriba a la derecha**:
 
+> **Estado, 2026-11-26**: la [spec 022](specs/022-vehicle-card-layout/spec.md) los bajó a la segunda
+> fila, junto a cuándo y quién lo aparcó. En la primera cortaban el nombre. La tarjeta tiene ahora
+> una fila para cada cosa: quién es, cómo está y qué haces; y sin flecha.
+
 - **Un icono por tipo de pendiente, no por incidencia**: dos incidencias de limpieza son una sola 🧽.
 - **Como mucho tres, y después «+N»**, para no comerse el nombre.
 - **Iconos y no un número.** Un número obliga a abrir el detalle para saber si importa; «⛽» lo dice

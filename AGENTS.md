@@ -130,12 +130,12 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 | `domain.repository` | Repository interfaces |
 | `domain.usecase` | One `operator fun invoke()` each |
 | `presentation.splash` · `presentation.auth.*` | Splash, login, register, verification, reset |
-| `presentation.home` | Map + vehicle carousel: park, and open the detail. No edit mode since spec 016. Each card shows one icon per open incident type (spec 020) |
+| `presentation.home` | Map + vehicle carousel: park, and open the detail. No edit mode since spec 016. One row per job on each card (spec 022): who it is, how it is — `ShortParkedText` and one icon per open incident type — and «Aparcar» |
 | `presentation.vehicles` · `presentation.account` | The vehicle list, with «Pendiente» on top — every vehicle's open incidents (spec 020) — and where vehicles are reordered (spec 016); and the account: name, email, password, theme, sign out, delete |
 | `presentation.addvehicle` · `presentation.editvehicle` · `presentation.vehicledetail` | Create/join, edit, and the detail: where it is, its incidents, its data, its members, transfer and remove |
 | `presentation.incidents` | The incidents section of the detail (spec 019): the list, the report sheet, resolve with «Deshacer», the folded resolved ones, and each code's label, icon, colour and `IncidentTypeIcon`; and `cardIncidents`, what the map card shows (spec 020) |
 | `presentation.vehicleform` | The form shared by create and edit, its pure reducer, and the labels, icons and swatches of each code |
-| `presentation.components` | Shared composables: map, buttons, dialog, permission handlers, `SectionTitle`, the tab bar with its badges, and `ParkedText` — «Aparcado hace 5 min por Edu», the one sentence the card, the list and the detail share |
+| `presentation.components` | Shared composables: map, buttons, dialog, permission handlers, `SectionTitle`, the tab bar with its badges, and `ParkedText` — «Aparcado hace 5 min por Edu», the sentence the list and the detail share; the map card uses `ShortParkedText`, «Hace 5 min · Edu», and still announces the long one (spec 022) |
 | `presentation.navigation` | Navigation 3 setup; `SessionViewModel`, the one exit; `PendingCountViewModel`, the badge on *Vehículos* (spec 020) |
 | `di` · `ui.theme` · `utils` | Koin modules, Material 3 theme, helpers |
 
@@ -480,6 +480,9 @@ graphify path "A" "B" --undirected
   *changes* of page (`snapshotFlow` + `drop(1)`), never the page it is born with: coming back to the
   tab it restores its saved page, which is stale if the order changed meanwhile, and reporting it
   overwrote the selection the ViewModel had already moved.
+- **A Material 3 `Button` draws 40 dp but takes 48**: it reserves its minimum touch target. Count 48
+  when adding up a layout by hand. `CardMinHeight` in `HomeScreen` counted 40, and the «+» card sat
+  8 dp shorter than the vehicle cards beside it until spec 022 measured it on screen.
 - **Switching tabs is not navigating forward.** `NavDisplay` animates on whatever its back stack
   shows, so swapping in another tab's stack looks like a push and slides sideways, suggesting a
   depth that is not there. The shell tells the two apart by *cause*, not by key: every push and pop

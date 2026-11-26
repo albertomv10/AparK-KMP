@@ -1,7 +1,7 @@
 # Spec: La tarjeta del mapa, una fila para cada cosa
 
 - **ID**: 022-vehicle-card-layout
-- **Estado**: Aprobada
+- **Estado**: Implementada — diseño en [design.md](design.md)
 - **Fecha**: 2026-11-26
 
 ## Problema / Por qué

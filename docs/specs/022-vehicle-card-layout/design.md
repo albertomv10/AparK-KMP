@@ -43,8 +43,10 @@ deslizar. La lista de *Vehículos* y el detalle mantienen la larga.
 - **Segunda fila:** `ShortParkedText` con `weight(1f)`; si hay incidencias, `IncidentIcons` a la
   derecha. La fila mide al menos 24 dp, lo que los iconos, así que mide lo mismo con ellos y sin
   ellos.
-- **`CardMinHeight` pasa a 152 dp** (16 + 32 + 12 + 24 + 12 + 40 + 16), y la tarjeta de «+» sigue
-  midiendo como las demás.
+- **`CardMinHeight` pasa a 160 dp** (16 + 32 + 12 + 24 + 12 + 48 + 16), y la tarjeta de «+» mide como
+  las demás. El diseño contaba 152, con el botón a 40; al probarlo, la tarjeta «+» salió más baja. Un
+  botón de Material 3 dibuja 40 pero ocupa 48, su zona táctil mínima, y ese desfase de 8 dp venía de
+  antes: con 148 ya se quedaba baja.
 
 ## Riesgos
 
