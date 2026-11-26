@@ -33,20 +33,32 @@ todo funcione sin conexión, y la hora la pone siempre el servidor.
 
 ## Datos
 
-`vehicles/{vehicleId}/incidents/{auto-id}`: `category`, `tag` (`""` si no tiene), `note` (`""`,
-hasta 280 caracteres), `status` (`open` o `resolved`), `reportedBy` (uid) y `createdAt` (hora del
-servidor). Al resolverla se añaden `resolvedBy`, `resolvedAt` (hora del servidor) y `expiresAt`
-(resolución + 30 días), que es el campo de la caducidad.
+`vehicles/{vehicleId}/incidents/{auto-id}`:
+- `type`: uno de los códigos de abajo, o `custom`;
+- `title`: el nombre de una personalizada, de 1 a 40; `""` en los demás tipos, y siempre presente;
+- `note` (`""`, hasta 280), `status` (`open` o `resolved`), `reportedBy` (uid) y `createdAt` (hora
+  del servidor);
+- al resolverla, `resolvedBy`, `resolvedAt` (hora del servidor) y `expiresAt` (resolución + 30 días),
+  que es el campo de la caducidad.
 
-| Categoría | Código | Etiquetas |
-|---|---|---|
-| Niveles y energía | `levels` | `low_fuel` · `low_charge` · `oil` · `washer_fluid` · `adblue` |
-| Mecánica y testigos | `mechanics` | `warning_light` · `wont_start` · `breakdown` · `strange_noise` · `bulb_out` |
-| Neumáticos | `tyres` | `puncture` · `low_pressure` · `tyre_wear` |
-| Carrocería e interior | `body` | `damage` · `cleaning` · `items_inside` |
-| Otro | `other` | — |
+> **Cambio después de probarla** (ver la spec): la primera versión guardaba `category`, obligatoria,
+> y `tag`, opcional, y se podía reportar una categoría sola. Ahora la incidencia es su tipo; la
+> categoría solo agrupa las opciones en el formulario y no se guarda. «Otro» desaparece y en su lugar
+> está «Personalizada».
 
-**Qué etiquetas se ofrecen según el vehículo** (`IncidentTag.appliesTo`):
+| Categoría (solo agrupa) | Tipos |
+|---|---|
+| Niveles y energía | `low_fuel` · `low_charge` · `oil` · `washer_fluid` · `adblue` |
+| Mecánica y testigos | `warning_light` · `wont_start` · `breakdown` · `strange_noise` · `bulb_out` |
+| Neumáticos | `puncture` · `low_pressure` · `tyre_wear` |
+| Carrocería e interior | `damage` · `cleaning` · `items_inside` |
+| — | `custom`, con su `title` |
+
+En el código: `IncidentCategory`, sin código porque no se guarda, e `IncidentType(code, category)`,
+con `CUSTOM` sin categoría. `IncidentType.fromCode` da `CUSTOM` para lo desconocido, que sin nombre
+se enseña como «Incidencia».
+
+**Qué tipos se ofrecen según el vehículo** (`IncidentType.appliesTo`):
 - si el vehículo no tiene datos, todas;
 - «Poco combustible» y «Aceite», nunca en un eléctrico;
 - «Poca carga», solo en un eléctrico o un híbrido enchufable;
@@ -59,7 +71,8 @@ servidor). Al resolverla se añaden `resolvedBy`, `resolvedAt` (hora del servido
   vehículo padre con `get()`.
 - **Crear:**
   - solo con esos campos;
-  - la categoría tiene que estar en la lista, y la etiqueta ser de esa categoría;
+  - el tipo tiene que estar en la lista;
+  - `title` tiene que estar: de 1 a 40, sin contar los espacios, si es `custom`, y `""` si no;
   - la nota, de 280 caracteres como mucho;
   - `status` tiene que ser `open`, `reportedBy` tiene que ser quien escribe, y `createdAt`, la hora
     del servidor.
@@ -82,8 +95,9 @@ servidor). Al resolverla se añaden `resolvedBy`, `resolvedAt` (hora del servido
 
 **En el detalle, la sección «Incidencias»**, después de «Dónde está»:
 - cada abierta lleva:
-  - el icono, que es el de su etiqueta o, si no tiene, el de su categoría;
-  - su nombre y la nota;
+  - el icono de su tipo, en un círculo del color de su categoría; el de una personalizada, el
+    octógono con exclamación (`Report`), en gris azulado;
+  - su nombre, con peso; la nota, más suave; y quién y cuándo, más pequeño y separado de la nota;
   - «Reportada hace 2 h por Edu / por ti»;
   - el botón de resolver, y «Borrar» si se puede;
 - debajo, «Reportar incidencia»;
@@ -92,9 +106,17 @@ servidor). Al resolverla se añaden `resolvedBy`, `resolvedAt` (hora del servido
 **Resolver** enseña un aviso con «Deshacer», y **borrar** pide confirmación.
 
 **El formulario es una hoja inferior** con:
-- la categoría;
-- las etiquetas que tienen sentido para ese vehículo;
-- la nota.
+- todos los tipos a la vez, separados por categorías, cada una con su encabezado y su color; solo
+  los que tienen sentido para ese vehículo, y elegir uno es obligatorio;
+- «¿No está en la lista?» con «Personalizada» al final, que pide el nombre, obligatorio;
+- la nota, opcional.
+
+**El color de cada categoría** (`IncidentCategory.color`, en `IncidentUi.kt`), con un tono para claro
+y otro para oscuro que sigue el tema de la app (`LocalIsDarkTheme`): niveles y energía, naranja;
+mecánica y testigos, rojo; neumáticos, morado; carrocería e interior, verde azulado; y
+«Personalizada», gris azulado.
+
+«Reportar» solo se activa cuando hay qué reportar (`ReportForm.canSubmit`).
 
 Las frases de tiempo se comparten con `ParkedText`.
 

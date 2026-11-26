@@ -132,7 +132,8 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 | `presentation.splash` · `presentation.auth.*` | Splash, login, register, verification, reset |
 | `presentation.home` | Map + vehicle carousel: park, and open the detail. No edit mode since spec 016 |
 | `presentation.vehicles` · `presentation.account` | The vehicle list, where vehicles are reordered (spec 016); and the account: name, email, password, theme, sign out, delete |
-| `presentation.addvehicle` · `presentation.editvehicle` · `presentation.vehicledetail` | Create/join, edit, and the detail: where it is, its data, its members, transfer and remove |
+| `presentation.addvehicle` · `presentation.editvehicle` · `presentation.vehicledetail` | Create/join, edit, and the detail: where it is, its incidents, its data, its members, transfer and remove |
+| `presentation.incidents` | The incidents section of the detail (spec 019): the list, the report sheet, resolve with «Deshacer», the folded resolved ones, and each code's label and icon |
 | `presentation.vehicleform` | The form shared by create and edit, its pure reducer, and the labels, icons and swatches of each code |
 | `presentation.components` | Shared composables: map, buttons, dialog, permission handlers, and `ParkedText` — «Aparcado hace 5 min por Edu», the one sentence the card, the list and the detail share |
 | `presentation.navigation` | Navigation 3 setup |
@@ -145,16 +146,18 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 | `users` | `FirebaseAuth.uid` | `email`, `name` — **the only copy the client writes**; `userVehicles: List<String>` — **an ordering hint only**, never the source of the list |
 | `vehicles` | Auto-generated | `name`, `licensePlate`, `ownerId`, `memberIds: List<String>` (owner included), `lastLocation`, `createdAt`, `updatedAt`; and spec 015's `type`, `powertrain`, `fuel`, `make`, `model`, `color`, `emissionsLabel` — codes or text, `""` meaning no data |
 | `invites` | The 8-character code | `vehicleId`, `createdBy`, `expiresAt`, `usedBy` — clients are denied all access |
+| `vehicles/{id}/incidents` | Auto-generated | `type` (one of 16 codes, or `custom`), `title` (a custom one's name, 1–40; `""` otherwise, always present), `note` (≤ 280), `status` (`open` · `resolved`), `reportedBy` (uid only), `createdAt`; once resolved, `resolvedBy`, `resolvedAt` and `expiresAt` — spec 019 |
 
 > [spec 008](docs/specs/008-vehicle-membership-model/spec.md) shipped this shape.
-> [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md) describes where the rest is going — the subcollections
-> for incidents, maintenance and reminders are not built yet.
+> [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md) describes where the rest is going. Spec 019 built the
+> first subcollection, `incidents`; maintenance and reminders are not built yet.
 
 ## Backend — Cloud Functions
 
 `functions/` is the only server-side code (TypeScript, Node 22): one `onDocumentDeleted` trigger on
-`vehicles` doing two independent cleanups under `Promise.all`, plus two callables for sharing that
-exist because the rules deny clients any access to `invites` at all.
+`vehicles` doing three independent cleanups under `Promise.all` — the members' `userVehicles`, the
+vehicle's invites, and its `incidents` subcollection with `recursiveDelete` (spec 019) — plus two
+callables for sharing that exist because the rules deny clients any access to `invites` at all.
 
 `propagateUserProfile` (spec 011) is an `onDocumentUpdated` trigger on `users/{uid}`. The client
 writes the name **only there**; the function copies it into `lastLocation.user` of every vehicle that
@@ -216,6 +219,15 @@ npx firebase-tools@latest functions:log
 - **A TTL policy on `invites` is part of how this works and is not in the repo.** Each project
   deletes invitations seven days after `expiresAt`; `firebase-tools` has no TTL command, so it is
   set by hand per database. See [spec 007](docs/specs/007-invite-cleanup/spec.md).
+- **So is one on `incidents`** (spec 019), also on `expiresAt`, a field only resolved incidents
+  carry: resolving sets it 30 days ahead, «Deshacer» removes it. It is a collection-group policy,
+  set by hand in each database. Without it the resolved ones pile up; the app hides those older than
+  30 days anyway (`incidentsView`), so the policy keeps storage clean, not the screen.
+- **Re-seeding with the Functions emulator running used to wipe what it had just seeded.** The seed
+  deletes the vehicles and recreates them **with the same ids**; each delete fires
+  `cleanupVehicleReferences`, which runs after the recreate and took the new incidents and
+  `userVehicles` entries with it. `seed-emulators.ts` now disables background triggers through the
+  emulator Hub while it writes. Production never reuses an id, so this is a seed-only race.
 - **Import narrowly**: `firebase-functions/logger`, *not* the `firebase-functions/v2` barrel, which
   pulls in every provider and breaks deploy-time analysis.
 
@@ -326,6 +338,19 @@ graphify path "A" "B" --undirected
   app, when the link is opened — and before this the app stayed on tabs where everything failed. When
   an operation on the current user comes back as a dead session, `FirebaseAuthRepository` signs out
   itself, which is what triggers the exit.
+- **Incidents (spec 019) store only who reported and resolved, by uid**; the name comes from the
+  members list the detail already loads (`getVehicleMembers`), through `whoIs`. Someone who left, or
+  deleted their account, simply shows no name — there are no copies to keep in sync.
+- **An incident is its type** (spec 019). `IncidentCategory` only groups the options in the form and
+  is never stored; a category alone cannot be reported. What fits no type is
+  `IncidentType.CUSTOM`, the only one that stores a name (`title`): the others are translated by
+  the app. Codes follow spec 015's rule — `IncidentType.fromCode` gives `CUSTOM` for anything
+  unknown, shown as «Incidencia». `IncidentType.appliesTo(powertrain, fuel)` decides which types the
+  form offers: no «Poca carga» on a petrol car, «AdBlue» only on a diesel.
+- **Reporting uses `document` + `set`, never `add()`**: `add()` waits for the server to return the
+  document, and offline it never returns. Server timestamps are read with
+  `ServerTimestampBehavior.ESTIMATE`, so an incident reported offline says «hace un momento» instead
+  of having no date.
 - **A listener error that escapes `viewModelScope` closes the app, on both platforms** (spec 021).
   When the session ends, Firestore re-sends every listener without credentials and the rules answer
   PERMISSION_DENIED — often *before* `authStateChanges` emits `null` and `flatMapLatest` cancels

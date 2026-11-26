@@ -115,13 +115,14 @@ vehicles/{vehicleId}
   }
   createdAt, updatedAt, createdBy, schemaVersion
 
-vehicles/{vehicleId}/incidents/{incidentId}
-  vehicleId                           # redundante a propósito: ver decisión 4
-  type, title, notes
+vehicles/{vehicleId}/incidents/{incidentId}        # CONSTRUIDO en la spec 019, así:
+  type                                # uno de los 16 tipos, o "custom"; la categoría no se guarda
+  title                               # "" salvo en "custom": su nombre, de 1 a 40
+  note                                # "" o hasta 280
   status: "open" | "resolved"
-  reportedBy: { uid, displayName }, reportedAt
-  resolvedBy?, resolvedAt?
-  createdAt, updatedAt, schemaVersion
+  reportedBy                          # solo el uid: el nombre sale de los miembros
+  createdAt                           # hora del servidor
+  resolvedBy?, resolvedAt?, expiresAt?   # solo resueltas; expiresAt = +30 días, campo de la TTL
 
 vehicles/{vehicleId}/maintenance/{recordId}
   vehicleId, type, performedAt, odometerKm?, cost?, currency?, workshop?, notes
@@ -252,7 +253,7 @@ cuando duela, no antes (decisión 4).
 | Patrón | Índice |
 |--------|--------|
 | R1 `vehicles where memberIds array-contains uid` | automático de campo único |
-| R3 `incidents where status == open order by createdAt` | **compuesto** (status, createdAt) |
+| R3 ~~`incidents where status == open order by createdAt`~~ | **ninguno**: la spec 019 escucha la subcolección entera y separa abiertas y resueltas en el móvil. La TTL de las resueltas la mantiene pequeña |
 | R5 `maintenance order by performedAt` | automático |
 | S4 `collectionGroup(reminders) where dueDate <= X` | **grupo de colección** sobre `dueDate` |
 | R4 `collectionGroup(incidents) …` | pendiente, solo si se implementa |
@@ -284,7 +285,7 @@ Todos deben acabar versionados en `firestore.indexes.json`, que hoy está vacío
 | `lastLocation.user` guarda un `User` entero | `by: {uid, displayName}` | spec 008 |
 | `inviteCode` muerto en el vehículo | eliminado | spec 008 |
 | Sin metadatos de vehículo (`model` y `color` existen, pero nadie los escribe) | los de §9, cada uno con la función que lo usa | fase 2 y siguientes |
-| Sin subcolecciones | `incidents`, `maintenance`, `reminders`, `places` | fase 3 |
+| Sin subcolecciones | `incidents` (hecha, spec 019), `maintenance`, `reminders`, `places` | fase 3 |
 | Sin `devices` ni `settings` | necesarios para notificar desde el servidor | fase 4 |
 | `firestore.indexes.json` vacío | compuestos y de grupo versionados | según lleguen |
 

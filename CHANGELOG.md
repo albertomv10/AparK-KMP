@@ -9,6 +9,17 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **Las incidencias de un vehículo** ([spec 019](docs/specs/019-incidents/spec.md)): en el detalle,
+  cualquier miembro puede reportar qué le pasa al vehículo.
+  - Se elige qué le pasa de una lista separada por categorías —niveles y energía, mecánica y
+    testigos, neumáticos, carrocería e interior—, cada una con su color, y si no encaja nada, una
+    «Personalizada» con su propio nombre. La nota es opcional. Lo que se ofrece depende del vehículo: un eléctrico no tiene «Poco
+    combustible», y «AdBlue» solo sale en un diésel.
+  - Todos los miembros la ven al momento, con quién la reportó y cuándo.
+  - Cualquiera la marca como resuelta, con «Deshacer». Las resueltas se ven 30 días en una sección
+    plegada y después se borran solas.
+  - Quien la reportó, o el dueño, puede borrarla si fue un error.
+  - Funciona sin conexión, y borrar el vehículo borra sus incidencias.
 - **Mover un vehículo manteniendo pulsado el mapa** ([spec 017](docs/specs/017-map-camera/spec.md)):
   el vehículo elegido pasa al punto que mantienes pulsado, el móvil vibra y sale el aviso con
   «Deshacer», igual que al arrastrar su marcador. Si nunca se había aparcado, queda aparcado ahí.

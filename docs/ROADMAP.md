@@ -373,7 +373,7 @@ JSON se sustituye por una colección `catalog` en Firestore que la app cachea �
 
 | # | Qué | Tamaño | Notas |
 |---|-----|--------|-------|
-| 3.1 | **Incidencias** (`vehicles/{id}/incidents`): reportar, estado, quién y cuándo, resolver | L | El corazón de la propuesta compartida |
+| 3.1 | **Incidencias** (`vehicles/{id}/incidents`): reportar, estado, quién y cuándo, resolver | L | ✅ Hecho en la [spec 019](specs/019-incidents/spec.md), desde el detalle. Dónde más se ven —pendientes, iconos en la tarjeta, la chapita— es la spec 020 |
 | 3.2 | **ITV y revisiones**: fechas, aviso de proximidad | M | Necesita el **primer índice** del proyecto |
 | 3.3 | **Mantenimiento**: historial de intervenciones | M | Mismo patrón de subcolección que 3.1 |
 | 3.4 | **Ubicaciones predeterminadas** (garaje) | M | Ver decisión abierta abajo |

@@ -1,7 +1,7 @@
 # Spec: Las incidencias de un vehículo
 
 - **ID**: 019-incidents
-- **Estado**: Aprobada — diseño en [design.md](design.md)
+- **Estado**: Implementada, con los cambios después de probarla (ver al final) — diseño en [design.md](design.md)
 - **Fecha**: 2026-11-25
 
 ## Problema / Por qué
@@ -28,8 +28,8 @@ vehículo, con todo lo que va por detrás: datos, reglas, el índice y la limpie
 
 ## Objetivos
 
-- **Cualquier miembro puede reportar una incidencia** de un vehículo: una categoría y, si quiere,
-  una etiqueta más concreta y una nota.
+- **Cualquier miembro puede reportar una incidencia** de un vehículo: qué le pasa, de una lista
+  agrupada por categorías, o una personalizada con su propio nombre; y, si quiere, una nota.
 - **Todos los miembros la ven al momento**, con quién la reportó y cuándo.
 - **Cualquier miembro puede marcarla como resuelta**, y queda constancia de quién y cuándo.
 - **Funciona sin conexión**, como aparcar: se ve al momento y se guarda al volver la red.
@@ -57,10 +57,12 @@ vehículo, con todo lo que va por detrás: datos, reglas, el índice y la limpie
 
 1. **Dado** que soy miembro de un vehículo, **cuando** abro su detalle, **entonces** veo sus
    incidencias abiertas, la más reciente primero. De cada una veo:
-   - su icono: el de la etiqueta si tiene una, o el de la categoría;
-   - el nombre de la categoría y de la etiqueta;
+   - el icono de su tipo, en el color de su categoría;
+   - su nombre: el del tipo, o el que le puso quien la reportó si es personalizada;
    - la nota, si la tiene;
    - quién la reportó y cuándo.
+
+   El nombre, la nota y quién y cuándo se distinguen a simple vista, y no van pegados.
 2. **Dado** que quien la reportó ya no es miembro, o borró su cuenta, **cuando** la veo,
    **entonces** sale solo cuándo, sin nombre y sin ningún texto en su lugar.
 3. **Dado** un vehículo sin incidencias abiertas, **cuando** abro su detalle, **entonces** lo dice en
@@ -68,15 +70,17 @@ vehículo, con todo lo que va por detrás: datos, reglas, el índice y la limpie
 
 **Reportar**
 
-4. **Dado** el detalle, **cuando** reporto una incidencia, **entonces** elijo una categoría, que es
-   obligatoria, y si quiero una etiqueta de esa categoría y una nota. Al guardarla aparece en la
-   lista, y les aparece a los demás miembros que tengan el detalle abierto sin que tengan que
-   recargar.
+4. **Dado** el detalle, **cuando** reporto una incidencia, **entonces** veo todos los tipos a la vez,
+   separados por categorías, y elijo qué le pasa: elegirlo es obligatorio. Si no encaja ninguno,
+   elijo «Personalizada» y le pongo un nombre, también obligatorio. La nota es opcional en los dos
+   casos. Al guardarla aparece en la lista, y les aparece a los demás miembros que tengan el detalle
+   abierto sin que tengan que recargar.
 5. **Dado** un vehículo con su sistema y su combustible indicados (spec 015), **cuando** elijo
-   etiqueta, **entonces** solo salen las que tienen sentido: en un eléctrico «Poca carga» y no «Poco
-   combustible», y «AdBlue» solo si es diésel. Si el vehículo no tiene esos datos, salen todas.
-6. **Dado** el formulario, **cuando** escribo la nota, **entonces** tiene un límite de longitud, que
-   comprueban también las reglas.
+   qué le pasa, **entonces** solo salen las opciones que tienen sentido: en un eléctrico «Poca carga»
+   y no «Poco combustible», y «AdBlue» solo si es diésel. Si el vehículo no tiene esos datos, salen
+   todas.
+6. **Dado** el formulario, **cuando** escribo la nota o el nombre de una personalizada,
+   **entonces** cada uno tiene un límite de longitud, que comprueban también las reglas.
 
 **Resolver**
 
@@ -102,14 +106,14 @@ vehículo, con todo lo que va por detrás: datos, reglas, el índice y la limpie
     **entonces** las reglas me lo deniegan.
 13. **Dado** que reporto o resuelvo una incidencia, **cuando** se guarda, **entonces** las reglas
     comprueban:
-    - que la categoría es de la lista;
-    - que la etiqueta es de esa categoría;
+    - que el tipo es de la lista;
+    - que lleva nombre si es personalizada, y solo entonces, y que no pasa del límite;
     - que la nota no pasa del límite;
     - que quien reporta o resuelve soy yo;
     - y que la fecha es la del servidor.
-14. **Dado** una incidencia con una categoría que esta versión de la app no conoce, **cuando** se
-    muestra, **entonces** sale como «Otro», sin errores (la regla de las listas de la spec 015). Una
-    etiqueta desconocida no se muestra.
+14. **Dado** una incidencia de un tipo que esta versión de la app no conoce, **cuando** se muestra,
+    **entonces** sale como una personalizada sin nombre, «Incidencia», con su icono, sin errores (la
+    regla de las listas de la spec 015).
 
 **Ciclo de vida**
 
@@ -125,26 +129,30 @@ vehículo, con todo lo que va por detrás: datos, reglas, el índice y la limpie
 
 ## Preguntas abiertas — resueltas
 
-1. **¿Qué tipos hay?** → **Categorías, con etiquetas opcionales.** Es la propuesta de Alberto, con
-   algunos ajustes.
+1. **¿Qué tipos hay?** → **Tipos concretos, agrupados por categorías, y una personalizada.** Es la
+   propuesta de Alberto, con algunos ajustes, y el cambio que hizo después de probarla (ver al
+   final).
 
-   | Categoría | Etiquetas (opcionales, como mucho una) |
+   | Categoría (solo agrupa) | Tipos |
    |---|---|
    | **Niveles y energía** | Poco combustible · Poca carga · Aceite · Limpiaparabrisas · AdBlue |
    | **Mecánica y testigos** | Testigo encendido · No arranca · Avería · Ruido extraño · Luz fundida |
    | **Neumáticos** | Pinchazo · Presión baja · Desgaste |
    | **Carrocería e interior** | Golpe o arañazo · Limpieza · Objetos dentro |
-   | **Otro** | Ninguna: lo que no encaje se explica en la nota |
+   | — | **Personalizada**: un nombre de hasta 40, obligatorio |
 
+   - **La incidencia es el tipo, y la categoría solo agrupa** las opciones en el formulario y les da
+     su color: no se guarda, porque cada tipo pertenece a una sola.
    - **«Gasolina/Batería» se separa** en «Poco combustible» y «Poca carga», y solo salen las que
      tienen sentido para el vehículo (criterio 5).
    - **«No arranca» va aparte**: es lo más urgente que le puede pasar a un coche compartido, y cubre
      también la batería de 12 V descargada.
    - **«Objetos dentro»** avisa de que hay cosas en el coche, en el maletero o donde sea.
-   - **«Otro» hace falta** para lo que no encaje y para leer un código desconocido.
-   - **Una sola etiqueta**: dos problemas distintos son dos incidencias.
-   - **Cada categoría y cada etiqueta tienen su código y su icono.** En la tarjeta del mapa
-     (spec 020) se verá el de la etiqueta si la hay, y si no el de la categoría.
+   - **«Personalizada»** es para lo que no encaje: una sola, sin categoría, con el icono de un aviso
+     (el octógono con exclamación, distinto del triángulo de «Testigo encendido»). Solo ella guarda
+     su nombre; los tipos de la lista no guardan texto, porque se traducen al idioma de quien mira.
+   - **Un solo tipo por incidencia**: dos problemas distintos son dos incidencias.
+   - **Cada tipo tiene su código y su icono.** En la tarjeta del mapa (spec 020) se verá ese.
 
 2. **¿Quién resuelve y quién borra?** → **Resuelve cualquier miembro. Borra quien la reportó o el
    dueño**, y solo para corregir errores, porque las resueltas se borran solas.
@@ -172,3 +180,23 @@ vehículo, con todo lo que va por detrás: datos, reglas, el índice y la limpie
 - **La ITV y las revisiones** (3.2) y **el mantenimiento** (3.3).
 - **Las notificaciones** (fase 4), incluido avisar al reportar o al resolver.
 - **Fotos y comentarios.**
+
+## Cambio después de probarla (2026-11-26)
+
+Alberto probó la primera versión y cambió dos cosas antes de integrarla:
+
+- **Una categoría sola no es una incidencia.** «Niveles y energía» no dice qué le pasa al coche, y
+  obligaba a leer la nota. Ahora se elige siempre el tipo concreto, y lo que no encaje es una
+  «Personalizada» con su nombre. La categoría «Otro» desaparece. Como no había nada en producción,
+  los datos cambian a la vez: `category` y `tag` se sustituyen por `type`, y se añade `title`, solo
+  para las personalizadas.
+- **En el detalle, el nombre, la nota y quién y cuándo se parecían demasiado**, y el «Reportada por»
+  iba pegado a la nota. El criterio 1 pide ahora que se distingan y que no vayan pegados.
+
+Y en una segunda prueba, dos más:
+
+- **No hay que elegir la categoría para ver sus tipos.** El formulario los enseña todos a la vez,
+  separados por categorías, y se toca directamente el que es.
+- **Cada categoría tiene un color**, que llevan sus iconos en el formulario y en el detalle. Todo se
+  veía muy monocromático, y el color ayuda a distinguir de un vistazo una avería de una limpieza.
+
