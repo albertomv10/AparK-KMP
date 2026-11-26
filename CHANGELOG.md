@@ -166,6 +166,11 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   y con él se va la vía de respaldo que todavía lo leía en la función de limpieza de vehículos.
 
 ### Fixed
+- **La debug de Android ya puede entrar contra los emuladores de Firebase.**
+  - Android bloquea el HTTP sin cifrar desde la 9, los emuladores hablan HTTP y el proyecto nunca lo
+    había permitido. Así que el inicio de sesión fallaba con «Ha ocurrido un error inesperado».
+  - Ahora se permite solo en la debug apuntada a los emuladores (`APARK_EMULATOR_HOST`). La debug
+    normal y la release siguen sin HTTP.
 - **El logo del splash de Android se veía con los bordes dentados.** Era un PNG de 2000 px que Android
   ampliaba y luego reducía mucho; ahora es vectorial.
 - **La cámara del mapa volvía sola al vehículo elegido** cada vez que cambiaba cualquier dato: que

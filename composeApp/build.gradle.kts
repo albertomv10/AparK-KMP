@@ -153,6 +153,7 @@ android {
     }
     buildTypes {
         release {
+            manifestPlaceholders["usesCleartextTraffic"] = "false"
             // Nulo cuando no hay credenciales: AGP marca la salida como `-unsigned`, que es una
             // senal mucho mas clara que un artefacto firmado con la clave de depuracion.
             signingConfig = if (releaseSigningReady) signingConfigs.getByName("release") else null
@@ -170,11 +171,14 @@ android {
             // Se declara SOLO aquí: en release el campo ni se genera, así que el código que lo
             // lee no compila para esa variante y no hay despiste posible. Vacío = sin emuladores,
             // que es lo normal. Ver `di/EmulatorConfig.kt` y `docs/FIREBASE.md`.
-            buildConfigField(
-                "String",
-                "EMULATOR_HOST",
-                "\"${signingSecret("APARK_EMULATOR_HOST") ?: ""}\""
-            )
+            val emulatorHost = signingSecret("APARK_EMULATOR_HOST")
+            buildConfigField("String", "EMULATOR_HOST", "\"${emulatorHost ?: ""}\"")
+
+            // Los emuladores hablan HTTP, y Android lo bloquea desde la 9: sin esto, el de Auth
+            // fallaba con «Cleartext HTTP traffic to 10.0.2.2 not permitted». Se permite solo en
+            // esta variante y solo si apunta a los emuladores; la debug de siempre, contra
+            // `apark-dev`, sigue sin HTTP, igual que la release.
+            manifestPlaceholders["usesCleartextTraffic"] = (emulatorHost != null).toString()
         }
     }
     buildFeatures {

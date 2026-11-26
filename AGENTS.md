@@ -330,6 +330,11 @@ graphify path "A" "B" --undirected
   `users` nor the profile's. The rule compares it with `request.auth.token.email`; the document lags
   behind after an email change, and **`reload()` updates the profile but not the token** — which is
   why `reloadUser()` also forces a token refresh.
+- **Android blocks cleartext HTTP, and the emulators speak nothing else.** The debug variant sets
+  `usesCleartextTraffic` through a manifest placeholder, `true` only when `APARK_EMULATOR_HOST` is
+  set — so a normal debug against `apark-dev`, and every release, still refuse it. Before that the
+  Android app had never been able to sign in against the Auth emulator: «Cleartext HTTP traffic to
+  10.0.2.2 not permitted», shown as an unexpected error.
 - **The Auth emulator does not revoke the session on an email change**, real Firebase does. To test
   how the app reacts, set `validSince` by hand (`accounts:update` with `Bearer owner`). The link
   itself comes from `GET :9099/emulator/v1/projects/apark-dev/oobCodes`.
