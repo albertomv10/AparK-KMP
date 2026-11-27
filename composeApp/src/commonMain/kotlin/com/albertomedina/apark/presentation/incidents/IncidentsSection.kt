@@ -9,11 +9,19 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -31,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -46,7 +55,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +87,7 @@ import com.albertomedina.apark.presentation.components.StandardAparKButton
 import com.albertomedina.apark.presentation.components.whenWhoText
 import com.albertomedina.apark.presentation.components.whoIs
 import com.albertomedina.apark.utils.SnackbarMessage
+import com.albertomedina.apark.utils.sheetShrinksAboveKeyboard
 import kotlin.time.Clock
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -299,6 +320,21 @@ private fun ResolvedHeader(count: Int, expanded: Boolean, onToggle: () -> Unit) 
  * El formulario de reportar (spec 019). La categoría solo agrupa: lo que se elige es qué le pasa, de
  * entre los tipos que tienen sentido para este vehículo (criterio 5). Lo que no encaje es
  * «Personalizada», con su nombre. La nota es opcional en los dos casos.
+ *
+ * **Solo se desplazan los tipos**: el nombre de una personalizada, la nota y «Reportar» quedan siempre
+ * a la vista, debajo. Por eso la columna de fuera no tiene scroll —un scroll dentro de otro se mide con
+ * altura infinita y Compose lanza una excepción— y la de los tipos lleva `weight(1f, fill = false)`:
+ * ocupa lo que dejan los demás, como mucho, y si cabe todo no estira la hoja. Cuando hay más tipos
+ * arriba o abajo, ese borde se difumina.
+ *
+ * **Los márgenes del teclado y de la barra del sistema los pone la hoja**: `ModalBottomSheet` aplica
+ * `imePadding()` y `BottomSheetDefaults.windowInsets`, y otro `navigationBarsPadding()` aquí los sumaba
+ * dos veces. En iOS, además, mientras se escribe la hoja deja de reservar el margen de abajo: allí el
+ * teclado encoge el diálogo en vez de llegar como margen, y el del indicador de inicio, tapado por el
+ * teclado, quedaba de hueco ([sheetShrinksAboveKeyboard]).
+ *
+ * **El teclado se cierra** tocando fuera de los campos, eligiendo un tipo o con «Hecho»: la hoja no
+ * tenía otra forma de quitarlo que cerrarse entera.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -309,41 +345,68 @@ private fun ReportSheet(
     onEvent: (IncidentsEvent) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(onDismissRequest = { onEvent(IncidentsEvent.ReportDismissed) }, sheetState = sheetState) {
+    val typesScroll = rememberScrollState()
+    // Algún campo tiene el foco, y por tanto el teclado está abierto.
+    var editing by remember { mutableStateOf(false) }
+    ModalBottomSheet(
+        onDismissRequest = { onEvent(IncidentsEvent.ReportDismissed) },
+        sheetState = sheetState,
+        contentWindowInsets = {
+            if (editing && sheetShrinksAboveKeyboard) WindowInsets.safeDrawing.only(WindowInsetsSides.Top)
+            else BottomSheetDefaults.windowInsets
+        }
+    ) {
+        // El de dentro de la hoja: es un diálogo, con su propia ventana y su propio foco. El de la
+        // pantalla de debajo no puede quitarles el foco a estos campos.
+        val focusManager = LocalFocusManager.current
+        val closeKeyboard = KeyboardActions(onDone = { focusManager.clearFocus() })
         Column(
             Modifier
-                .verticalScroll(rememberScrollState())
+                .onFocusChanged { editing = it.hasFocus }
+                .focusGroup()
+                // Tocar fuera de un campo cierra el teclado. Los chips y los campos se quedan su toque.
+                .pointerInput(Unit) { detectTapGestures(onTap = { focusManager.clearFocus() }) }
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp)
-                .navigationBarsPadding(),
+                .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(stringResource(Res.string.incidents_report), style = MaterialTheme.typography.titleLarge)
 
             Text(stringResource(Res.string.incidents_form_type), style = MaterialTheme.typography.titleSmall)
 
-            // Todos los tipos a la vez, separados por categorías: se toca directamente el que es.
-            IncidentCategory.entries.forEach { category ->
-                val types = category.types.filter { it.appliesTo(powertrain, fuel) }
-                if (types.isNotEmpty()) {
-                    TypeGroup(
-                        heading = stringResource(category.label),
-                        headingIcon = category.icon,
-                        color = category.color,
-                        types = types,
-                        selected = form.type,
-                        onSelect = { onEvent(IncidentsEvent.TypeSelected(it)) }
-                    )
+            Column(
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .fadingEdges(typesScroll, 32.dp)
+                    .verticalScroll(typesScroll),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Todos los tipos a la vez, separados por categorías: se toca directamente el que es.
+                IncidentCategory.entries.forEach { category ->
+                    val types = category.types.filter { it.appliesTo(powertrain, fuel) }
+                    if (types.isNotEmpty()) {
+                        TypeGroup(
+                            heading = stringResource(category.label),
+                            headingIcon = category.icon,
+                            color = category.color,
+                            types = types,
+                            selected = form.type,
+                            onSelect = { focusManager.clearFocus(); onEvent(IncidentsEvent.TypeSelected(it)) }
+                        )
+                    }
                 }
+                TypeGroup(
+                    heading = stringResource(Res.string.incidents_form_not_listed),
+                    headingIcon = null,
+                    color = IncidentType.CUSTOM.color,
+                    types = listOf(IncidentType.CUSTOM),
+                    selected = form.type,
+                    onSelect = { focusManager.clearFocus(); onEvent(IncidentsEvent.TypeSelected(it)) }
+                )
             }
-            TypeGroup(
-                heading = stringResource(Res.string.incidents_form_not_listed),
-                headingIcon = null,
-                color = IncidentType.CUSTOM.color,
-                types = listOf(IncidentType.CUSTOM),
-                selected = form.type,
-                onSelect = { onEvent(IncidentsEvent.TypeSelected(it)) }
-            )
+
+            // Fuera del scroll: «Personalizada» es lo último de la lista, y su nombre, al final de la
+            // parte que se desplaza, quedaría oculto bajo el borde. Aquí sale justo encima de la nota.
             if (form.isCustom) {
                 OutlinedTextField(
                     value = form.title,
@@ -351,10 +414,11 @@ private fun ReportSheet(
                     label = { Text(stringResource(Res.string.incidents_form_title)) },
                     supportingText = { Counter(form.title.length, Incident.TITLE_MAX_LENGTH) },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = closeKeyboard,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-
             OutlinedTextField(
                 value = form.note,
                 onValueChange = { onEvent(IncidentsEvent.NoteChanged(it)) },
@@ -362,9 +426,12 @@ private fun ReportSheet(
                 supportingText = { Counter(form.note.length, Incident.NOTE_MAX_LENGTH) },
                 minLines = 2,
                 maxLines = 5,
+                // «Hecho» en vez de salto de línea: una nota es una frase o dos, y así el teclado se
+                // puede cerrar desde él. El texto sigue partiéndose en varias líneas al escribir.
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = closeKeyboard,
                 modifier = Modifier.fillMaxWidth()
             )
-
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 StandardAparKButton(
                     onClick = { onEvent(IncidentsEvent.ReportConfirmed) },
@@ -376,6 +443,34 @@ private fun ReportSheet(
         }
     }
 }
+
+/**
+ * Difumina el borde de arriba y el de abajo de algo que se desplaza, cada uno solo si hay más contenido
+ * por ese lado: así se ve que la lista sigue. Se pinta la transparencia del propio contenido, no un
+ * color encima, para que valga sobre cualquier fondo, en claro y en oscuro.
+ */
+private fun Modifier.fadingEdges(scroll: ScrollState, length: Dp): Modifier = this
+    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+    .drawWithContent {
+        drawContent()
+        val edge = length.toPx().coerceAtMost(size.height / 2)
+        if (scroll.canScrollBackward) {
+            drawRect(
+                brush = Brush.verticalGradient(0f to Color.Transparent, 1f to Color.Black, startY = 0f, endY = edge),
+                size = size.copy(height = edge),
+                blendMode = BlendMode.DstIn
+            )
+        }
+        if (scroll.canScrollForward) {
+            val top = size.height - edge
+            drawRect(
+                brush = Brush.verticalGradient(0f to Color.Black, 1f to Color.Transparent, startY = top, endY = size.height),
+                topLeft = Offset(0f, top),
+                size = size.copy(height = edge),
+                blendMode = BlendMode.DstIn
+            )
+        }
+    }
 
 /**
  * Un grupo de tipos con su encabezado. Los chips llevan el color de su categoría en el icono y, si
