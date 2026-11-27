@@ -204,6 +204,11 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
   y con él se va la vía de respaldo que todavía lo leía en la función de limpieza de vehículos.
 
 ### Fixed
+- **La hoja de reportar una incidencia**: solo se desplaza la lista de tipos, con el borde difuminado
+  cuando hay más; la nota y «Reportar» quedan siempre a la vista. El teclado se cierra con «Hecho»,
+  tocando fuera o eligiendo un tipo, sin tener que cerrar la hoja. En iPhone ya no queda un hueco
+  entre el teclado y el formulario: allí el teclado encoge la hoja, y esta reservaba además el margen
+  del indicador de inicio, que el teclado tapa.
 - **En iPhone, cambiar de tema ya no mueve las pantallas**
   ([spec 023](docs/specs/023-tab-insets-after-theme-change/spec.md)).
   - Al pasar el móvil a oscuro o a claro con el mapa abierto, el carrusel y el logo de Google subían
