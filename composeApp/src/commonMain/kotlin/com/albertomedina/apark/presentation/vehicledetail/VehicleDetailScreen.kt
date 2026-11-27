@@ -19,10 +19,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
@@ -74,6 +77,7 @@ import com.albertomedina.apark.domain.model.Vehicle
 import com.albertomedina.apark.domain.model.VehicleColor
 import com.albertomedina.apark.domain.model.VehicleType
 import com.albertomedina.apark.domain.model.hasDetails
+import com.albertomedina.apark.domain.model.parkedAtPlace
 import com.albertomedina.apark.presentation.vehicleform.VehicleAvatar
 import com.albertomedina.apark.presentation.navigation.TabShellDefaults
 import com.albertomedina.apark.presentation.vehicleform.badgeColor
@@ -103,7 +107,9 @@ fun VehicleDetailScreen(
     viewModel: VehicleDetailViewModel = koinViewModel(),
     onBack: () -> Unit,
     onShowOnMap: (String) -> Unit,
-    onEdit: (String) -> Unit
+    onEdit: (String) -> Unit,
+    /** Abrir la ubicación predeterminada del vehículo, para ponerla, cambiarla o quitarla (spec 024). */
+    onEditDefaultPlace: (String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -207,7 +213,12 @@ fun VehicleDetailScreen(
             else -> Column(contentModifier.verticalScroll(rememberScrollState())) {
                 if (state.isWorking) LinearProgressIndicator(Modifier.fillMaxWidth())
                 Header(vehicle)
-                LocationSection(vehicle, state.currentUserId, onShowOnMap = { onShowOnMap(vehicle.id) })
+                LocationSection(
+                    vehicle,
+                    state.currentUserId,
+                    onShowOnMap = { onShowOnMap(vehicle.id) },
+                    onEditDefaultPlace = { onEditDefaultPlace(vehicle.id) }
+                )
                 HorizontalDivider(Modifier.padding(top = 12.dp))
                 IncidentsSection(
                     vehicle = vehicle,
@@ -329,19 +340,53 @@ private fun DataRow(label: String, value: String, marker: (@Composable () -> Uni
 }
 
 @Composable
-private fun LocationSection(vehicle: Vehicle, currentUserId: String?, onShowOnMap: () -> Unit) {
+private fun LocationSection(
+    vehicle: Vehicle,
+    currentUserId: String?,
+    onShowOnMap: () -> Unit,
+    onEditDefaultPlace: () -> Unit
+) {
     SectionTitle(stringResource(Res.string.vehicle_detail_location_title))
     Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         val location = vehicle.lastLocation
-        // La misma frase que la tarjeta y la lista (spec 016); aquí puede ocupar dos líneas.
-        ParkedText(location, currentUserId, style = MaterialTheme.typography.bodyLarge, maxLines = 2)
-        if (location == null || location.timestamp == 0L) return@Column
-        OutlinedButton(onClick = onShowOnMap, modifier = Modifier.padding(top = 8.dp)) {
-            Icon(Icons.Default.Map, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text(stringResource(Res.string.vehicle_detail_show_on_map))
+        // La misma frase que la lista (spec 016), con el sitio si está en su ubicación predeterminada
+        // (spec 024); aquí puede ocupar dos líneas.
+        ParkedText(
+            location,
+            currentUserId,
+            placeName = vehicle.parkedAtPlace?.name,
+            style = MaterialTheme.typography.bodyLarge,
+            maxLines = 2
+        )
+        if (location != null && location.timestamp != 0L) {
+            OutlinedButton(onClick = onShowOnMap, modifier = Modifier.padding(top = 8.dp)) {
+                Icon(Icons.Default.Map, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(Res.string.vehicle_detail_show_on_map))
+            }
         }
     }
+    DefaultPlaceRow(vehicle.defaultPlace, onClick = onEditDefaultPlace)
+}
+
+/**
+ * La ubicación predeterminada (spec 024): su nombre, o «Añadir». La puede poner, cambiar o quitar
+ * cualquier miembro, así que se enseña a todos.
+ */
+@Composable
+private fun DefaultPlaceRow(place: Vehicle.DefaultPlace?, onClick: () -> Unit) {
+    ListItem(
+        modifier = Modifier.clickable(onClick = onClick).padding(horizontal = 8.dp),
+        leadingContent = { Icon(Icons.Default.Home, contentDescription = null) },
+        headlineContent = { Text(stringResource(Res.string.default_place_title)) },
+        supportingContent = {
+            Text(
+                place?.name ?: stringResource(Res.string.default_place_add),
+                color = if (place == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) }
+    )
 }
 
 @Composable

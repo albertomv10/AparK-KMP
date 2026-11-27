@@ -171,6 +171,8 @@ class HomeViewModel(
                 updateVehicleLocation(event.vehicleId)
             }
 
+            is HomeEvent.ParkAtPlaceClicked -> parkAtPlace(event.vehicleId)
+
             is HomeEvent.UndoLocationClicked -> {
                 undoVehicleLocation(event.vehicleId, event.previousLocation)
             }
@@ -219,6 +221,29 @@ class HomeViewModel(
                 _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_gps_permissions")) }
             } finally {
                 _uiState.update { it.copy(isLoading = false, updatingVehicleId = null) }
+            }
+        }
+    }
+
+    /**
+     * Aparcar en su ubicación predeterminada (spec 024). No pide la ubicación —para eso está— ni
+     * espera a la escritura, que sin conexión no termina nunca: en un garaje subterráneo es lo normal.
+     * Confirma al momento, con el «Deshacer» de siempre, y si la escritura falla después, lo dice.
+     */
+    private fun parkAtPlace(vehicleId: String) {
+        val vehicle = _uiState.value.vehicles.find { it.id == vehicleId } ?: return
+        val place = vehicle.defaultPlace ?: return
+        confirmParked(vehicleId, vehicle.lastLocation)
+        viewModelScope.launch {
+            updateVehicleLocationUseCase(
+                vehicleId = vehicleId,
+                manualLocation = Vehicle.LocationModel(
+                    latitude = place.latitude,
+                    longitude = place.longitude,
+                    atDefaultPlace = true
+                )
+            ).onFailure {
+                _uiState.update { it.copy(snackbarMessage = SnackbarMessage.Error("error_location_save")) }
             }
         }
     }
@@ -356,6 +381,8 @@ data class UndoLocationData(
 sealed class HomeEvent {
     data class OnVehicleSwiped(val newIndex: Int) : HomeEvent()
     data class UpdateLocationClicked(val vehicleId: String) : HomeEvent()
+    /** Aparcar en su ubicación predeterminada, sin GPS (spec 024). */
+    data class ParkAtPlaceClicked(val vehicleId: String) : HomeEvent()
     data class UndoLocationClicked(val vehicleId:String, val previousLocation: Vehicle.LocationModel): HomeEvent()
     /** Una ubicación elegida a mano para un vehículo: arrastrando su marcador. */
     data class ManualLocationChosen(

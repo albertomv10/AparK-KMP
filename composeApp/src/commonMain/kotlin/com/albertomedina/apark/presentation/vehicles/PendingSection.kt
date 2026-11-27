@@ -22,7 +22,7 @@ import com.albertomedina.apark.presentation.components.SectionTitle
 import com.albertomedina.apark.presentation.components.Who
 import com.albertomedina.apark.presentation.components.whenWhoText
 import com.albertomedina.apark.presentation.incidents.IncidentTypeIcon
-import com.albertomedina.apark.presentation.incidents.TimeAgoSentences
+import com.albertomedina.apark.presentation.components.TimeAgoSentences
 import com.albertomedina.apark.presentation.incidents.displayName
 import org.jetbrains.compose.resources.stringResource
 

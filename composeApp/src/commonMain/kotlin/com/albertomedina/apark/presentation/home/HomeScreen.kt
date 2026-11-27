@@ -13,6 +13,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,6 +30,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,6 +40,7 @@ import apark.composeapp.generated.resources.Res
 import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.domain.model.Incident
 import com.albertomedina.apark.domain.model.Vehicle
+import com.albertomedina.apark.domain.model.parkedAtPlace
 import com.albertomedina.apark.domain.model.VehicleType
 import com.albertomedina.apark.presentation.components.AparKMap
 import com.albertomedina.apark.presentation.components.LocationPermissionHandler
@@ -324,6 +327,7 @@ fun HomeScreen(
                                 isLoading = state.isLoading,
                                 isSpecificLoading = state.updatingVehicleId == vehicle.id,
                                 onClick = { onNavigateToDetails(vehicle.id) },
+                                onParkAtPlace = { viewModel.onEvent(HomeEvent.ParkAtPlaceClicked(vehicle.id)) },
                                 onUpdateLocation = {
                                     if (hasLocationPermission){
                                         viewModel.onEvent(HomeEvent.UpdateLocationClicked(vehicle.id))
@@ -372,6 +376,8 @@ fun VehicleCard(
     /** La operación en marcha es la de este vehículo: el botón enseña que está trabajando. */
     isSpecificLoading: Boolean,
     onClick: () -> Unit,
+    /** Aparcar en su ubicación predeterminada, si la tiene (spec 024). */
+    onParkAtPlace: () -> Unit,
     onUpdateLocation: () -> Unit
 ) {
     val shape = CardDefaults.shape
@@ -417,6 +423,7 @@ fun VehicleCard(
                 ShortParkedText(
                     location = vehicle.lastLocation,
                     currentUserId = currentUserId,
+                    placeName = vehicle.parkedAtPlace?.name,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f)
@@ -429,15 +436,47 @@ fun VehicleCard(
 
             // Mientras aparca, el indicador va dentro del botón: cambiar el botón por un indicador
             // suelto cambiaba el alto de la tarjeta.
-            Button(
-                onClick = onUpdateLocation,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
-            ) {
-                if (isLoading && isSpecificLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                } else {
-                    Text(stringResource(Res.string.home_park_here))
+            val place = vehicle.defaultPlace
+            if (place == null) {
+                Button(
+                    onClick = onUpdateLocation,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading
+                ) {
+                    if (isLoading && isSpecificLoading) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(Res.string.home_park_here))
+                    }
+                }
+            } else {
+                // Con ubicación predeterminada (spec 024), dos botones del mismo tamaño, nombrados por
+                // el sitio: «Aquí», con el GPS, y el de la ubicación, sin él. La fila mide lo que uno.
+                val hereDescription = stringResource(Res.string.home_park_gps_description)
+                val placeDescription = stringResource(Res.string.home_park_at_place_description, place.name)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = onUpdateLocation,
+                        modifier = Modifier.weight(1f).semantics { contentDescription = hereDescription },
+                        enabled = !isLoading
+                    ) {
+                        if (isLoading && isSpecificLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.MyLocation, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text(stringResource(Res.string.home_park_gps), maxLines = 1)
+                        }
+                    }
+                    OutlinedButton(
+                        onClick = onParkAtPlace,
+                        modifier = Modifier.weight(1f).semantics { contentDescription = placeDescription },
+                        enabled = !isLoading
+                    ) {
+                        Icon(Icons.Default.Home, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(place.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
                 }
             }
         }

@@ -71,6 +71,7 @@ import com.albertomedina.apark.presentation.account.ChangePasswordViewModel
 import com.albertomedina.apark.presentation.account.DeleteAccountViewModel
 import com.albertomedina.apark.presentation.navigation.SessionViewModel
 import com.albertomedina.apark.presentation.navigation.PendingCountViewModel
+import com.albertomedina.apark.presentation.defaultplace.DefaultPlaceViewModel
 import com.albertomedina.apark.presentation.splash.SplashViewModel
 import com.albertomedina.apark.presentation.vehicles.VehiclesViewModel
 import com.albertomedina.apark.presentation.vehicledetail.VehicleDetailViewModel
@@ -244,6 +245,17 @@ val sharedModule = module {
         SessionViewModel(
             authRepository = get(),
             syncUserProfileUseCase = get()
+        )
+    }
+
+    viewModel {
+        DefaultPlaceViewModel(
+            authRepository = get(),
+            getVehicleListUseCase = get(),
+            locateUserUseCase = get(),
+            setDefaultPlaceUseCase = get(),
+            removeDefaultPlaceUseCase = get(),
+            crashReporter = get()
         )
     }
 

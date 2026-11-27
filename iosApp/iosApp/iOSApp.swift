@@ -114,22 +114,24 @@ struct iOSApp: App {
         // oscuro, o nil para el normal. Es el mismo JSON que usa Android, desde commonMain.
         AparKMap_iosKt.updateMapStyle = { json in
             guard let mapView = MapLocationController.shared.mapView else { return }
+            applyMapStyle(mapView, json: json)
+        }
 
-            // `overrideUserInterfaceStyle` no es opcional aquí. Desde la versión 9, el SDK de Maps
-            // adapta el mapa al modo oscuro **del sistema** él solo, y `mapStyle = nil` quiere
-            // decir "el de por defecto", que es justamente ese. Con el móvil en oscuro y la app en
-            // claro, quitar el estilo devolvía el mapa al oscuro del SDK en vez de aclararlo.
-            // Fijando el rasgo, el mapa deja de mirar al sistema y hace caso a la app.
-            guard let json else {
-                mapView.overrideUserInterfaceStyle = .light
-                mapView.mapStyle = nil
-                return
-            }
-            mapView.overrideUserInterfaceStyle = .dark
-            // El inicializador lanza si el JSON no es válido. Es un literal del propio repositorio,
-            // así que si fallara sería un error de programación, no algo que el usuario pueda
-            // provocar: se cae al estilo por defecto en vez de arrastrar un throw.
-            mapView.mapStyle = try? GMSMapStyle(jsonString: json)
+        // El mapa de elegir la ubicación predeterminada (spec 024): otro mapa, con su propio
+        // controlador, que nace donde dice Kotlin y le avisa del centro cada vez que se para.
+        PlacePickerMap_iosKt.iosPlacePickerFactory = { lat, lng, zoom, styleJson in
+            let options = GMSMapViewOptions()
+            options.camera = GMSCameraPosition.camera(
+                withLatitude: lat.doubleValue,
+                longitude: lng.doubleValue,
+                zoom: zoom.floatValue
+            )
+            let mapView = GMSMapView(options: options)
+            mapView.isMyLocationEnabled = true
+            mapView.settings.myLocationButton = false
+            mapView.delegate = PlacePickerController.shared
+            applyMapStyle(mapView, json: styleJson)
+            return mapView
         }
 
         // El mapa se va de la pantalla: se suelta, para que una orden de cámara no vaya a él (spec 017).
@@ -188,6 +190,7 @@ struct iOSApp: App {
         AparKMap_iosKt.iosMapUpdateMarkers = { markers in
             if let map = MapLocationController.shared.mapView {
                 map.clear() // Borra los pines antiguos para no duplicarlos
+                MapLocationController.shared.markers = []
                 
                 for marker in markers {
                     let position = CLLocationCoordinate2D(latitude: marker.lat, longitude: marker.lng)
@@ -196,11 +199,17 @@ struct iOSApp: App {
                     let selectedVehicleIndex = Int(marker.selectedVehicleIndex)
                     let colorToUse = if(selectedVehicleIndex == vehicleIndex) { UIColor.systemRed } else { UIColor.systemBlue}
                     
-                    gmsMarker.icon = GMSMarker.markerImage(with: colorToUse)
+                    // En su ubicación predeterminada, el mismo pin con una casa (spec 024).
+                    gmsMarker.icon = marker.atPlace
+                        ? markerImageAtPlace(color: colorToUse)
+                        : GMSMarker.markerImage(with: colorToUse)
                     gmsMarker.title = marker.title
-                    gmsMarker.isDraggable = true
+                    // Solo se arrastra el del vehículo elegido (spec 024): para mover otro, se elige
+                    // antes, en el carrusel o tocando su pin.
+                    gmsMarker.isDraggable = selectedVehicleIndex == vehicleIndex
                     gmsMarker.userData = marker.id
                     gmsMarker.map = map
+                    MapLocationController.shared.markers.append(gmsMarker)
                 }
             }
         }

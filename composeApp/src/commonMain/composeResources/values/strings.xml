@@ -357,4 +357,17 @@
     <string name="card_time_yesterday_at">Ayer a las %1$s</string>
     <string name="card_time_on_date">El %1$s %2$s</string>
     <string name="card_by_you">tú</string>
+
+    <!-- Spec 024: la ubicación predeterminada -->
+    <string name="parked_at_place">%1$s en %2$s</string>
+    <string name="home_park_gps">Aquí</string>
+    <string name="home_park_gps_description">Aparcar aquí</string>
+    <string name="home_park_at_place_description">Aparcar en %1$s</string>
+    <string name="default_place_title">Ubicación predeterminada</string>
+    <string name="default_place_add">Añadir</string>
+    <string name="default_place_name">Nombre</string>
+    <string name="default_place_default_name">Garaje</string>
+    <string name="default_place_hint">Mueve el mapa hasta la plaza</string>
+    <string name="default_place_save">Guardar</string>
+    <string name="default_place_remove">Quitar</string>
 </resources>

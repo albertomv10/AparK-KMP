@@ -357,4 +357,17 @@
     <string name="card_time_yesterday_at">Yesterday at %1$s</string>
     <string name="card_time_on_date">%1$s %2$s</string>
     <string name="card_by_you">you</string>
+
+    <!-- Spec 024 -->
+    <string name="parked_at_place">%1$s at %2$s</string>
+    <string name="home_park_gps">Here</string>
+    <string name="home_park_gps_description">Park here</string>
+    <string name="home_park_at_place_description">Park at %1$s</string>
+    <string name="default_place_title">Default location</string>
+    <string name="default_place_add">Add</string>
+    <string name="default_place_name">Name</string>
+    <string name="default_place_default_name">Garage</string>
+    <string name="default_place_hint">Move the map to the spot</string>
+    <string name="default_place_save">Save</string>
+    <string name="default_place_remove">Remove</string>
 </resources>
