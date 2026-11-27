@@ -40,6 +40,8 @@ import com.albertomedina.apark.domain.usecase.GetCurrentLocationUseCase
 import com.albertomedina.apark.domain.usecase.GetLastVehicleLocationUseCase
 import com.albertomedina.apark.domain.usecase.GetUserUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
+import com.albertomedina.apark.domain.usecase.RemoveDefaultPlaceUseCase
+import com.albertomedina.apark.domain.usecase.SetDefaultPlaceUseCase
 import com.albertomedina.apark.domain.usecase.JoinVehicleWithCodeUseCase
 import com.albertomedina.apark.domain.usecase.LocateUserUseCase
 import com.albertomedina.apark.domain.usecase.LoginAppleUseCase
@@ -151,6 +153,8 @@ val sharedModule = module {
     factory { RemoveUserFromVehicleUseCase(repository = get()) }
     factory { RemoveVehicleMemberUseCase(vehicleRepository = get()) }
     factory { TransferVehicleOwnershipUseCase(vehicleRepository = get()) }
+    factory { SetDefaultPlaceUseCase(repository = get()) }
+    factory { RemoveDefaultPlaceUseCase(repository = get()) }
     factory { GetVehicleMembersUseCase(memberRepository = get()) }
     factory { GetLastVehicleLocationUseCase(repository = get()) }
     factory { UpdateVehicleLocationUseCase(
