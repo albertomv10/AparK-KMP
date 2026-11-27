@@ -8,5 +8,5 @@ PRODUCT_BUNDLE_IDENTIFIER=com.albertomedina.apark.Apark
 // No la cambies desde la pestaña General de Xcode: la escribe en el target, en
 // project.pbxproj, y desde ahí pisa a este fichero sin avisar. Así estuvo hasta
 // la 1.1.0: estos valores no llegaban a la app.
-CURRENT_PROJECT_VERSION=3
-MARKETING_VERSION=1.1.0
+CURRENT_PROJECT_VERSION=4
+MARKETING_VERSION=1.2.0
