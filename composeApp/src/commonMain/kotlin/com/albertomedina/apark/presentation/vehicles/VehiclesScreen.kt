@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import apark.composeapp.generated.resources.*
 import com.albertomedina.apark.domain.model.Pending
 import com.albertomedina.apark.domain.model.Vehicle
+import com.albertomedina.apark.domain.model.parkedAtPlace
 import com.albertomedina.apark.presentation.components.ParkedText
 import com.albertomedina.apark.presentation.navigation.TabShellDefaults
 import com.albertomedina.apark.presentation.components.SectionTitle
@@ -267,6 +268,7 @@ private fun VehicleRow(
             ParkedText(
                 location = vehicle.lastLocation,
                 currentUserId = currentUserId,
+                placeName = vehicle.parkedAtPlace?.name,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

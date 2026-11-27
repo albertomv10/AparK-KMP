@@ -7,12 +7,22 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
 import com.albertomedina.apark.domain.model.Vehicle
+import com.albertomedina.apark.domain.model.parkedAtPlace
 import com.albertomedina.apark.ui.theme.LocalIsDarkTheme
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.flow.Flow
 import platform.UIKit.UIView
 
-data class IosMapMarker(val id: String, val lat: Double, val lng: Double, val title: String, val vehicleIndex:Int, val selectedVehicleIndex: Int)
+/** Un marcador para Swift. [atPlace]: está en su ubicación predeterminada, y el pin lleva una casa (spec 024). */
+data class IosMapMarker(
+    val id: String,
+    val lat: Double,
+    val lng: Double,
+    val title: String,
+    val vehicleIndex: Int,
+    val selectedVehicleIndex: Int,
+    val atPlace: Boolean
+)
 var iosMapViewFactory: (() -> UIView)? = null
 var updateMapPadding: ((Double) -> Unit)? = null
 
@@ -54,7 +64,10 @@ actual fun AparKMap(
     LaunchedEffect(vehicles, selectedVehicleIndex) {
         val markers = vehicles.mapIndexedNotNull { index, vehicle ->
             vehicle.lastLocation?.let { loc ->
-                IosMapMarker(vehicle.id, loc.latitude, loc.longitude, vehicle.name, index, selectedVehicleIndex)
+                IosMapMarker(
+                    vehicle.id, loc.latitude, loc.longitude, vehicle.name, index, selectedVehicleIndex,
+                    atPlace = vehicle.parkedAtPlace != null
+                )
             }
         }
         iosMapUpdateMarkers?.invoke(markers)

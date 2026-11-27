@@ -40,6 +40,8 @@ import com.albertomedina.apark.domain.usecase.GetCurrentLocationUseCase
 import com.albertomedina.apark.domain.usecase.GetLastVehicleLocationUseCase
 import com.albertomedina.apark.domain.usecase.GetUserUseCase
 import com.albertomedina.apark.domain.usecase.GetVehicleListUseCase
+import com.albertomedina.apark.domain.usecase.RemoveDefaultPlaceUseCase
+import com.albertomedina.apark.domain.usecase.SetDefaultPlaceUseCase
 import com.albertomedina.apark.domain.usecase.JoinVehicleWithCodeUseCase
 import com.albertomedina.apark.domain.usecase.LocateUserUseCase
 import com.albertomedina.apark.domain.usecase.LoginAppleUseCase
@@ -69,6 +71,7 @@ import com.albertomedina.apark.presentation.account.ChangePasswordViewModel
 import com.albertomedina.apark.presentation.account.DeleteAccountViewModel
 import com.albertomedina.apark.presentation.navigation.SessionViewModel
 import com.albertomedina.apark.presentation.navigation.PendingCountViewModel
+import com.albertomedina.apark.presentation.defaultplace.DefaultPlaceViewModel
 import com.albertomedina.apark.presentation.splash.SplashViewModel
 import com.albertomedina.apark.presentation.vehicles.VehiclesViewModel
 import com.albertomedina.apark.presentation.vehicledetail.VehicleDetailViewModel
@@ -151,6 +154,8 @@ val sharedModule = module {
     factory { RemoveUserFromVehicleUseCase(repository = get()) }
     factory { RemoveVehicleMemberUseCase(vehicleRepository = get()) }
     factory { TransferVehicleOwnershipUseCase(vehicleRepository = get()) }
+    factory { SetDefaultPlaceUseCase(repository = get()) }
+    factory { RemoveDefaultPlaceUseCase(repository = get()) }
     factory { GetVehicleMembersUseCase(memberRepository = get()) }
     factory { GetLastVehicleLocationUseCase(repository = get()) }
     factory { UpdateVehicleLocationUseCase(
@@ -240,6 +245,17 @@ val sharedModule = module {
         SessionViewModel(
             authRepository = get(),
             syncUserProfileUseCase = get()
+        )
+    }
+
+    viewModel {
+        DefaultPlaceViewModel(
+            authRepository = get(),
+            getVehicleListUseCase = get(),
+            locateUserUseCase = get(),
+            setDefaultPlaceUseCase = get(),
+            removeDefaultPlaceUseCase = get(),
+            crashReporter = get()
         )
     }
 

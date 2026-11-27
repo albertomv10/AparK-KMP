@@ -18,4 +18,13 @@ interface VehicleRepository {
     /** El dueño quita a otro. No toca el `users` de esa persona, que las reglas no dejan escribir. */
     suspend fun removeMember(vehicleId: String, memberId: String): Result<Unit>
     suspend fun transferVehicleOwnership(vehicleId: String, newOwnerId: String): Result<Unit>
+
+    /**
+     * Pone o cambia la ubicación predeterminada (spec 024). Como toda escritura, no termina hasta que
+     * el servidor confirma, y sin conexión no termina nunca: quien la llama no debe esperarla.
+     */
+    suspend fun setDefaultPlace(vehicleId: String, place: Vehicle.DefaultPlace): Result<Unit>
+
+    /** La quita: borra el campo. Igual que [setDefaultPlace], no se espera. */
+    suspend fun removeDefaultPlace(vehicleId: String): Result<Unit>
 }

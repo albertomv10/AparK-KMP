@@ -58,10 +58,31 @@ service cloud.firestore {
       return d.name is string && d.name.size() > 0 && d.name.size() <= 60;
     }
 
+    // The default place (spec 024): the vehicle's garage. Either absent or null — no place; the app
+    // writes null when it creates a vehicle with every field —, or exactly a name of 1 to 40
+    // characters, not counting the spaces around it, and a valid point. It is free text that every
+    // member sees on the card, so it is bounded like the rest.
+    function defaultPlaceOk(d) {
+      return !('defaultPlace' in d)
+          || d.defaultPlace == null
+          || (
+            d.defaultPlace is map
+            && d.defaultPlace.keys().hasOnly(['name', 'latitude', 'longitude'])
+            && d.defaultPlace.keys().hasAll(['name', 'latitude', 'longitude'])
+            && d.defaultPlace.name is string
+            && d.defaultPlace.name.trim().size() > 0
+            && d.defaultPlace.name.size() <= 40
+            && d.defaultPlace.latitude is number
+            && d.defaultPlace.latitude >= -90 && d.defaultPlace.latitude <= 90
+            && d.defaultPlace.longitude is number
+            && d.defaultPlace.longitude >= -180 && d.defaultPlace.longitude <= 180
+          );
+    }
+
     // Every field, for a vehicle being created.
     function vehicleDataOk(d) {
       return vehicleTypeOk(d) && powertrainOk(d) && fuelOk(d) && colorOk(d) && emissionsLabelOk(d)
-          && textOk(d, 'make', 40) && textOk(d, 'model', 40);
+          && textOk(d, 'make', 40) && textOk(d, 'model', 40) && defaultPlaceOk(d);
     }
 
     // Only the fields that change, for an update. Checking them all would let one value written
@@ -80,7 +101,8 @@ service cloud.firestore {
           && (!vehicleFieldChanged('color') || colorOk(d))
           && (!vehicleFieldChanged('emissionsLabel') || emissionsLabelOk(d))
           && (!vehicleFieldChanged('make') || textOk(d, 'make', 40))
-          && (!vehicleFieldChanged('model') || textOk(d, 'model', 40));
+          && (!vehicleFieldChanged('model') || textOk(d, 'model', 40))
+          && (!vehicleFieldChanged('defaultPlace') || defaultPlaceOk(d));
     }
 
     match /vehicles/{vehicleId} {
@@ -110,7 +132,8 @@ service cloud.firestore {
       allow delete: if request.auth != null
                     && request.auth.uid == resource.data.ownerId;
 
-      // Update: the owner may change anything; a member may only park the vehicle, or leave it.
+      // Update: the owner may change anything; a member may park the vehicle, set its default
+      // place, or leave it.
       allow update: if request.auth != null && (
         (
           // The owner may change anything except their own membership. Without that second
@@ -130,11 +153,23 @@ service cloud.firestore {
         )
         ||
         (
-          // Parking: only the location changes, and only with the caller's own email on it.
+          // Parking: only the location changes, and only with the caller's own email on it. Parking
+          // at the default place marks it, and the mark can only be a boolean (spec 024).
           request.auth.uid in resource.data.memberIds
           && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['lastLocation', 'updatedAt'])
           && request.resource.data.lastLocation.user.email == request.auth.token.email
+          && request.resource.data.lastLocation.get('atDefaultPlace', false) is bool
+        )
+        ||
+        (
+          // The default place (spec 024): any member may set, change or remove it — the one piece
+          // of the vehicle's data that is not the owner's alone — and nothing else in the same
+          // write. Removing it deletes the field, which `defaultPlaceOk` lets through.
+          request.auth.uid in resource.data.memberIds
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['defaultPlace', 'updatedAt'])
+          && defaultPlaceOk(request.resource.data)
         )
         ||
         (

@@ -20,19 +20,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import com.albertomedina.apark.ui.theme.LocalIsDarkTheme
 import androidx.compose.ui.unit.Dp
 import androidx.core.content.ContextCompat
 import com.albertomedina.apark.domain.model.Vehicle
+import com.albertomedina.apark.domain.model.parkedAtPlace
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.CancellationException
@@ -55,6 +56,7 @@ actual fun AparKMap(
 ) {
 
     val context = LocalContext.current
+    val density = LocalDensity.current
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
             LatLng(DefaultMapCenter.latitude, DefaultMapCenter.longitude),
@@ -115,7 +117,19 @@ actual fun AparKMap(
             uiSettings = uiSettings,
             contentPadding = PaddingValues(bottom = bottomPadding),
             onMapLoaded = { isMapLoaded = true },
-            onMapLongClick = { onMapLongPressed(it.latitude, it.longitude) }
+            // Mantener pulsado un pin no es «aparcar aquí» (spec 024): el del elegido se arrastra, y el
+            // de otro no se mueve. Sin esto, mantener pulsado el pin de otro vehículo llevaba el
+            // elegido encima de él, porque en Android esa pulsación también llega al mapa.
+            onMapLongClick = { latLng ->
+                val projection = cameraPositionState.projection
+                val pressed = projection?.toScreenLocation(latLng)
+                val onPin = pressed != null && vehicles.any { vehicle ->
+                    val loc = vehicle.lastLocation ?: return@any false
+                    val pin = projection.toScreenLocation(LatLng(loc.latitude, loc.longitude))
+                    isOnPin(pin.x.toFloat(), pin.y.toFloat(), pressed.x.toFloat(), pressed.y.toFloat(), density.density)
+                }
+                if (!onPin) onMapLongPressed(latLng.latitude, latLng.longitude)
+            }
         ) {
             vehicles.forEachIndexed { index, vehicle ->
                 vehicle.lastLocation?.let { loc ->
@@ -145,24 +159,29 @@ actual fun AparKMap(
                         }
                     }
 
-                    val iconMarker = if (index == selectedVehicleIndex){
-                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
-                    }else{
-                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
-                    }
+                    val selected = index == selectedVehicleIndex
+                    val atPlace = vehicle.parkedAtPlace != null
 
-                    Marker(
+                    // Un pin propio y no el del SDK (spec 024): `defaultMarker` es un BitmapDescriptor
+                    // opaco, sin forma de dibujarle encima la casa del garaje. Así el pin normal y el
+                    // de la casa tienen la misma forma. Las claves rehacen la imagen al cambiar.
+                    MarkerComposable(
+                        selected, atPlace,
                         state = markerState,
                         title = vehicle.name,
-                        icon = iconMarker,
-                        draggable = true,
+                        anchor = VehiclePinAnchor,
+                        // Solo se arrastra el del vehículo elegido (spec 024): para mover otro, se
+                        // elige antes, en el carrusel o tocando su pin.
+                        draggable = selected,
                         // Tocarlo elige el vehículo. `true` evita lo de por defecto —centrarlo y abrir
                         // un globo—: la cámara ya va a él por la regla común.
                         onClick = {
                             onMarkerTapped(vehicle.id)
                             true
                         }
-                    )
+                    ) {
+                        VehiclePin(selected = selected, atPlace = atPlace)
+                    }
                 }
             }
         }

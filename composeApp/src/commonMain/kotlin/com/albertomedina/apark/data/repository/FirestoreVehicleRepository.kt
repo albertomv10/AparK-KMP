@@ -11,6 +11,7 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 
 class FirestoreVehicleRepository(
@@ -192,6 +193,32 @@ class FirestoreVehicleRepository(
     }
 
     /** Las reglas solo dejan pasar la propiedad a quien ya está en `memberIds` (spec 014). */
+    override suspend fun setDefaultPlace(vehicleId: String, place: Vehicle.DefaultPlace): Result<Unit> = try {
+        firestore.collection(FirestoreConstants.CARS_COLLECTION)
+            .document(vehicleId)
+            .update(
+                FirestoreConstants.DEFAULT_PLACE_FIELD to place,
+                FirestoreConstants.UPDATED_AT_FIELD to Clock.System.now().toEpochMilliseconds()
+            )
+        Result.success(Unit)
+    } catch (e: Exception) {
+        if (e is CancellationException) throw e
+        Result.failure(e)
+    }
+
+    override suspend fun removeDefaultPlace(vehicleId: String): Result<Unit> = try {
+        firestore.collection(FirestoreConstants.CARS_COLLECTION)
+            .document(vehicleId)
+            .update(
+                FirestoreConstants.DEFAULT_PLACE_FIELD to FieldValue.delete,
+                FirestoreConstants.UPDATED_AT_FIELD to Clock.System.now().toEpochMilliseconds()
+            )
+        Result.success(Unit)
+    } catch (e: Exception) {
+        if (e is CancellationException) throw e
+        Result.failure(e)
+    }
+
     override suspend fun transferVehicleOwnership(vehicleId: String, newOwnerId: String): Result<Unit> {
         return try {
             firestore.collection(FirestoreConstants.CARS_COLLECTION)

@@ -64,7 +64,11 @@ export interface SeedVehicle {
         longitude: number;
         timestamp: number;
         user: { uid: string; name: string; email: string } | null;
+        /** Se aparcó con el botón de su ubicación predeterminada (spec 024). */
+        atDefaultPlace?: boolean;
     } | null;
+    /** Su ubicación predeterminada (spec 024): el garaje. */
+    defaultPlace?: { name: string; latitude: number; longitude: number };
     createdAt: number;
     updatedAt: number;
 }
@@ -91,8 +95,9 @@ export function buildVehicles(): SeedVehicle[] {
             updatedAt: T0,
         },
         {
-            // Aparcado en Madrid, por su dueño. Sin datos, como cualquiera de antes de la spec 015:
-            // su dueño ve «Añade los datos del vehículo».
+            // Aparcado en Madrid, por su dueño, y en su garaje (spec 024): enseña el pin con la casa
+            // y «Garaje · …» en la tarjeta. Sin datos, como cualquiera de antes de la spec 015: su
+            // dueño ve «Añade los datos del vehículo».
             id: "seed-vehicle-aparcado",
             name: "Coche de Alberto",
             licensePlate: "5678 DEF",
@@ -110,12 +115,15 @@ export function buildVehicles(): SeedVehicle[] {
                 longitude: -3.7038,
                 timestamp: T0,
                 user: { uid: ALBERTO.uid, name: ALBERTO.name, email: ALBERTO.email },
+                atDefaultPlace: true,
             },
+            defaultPlace: { name: "Garaje", latitude: 40.4168, longitude: -3.7038 },
             createdAt: T0,
             updatedAt: T0,
         },
         {
-            // El interesante: dos miembros, y lo aparcó el que NO es el dueño.
+            // El interesante: dos miembros, y lo aparcó el que NO es el dueño. Tiene una plaza de
+            // garaje cerca, pero no está en ella: enseña los dos botones (spec 024).
             id: "seed-vehicle-compartido",
             name: "Coche compartido",
             licensePlate: "9012 GHI",
@@ -134,6 +142,7 @@ export function buildVehicles(): SeedVehicle[] {
                 timestamp: T0,
                 user: { uid: EDU.uid, name: EDU.name, email: EDU.email },
             },
+            defaultPlace: { name: "Plaza 23", latitude: 40.4149, longitude: -3.7065 },
             createdAt: T0,
             updatedAt: T0,
         },
@@ -237,6 +246,17 @@ export function assertInvariants(vehicles: SeedVehicle[], users: SeedUser[], inc
         }
         if (v.name.length === 0 || v.name.length > 60) {
             throw new Error(`${v.id}: el nombre no cumple lo que exige la regla de creación`);
+        }
+        const place = v.defaultPlace;
+        if (place) {
+            const name = place.name.trim();
+            if (name === "" || place.name.length > 40) throw new Error(`${v.id}: la ubicación necesita un nombre de 1 a 40`);
+            if (Math.abs(place.latitude) > 90 || Math.abs(place.longitude) > 180) {
+                throw new Error(`${v.id}: la ubicación está fuera del mapa`);
+            }
+        }
+        if (v.lastLocation?.atDefaultPlace && !place) {
+            throw new Error(`${v.id}: está aparcado en su ubicación, pero no tiene`);
         }
     }
 

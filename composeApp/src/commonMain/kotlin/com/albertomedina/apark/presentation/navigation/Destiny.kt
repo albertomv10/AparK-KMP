@@ -61,6 +61,15 @@ data class EditVehicle(val vehicleId: String) : Destiny {
 }
 
 /**
+ * Elegir la ubicación predeterminada de un vehículo (spec 024): una tarea con principio y fin, con un
+ * mapa y teclado, así que sin barra.
+ */
+@Serializable
+data class DefaultPlaceEditor(val vehicleId: String) : Destiny {
+    override val showsTabBar: Boolean get() = false
+}
+
+/**
  * Cambiar el email o la contraseña: tareas con principio y fin, y con teclado, así que sin barra.
  * Una pantalla y no un diálogo porque la contraseña lleva tres campos (spec 011).
  */
@@ -96,6 +105,7 @@ internal val navigationConfig = SavedStateConfiguration {
             subclass(AddVehicle::class, AddVehicle.serializer())
             subclass(VehicleDetail::class, VehicleDetail.serializer())
             subclass(EditVehicle::class, EditVehicle.serializer())
+            subclass(DefaultPlaceEditor::class, DefaultPlaceEditor.serializer())
             subclass(ChangeEmail::class, ChangeEmail.serializer())
             subclass(ChangePassword::class, ChangePassword.serializer())
             subclass(DeleteAccount::class, DeleteAccount.serializer())

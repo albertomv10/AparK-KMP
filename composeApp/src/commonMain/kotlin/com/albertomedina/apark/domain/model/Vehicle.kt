@@ -27,6 +27,8 @@ data class Vehicle(
      */
     val memberIds: List<String> = emptyList(),
     val lastLocation: LocationModel? = LocationModel(),
+    /** Su ubicación predeterminada —el garaje—, o `null` si no tiene (spec 024). */
+    val defaultPlace: DefaultPlace? = null,
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L
 )  {
@@ -35,8 +37,29 @@ data class Vehicle(
         val latitude: Double = 0.0,
         val longitude: Double = 0.0,
         val timestamp: Long = 0L,
-        val user: ParkedBy? = null
+        val user: ParkedBy? = null,
+        /**
+         * Se aparcó con el botón de su ubicación predeterminada (spec 024). Aparcar con el GPS,
+         * arrastrar el marcador o aparcar desde una versión anterior reescriben la ubicación entera, y
+         * con ella se va la marca.
+         */
+        val atDefaultPlace: Boolean = false
     )
+
+    /**
+     * La ubicación predeterminada de un vehículo (spec 024): una sola, con su nombre. La pone,
+     * cambia o quita cualquier miembro, y las reglas solo le dejan tocar esto.
+     */
+    @Serializable
+    data class DefaultPlace(
+        val name: String = "",
+        val latitude: Double = 0.0,
+        val longitude: Double = 0.0
+    ) {
+        companion object {
+            const val NAME_MAX_LENGTH = 40
+        }
+    }
 
     /**
      * Quién aparcó, con **lo que la tarjeta pinta y nada más**.
@@ -52,3 +75,11 @@ data class Vehicle(
         val email: String = ""
     )
 }
+
+/**
+ * La ubicación predeterminada en la que está aparcado, o `null` si no está en ella (spec 024). Se
+ * mira la marca de la última ubicación **y** que la ubicación siga existiendo: si alguien la quita con
+ * el coche dentro, ya no hay sitio que nombrar.
+ */
+val Vehicle.parkedAtPlace: Vehicle.DefaultPlace?
+    get() = defaultPlace?.takeIf { lastLocation?.atDefaultPlace == true }

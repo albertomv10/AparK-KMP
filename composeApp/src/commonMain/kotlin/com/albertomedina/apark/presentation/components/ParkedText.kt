@@ -70,6 +70,15 @@ val ParkedSentences = TimeSentences(
 )
 
 /**
+ * Solo el cuándo, en minúscula y sin verbo: «hace 2 h», «ayer a las 18:45». Para «Pendiente» (spec 020)
+ * y para la tarjeta de un vehículo en su ubicación predeterminada, detrás del nombre (spec 024).
+ */
+val TimeAgoSentences = TimeSentences(
+    Res.string.time_just_now, Res.string.time_minutes_ago, Res.string.time_hours_ago,
+    Res.string.time_today_at, Res.string.time_yesterday_at, Res.string.time_on_date
+)
+
+/**
  * «Aparcado hace 5 min por Edu», «Reportada ayer a las 18:45 por ti», «Resuelta el 12 nov»: el cuándo
  * con las frases de [sentences], y el quién si lo hay. Se refresca cada minuto.
  */
@@ -88,12 +97,16 @@ private fun withWho(whenText: String, who: Who): String = when (who) {
  * «Aparcado hace 5 min por Edu», en una línea (spec 016): lo que dicen la lista de *Vehículos* y el
  * detalle. Sin ubicación, «Aún no aparcado». Si quien aparcó fue quien mira, «por ti». La tarjeta del
  * mapa usa la corta, [ShortParkedText].
+ *
+ * @param placeName el nombre de su ubicación predeterminada, si está aparcado en ella (spec 024):
+ *   «Aparcado hace 5 min en Garaje por Edu».
  */
 @Composable
 fun ParkedText(
     location: Vehicle.LocationModel?,
     currentUserId: String?,
     modifier: Modifier = Modifier,
+    placeName: String? = null,
     style: TextStyle = LocalTextStyle.current,
     color: Color = Color.Unspecified,
     maxLines: Int = 1
@@ -101,9 +114,17 @@ fun ParkedText(
     val text = if (location == null || location.timestamp == 0L) {
         stringResource(Res.string.home_not_parked_yet)
     } else {
-        whenWhoText(location.timestamp, whoParked(location, currentUserId), ParkedSentences)
+        longParkedText(rememberRelativeTime(location.timestamp), whoParked(location, currentUserId), placeName)
     }
     Text(text, modifier, color = color, style = style, maxLines = maxLines, overflow = TextOverflow.Ellipsis)
+}
+
+/** La frase larga: el cuándo, el sitio si lo hay y el quién. */
+@Composable
+private fun longParkedText(time: RelativeTime, who: Who, placeName: String?): String {
+    val whenText = sentenceFor(time, ParkedSentences)
+    val whenWhere = placeName?.let { stringResource(Res.string.parked_at_place, whenText, it) } ?: whenText
+    return withWho(whenWhere, who)
 }
 
 /**
@@ -131,6 +152,9 @@ fun shortParkedLine(whenText: String, who: Who, you: String): String = when (who
  * las incidencias a su lado, y siempre corta, con iconos o sin ellos, para que no cambie de forma al
  * deslizar. Sin ubicación, «Aún no aparcado».
  *
+ * En su ubicación predeterminada ([placeName], spec 024), el sitio y el cuándo: «Garaje · hace 5 min».
+ * El quién no cabe junto a los iconos, y en el garaje importa menos quién lo dejó.
+ *
  * El lector de pantalla dice la frase larga de siempre, «Aparcado hace 5 min por Edu»: el «·» no se lee
  * bien, y fuera de la vista el verbo sí hace falta.
  */
@@ -139,6 +163,7 @@ fun ShortParkedText(
     location: Vehicle.LocationModel?,
     currentUserId: String?,
     modifier: Modifier = Modifier,
+    placeName: String? = null,
     style: TextStyle = LocalTextStyle.current,
     color: Color = Color.Unspecified
 ) {
@@ -149,8 +174,12 @@ fun ShortParkedText(
     }
     val who = whoParked(location, currentUserId)
     val time = rememberRelativeTime(location.timestamp)
-    val short = shortParkedLine(sentenceFor(time, CardTimeSentences), who, stringResource(Res.string.card_by_you))
-    val long = withWho(sentenceFor(time, ParkedSentences), who)
+    val short = if (placeName != null) {
+        "$placeName · ${sentenceFor(time, TimeAgoSentences)}"
+    } else {
+        shortParkedLine(sentenceFor(time, CardTimeSentences), who, stringResource(Res.string.card_by_you))
+    }
+    val long = longParkedText(time, who, placeName)
     Text(
         short,
         modifier.semantics { contentDescription = long },

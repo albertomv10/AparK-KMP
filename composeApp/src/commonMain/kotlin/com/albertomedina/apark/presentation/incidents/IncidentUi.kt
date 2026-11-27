@@ -179,9 +179,3 @@ val ResolvedSentences = TimeSentences(
     Res.string.incident_resolved_hours_ago, Res.string.incident_resolved_today_at,
     Res.string.incident_resolved_yesterday_at, Res.string.incident_resolved_on_date
 )
-
-/** Solo el cuándo, sin «Reportada»: «hace 2 h», «ayer a las 18:45». Para «Pendiente» (spec 020). */
-val TimeAgoSentences = TimeSentences(
-    Res.string.time_just_now, Res.string.time_minutes_ago, Res.string.time_hours_ago,
-    Res.string.time_today_at, Res.string.time_yesterday_at, Res.string.time_on_date
-)
