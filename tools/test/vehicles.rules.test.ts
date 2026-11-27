@@ -13,7 +13,7 @@ import {
     type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { deleteField, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
 const OWNER = "uid_owner";
 const MEMBER = "uid_member";
@@ -276,6 +276,71 @@ describe("datos del vehículo (spec 015)", () => {
             ownerUpdate({ lastLocation: { latitude: 1, longitude: 2, timestamp: 3, user: { uid: OWNER, name: "", email: OWNER_EMAIL } } })
         );
         await assertSucceeds(ownerUpdate({ type: "van" }));
+    });
+});
+
+describe("ubicación predeterminada (spec 024)", () => {
+    const garaje = { name: "Garaje", latitude: 40.41, longitude: -3.7 };
+    const memberUpdate = (data: Record<string, unknown>) =>
+        updateDoc(doc(as(MEMBER, MEMBER_EMAIL), "vehicles", VEHICLE), data);
+    const ownerUpdate = (data: Record<string, unknown>) =>
+        updateDoc(doc(as(OWNER, OWNER_EMAIL), "vehicles", VEHICLE), data);
+
+    it("un miembro que no es el dueño la pone, la cambia y la quita", async () => {
+        await assertSucceeds(memberUpdate({ defaultPlace: garaje, updatedAt: 1 }));
+        await assertSucceeds(memberUpdate({ defaultPlace: { ...garaje, name: "Plaza 23" } }));
+        await assertSucceeds(memberUpdate({ defaultPlace: deleteField() }));
+        // null también es «sin ubicación»: es lo que escribe la app al crear un vehículo entero.
+        await assertSucceeds(memberUpdate({ defaultPlace: null }));
+    });
+
+    it("el dueño la pone", async () => {
+        await assertSucceeds(ownerUpdate({ defaultPlace: garaje }));
+    });
+
+    it("NO con el nombre vacío, solo espacios o de 41", async () => {
+        await assertFails(memberUpdate({ defaultPlace: { ...garaje, name: "" } }));
+        await assertFails(memberUpdate({ defaultPlace: { ...garaje, name: "   " } }));
+        await assertFails(memberUpdate({ defaultPlace: { ...garaje, name: "x".repeat(41) } }));
+        await assertFails(ownerUpdate({ defaultPlace: { ...garaje, name: "" } }));
+    });
+
+    it("NO con un punto fuera de rango", async () => {
+        await assertFails(memberUpdate({ defaultPlace: { ...garaje, latitude: 100 } }));
+        await assertFails(memberUpdate({ defaultPlace: { ...garaje, longitude: -200 } }));
+        await assertFails(ownerUpdate({ defaultPlace: { ...garaje, latitude: "40" } }));
+    });
+
+    it("NO con un campo de más ni de menos", async () => {
+        await assertFails(memberUpdate({ defaultPlace: { ...garaje, icon: "home" } }));
+        await assertFails(memberUpdate({ defaultPlace: { name: "Garaje", latitude: 40.41 } }));
+        await assertFails(memberUpdate({ defaultPlace: "Garaje" }));
+    });
+
+    it("un miembro NO puede cambiar otra cosa del vehículo de paso", async () => {
+        await assertFails(memberUpdate({ defaultPlace: garaje, name: "Secuestrado" }));
+    });
+
+    it("un extraño NO la pone", async () => {
+        await assertFails(
+            updateDoc(doc(as(STRANGER, "x@apark.test"), "vehicles", VEHICLE), { defaultPlace: garaje })
+        );
+    });
+
+    it("aparcar en ella deja la marca, que solo puede ser booleana", async () => {
+        const parked = { latitude: 40.41, longitude: -3.7, timestamp: 1, user: { uid: MEMBER, name: "", email: MEMBER_EMAIL } };
+        await assertSucceeds(memberUpdate({ lastLocation: { ...parked, atDefaultPlace: true } }));
+        await assertSucceeds(memberUpdate({ lastLocation: parked }));
+        await assertFails(memberUpdate({ lastLocation: { ...parked, atDefaultPlace: "sí" } }));
+    });
+
+    it("se puede crear un vehículo con ella, pero no con una inválida", async () => {
+        const fresh = { name: "Nuevo", ownerId: STRANGER, memberIds: [STRANGER], lastLocation: null };
+        await assertSucceeds(setDoc(doc(as(STRANGER, "x@apark.test"), "vehicles", "v_place"), { ...fresh, defaultPlace: garaje }));
+        await assertSucceeds(setDoc(doc(as(STRANGER, "x@apark.test"), "vehicles", "v_null"), { ...fresh, defaultPlace: null }));
+        await assertFails(
+            setDoc(doc(as(STRANGER, "x@apark.test"), "vehicles", "v_bad_place"), { ...fresh, defaultPlace: { ...garaje, name: "" } })
+        );
     });
 });
 
