@@ -1,9 +1,13 @@
 package com.albertomedina.apark.presentation.navigation
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -138,11 +142,11 @@ fun TabShell(
             }
         }
     ) { padding ->
-        // Las pantallas traen su propio Scaffold, que por defecto vuelve a reservar sitio para las
-        // barras del sistema — y ese sitio ya lo ha descontado este de fuera al colocar la barra de
-        // pestañas. Sin `consumeWindowInsets` se suman dos veces: en Android el inset de gestos es
-        // pequeño y apenas se nota, pero en iPhone el del indicador de inicio son ~34pt y el
-        // contenido sube de más.
+        // Lo de abajo —la barra de pestañas, o el indicador de inicio cuando no hay barra— lo deja
+        // libre este Scaffold, y es suyo: los de las pantallas no lo piden
+        // (`TabShellDefaults.contentWindowInsets`, spec 023). Consumirlo aquí sigue haciendo falta
+        // para el teclado: los `imePadding()` de los formularios descuentan lo consumido, y sin
+        // esto sumarían otra vez la barra o el indicador.
         val tabBarPadding = PaddingValues(bottom = padding.calculateBottomPadding())
         fun push(key: Destiny) {
             isTabSwitch = false
@@ -217,6 +221,27 @@ fun TabShell(
             }
         )
     }
+}
+
+/** Lo que necesitan las pantallas que viven dentro de [TabShell]. */
+object TabShellDefaults {
+    /**
+     * Los márgenes que pide el `Scaffold` de una pantalla de dentro de las pestañas: arriba y a los
+     * lados, **nunca abajo**. Lo de abajo lo deja libre el shell —la barra de pestañas, o el
+     * indicador de inicio cuando no hay barra—, así que es suyo. Toda pantalla de dentro, lleve
+     * barra o no, lo pasa como `contentWindowInsets`.
+     *
+     * Por defecto el `Scaffold` pide los márgenes enteros y descuenta lo que el shell ya consumió.
+     * En iOS ese descuento se pierde en cuanto se recompone toda la app, que es lo que pasa al
+     * cambiar el tema: allí `WindowInsets.systemBars` es un objeto nuevo en cada lectura, el
+     * `Scaffold` rehace sus márgenes sin descontar nada, y la pantalla volvía a reservar los 34 pt
+     * del indicador de inicio (spec 023). Pidiendo solo arriba y los lados, que nadie consume por
+     * encima, no queda nada que descontar. Compose Multiplatform 1.12 lo arregla en la librería; esto
+     * sigue siendo correcto después.
+     */
+    val contentWindowInsets: WindowInsets
+        @Composable get() = ScaffoldDefaults.contentWindowInsets
+            .only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
 }
 
 /**

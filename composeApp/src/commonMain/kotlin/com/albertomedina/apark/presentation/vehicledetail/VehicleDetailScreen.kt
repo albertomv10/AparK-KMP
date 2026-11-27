@@ -75,6 +75,7 @@ import com.albertomedina.apark.domain.model.VehicleColor
 import com.albertomedina.apark.domain.model.VehicleType
 import com.albertomedina.apark.domain.model.hasDetails
 import com.albertomedina.apark.presentation.vehicleform.VehicleAvatar
+import com.albertomedina.apark.presentation.navigation.TabShellDefaults
 import com.albertomedina.apark.presentation.vehicleform.badgeColor
 import com.albertomedina.apark.presentation.vehicleform.hasAvatar
 import com.albertomedina.apark.presentation.vehicleform.label
@@ -150,6 +151,7 @@ fun VehicleDetailScreen(
     }
 
     Scaffold(
+        contentWindowInsets = TabShellDefaults.contentWindowInsets,
         snackbarHost = {
             SnackbarHost(snackbarHostState) { data ->
                 activeSnackbarMessage?.let {
@@ -182,8 +184,8 @@ fun VehicleDetailScreen(
             )
         }
     ) { padding ->
-        // Va dentro del shell de pestañas: sin consumir los insets, el contenido subiría el alto
-        // del indicador de inicio. Ver «A Scaffold inside the tab shell» en AGENTS.md.
+        // Consumir `padding` le cuenta a lo de dentro el alto de la barra superior. El indicador de
+        // inicio no entra: es del shell, y este Scaffold ni lo pide (`TabShellDefaults`, spec 023).
         val contentModifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
         val vehicle = state.vehicle
         when {

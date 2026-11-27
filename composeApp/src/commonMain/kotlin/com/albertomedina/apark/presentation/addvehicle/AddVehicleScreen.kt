@@ -58,6 +58,7 @@ import apark.composeapp.generated.resources.join_vehicle_error_invalid
 import apark.composeapp.generated.resources.join_vehicle_error_used
 import apark.composeapp.generated.resources.add_vehicle_title
 import com.albertomedina.apark.presentation.components.StandardAparKButton
+import com.albertomedina.apark.presentation.navigation.TabShellDefaults
 import com.albertomedina.apark.presentation.vehicleform.VehicleForm
 import com.albertomedina.apark.utils.SnackbarMessage
 import org.jetbrains.compose.resources.stringResource
@@ -112,6 +113,7 @@ fun AddVehicleScreen(
     }
 
     Scaffold(
+        contentWindowInsets = TabShellDefaults.contentWindowInsets,
         snackbarHost = {
             SnackbarHost(snackbarHostState) { snackbarData ->
                 activeSnackbarMessage?.let {

@@ -427,11 +427,24 @@ graphify path "A" "B" --undirected
   `create` and in the owner's branch. Validating them all would let one stale value block parking.
 - **The make and model search folds accents with its own table** (`foldForSearch`): `commonMain`
   has no `java.text.Normalizer`. It covers Latin letters, which is what brand names need.
-- **A `Scaffold` inside the tab shell must consume the insets the shell already applied.** The
-  shell pads its `NavDisplay` by the tab bar's height; a screen's own `Scaffold` then reserves room
-  for the system bars *again*, and the content floats up by that much. `Modifier.padding(p)` plus
-  `consumeWindowInsets(p)` is the fix. On Android the gesture inset is small enough to miss; on
-  iPhone the home indicator is ~34pt and it is obvious.
+- **A `Scaffold` inside the tab shell passes `contentWindowInsets = TabShellDefaults.contentWindowInsets`**
+  (spec 023). The shell pads its `NavDisplay` by the tab bar's height — or by the home indicator when
+  the bar is hidden — so the bottom inset is the shell's, and a screen asks only for the top and the
+  sides. The default asks for everything and relies on subtracting what the shell consumed, and **on
+  iOS that subtraction is lost after any full recomposition**: changing the system appearance, or the
+  theme in *Cuenta*, raised the map's carousel and Google logo by the home indicator's 34pt and left a
+  gap at the end of *Cuenta*, until you left the screen. Four pieces: `LocalSystemTheme` and our theme
+  locals are static, so the whole tree recomposes; on iOS `WindowInsets.systemBars` is a new, unequal
+  object on every read; Material's `Scaffold` keys `remember(contentWindowInsets)` on it and rebuilds
+  its insets unsubtracted; and `ConsumedInsetsModifierNode.update()` stores the new block without
+  running it. Android returns the same object every time, so it never shows there. The shell's own
+  `consumeWindowInsets` stays: the forms' `imePadding()` relies on it. Before that, the fix was
+  `Modifier.padding(p)` plus `consumeWindowInsets(p)`, which only works until the first full
+  recomposition.
+- **Compose Multiplatform 1.12.0 fixes that last piece upstream** (`update()` re-runs the block), and
+  nothing earlier does. The app declares 1.9.3, but on iOS it links `ui`, `runtime` and
+  `foundation-layout` **1.10.1**, pulled in by some dependency, with `material3` 1.9.0. Check
+  `:composeApp:dependencies` before trusting the catalog about what is actually inside the binary.
 - **The map camera is decided once, in common code, and both platforms only execute it** (spec 017).
   `cameraMoveFor(previous, current)` in `MapCamera.kt` is a pure function of the *focus* — the
   selected vehicle's id and location — and `HomeViewModel` turns its result into `CameraRequest`s,

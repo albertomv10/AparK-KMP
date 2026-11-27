@@ -1,6 +1,7 @@
 package com.albertomedina.apark.presentation.home
 
 import com.albertomedina.apark.presentation.vehicleform.VehicleAvatar
+import com.albertomedina.apark.presentation.navigation.TabShellDefaults
 import com.albertomedina.apark.presentation.vehicleform.hasAvatar
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -207,7 +208,7 @@ fun HomeScreen(
     val haptics = LocalHapticFeedback.current
     val selectedVehicle = state.vehicles.getOrNull(state.selectedVehicleIndex)
 
-    Scaffold { paddingValues ->
+    Scaffold(contentWindowInsets = TabShellDefaults.contentWindowInsets) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
 
             AparKMap(
