@@ -9,6 +9,16 @@ Este proyecto usa [Spec-Driven Development](docs/PROCESS.md); las specs viven en
 ## [Unreleased]
 
 ### Added
+- **La ubicación predeterminada de un vehículo** ([spec 024](docs/specs/024-default-place/spec.md)):
+  la plaza de garaje, con su nombre.
+  - Se pone, se cambia o se quita desde el detalle, en «Dónde está», moviendo un mapa bajo un
+    marcador fijo. Lo puede hacer cualquier miembro, no solo el dueño.
+  - En la tarjeta del mapa salen dos botones, «Aquí» con el GPS y el de la ubicación, que aparca ahí
+    **sin GPS y sin conexión**, con «Deshacer». Pensado para garajes subterráneos sin señal.
+  - Se ve que está ahí: «Plaza 23 · hace 5 min» en la tarjeta, «Aparcado … en Plaza 23 por Edu» en el
+    detalle y la lista, y el pin del mapa con una casa dentro.
+  - En Android, todos los pines de los vehículos son ahora propios, con la misma forma con casa o sin
+    ella; el aspecto cambia un poco.
 - **Lo pendiente de los vehículos, a la vista** ([spec 020](docs/specs/020-pending-incidents/spec.md)):
   las incidencias ya no se ven solo abriendo cada vehículo.
   - Arriba en *Vehículos*, **«Pendiente»**: las abiertas de todos tus vehículos, la más reciente

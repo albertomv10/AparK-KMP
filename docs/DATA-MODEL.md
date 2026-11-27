@@ -134,7 +134,7 @@ vehicles/{vehicleId}/reminders/{reminderId}
   recurrence, lastNotifiedAt?
   createdBy, createdAt, updatedAt, schemaVersion
 
-vehicles/{vehicleId}/places/{placeId}
+vehicles/{vehicleId}/places/{placeId}   # APLAZADA: la spec 024 guarda una sola, dentro del vehículo
   label, icon: "garage" | "home" | "work" | "other"
   lat, lng
   createdBy, createdAt, updatedAt, schemaVersion
@@ -144,6 +144,14 @@ invites/{code}                        # el cliente no lo toca: solo Cloud Functi
 ```
 
 ---
+
+> **Estado, 2026-11-27 — la ubicación predeterminada (R8, spec 024)**: no es la subcolección `places`
+> de arriba, sino **una sola por vehículo, dentro del propio documento**: `defaultPlace: {name,
+> latitude, longitude}`, que puede poner cualquier miembro. Aparcar en ella deja
+> `lastLocation.atDefaultPlace: true`, una marca y no una copia del nombre: con la ubicación en el
+> mismo documento, el nombre ya está a mano, y renombrarla se ve al momento. Una versión anterior que
+> aparca reescribe `lastLocation` entero y la marca se va con él. Si algún día hacen falta varias, se
+> pasa a `places`.
 
 ## 5. Las decisiones, y por qué
 

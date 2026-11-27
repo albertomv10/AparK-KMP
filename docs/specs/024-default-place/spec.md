@@ -1,7 +1,7 @@
 # Spec: La ubicación predeterminada de un vehículo
 
 - **ID**: 024-default-place
-- **Estado**: Aprobada
+- **Estado**: Implementada — diseño en [design.md](design.md)
 - **Fecha**: 2026-11-27
 
 ## Problema / Por qué
@@ -79,6 +79,16 @@ segundo botón.
 10. **Dado** que después alguien lo aparca con «Aquí» o arrastra su marcador, **cuando** veo la
     tarjeta y el mapa, **entonces** vuelven a ser los de siempre.
 
+**El pin y arrastrarlo** (cambios después de probarla)
+
+13. **Dado** el mapa, **cuando** veo los pines en Android, **entonces** tienen la forma y el tamaño
+    del pin de antes, y la casa de uno en su ubicación se distingue bien.
+14. **Dado** un vehículo elegido, **cuando** mantengo pulsado su pin, **entonces** empiezo a
+    arrastrarlo, también en iOS, y no se aparca en el punto del dedo. Mantener pulsado el pin de
+    otro vehículo tampoco aparca el elegido encima de él.
+15. **Dado** el mapa, **cuando** intento arrastrar el pin de un vehículo que no es el elegido,
+    **entonces** no se mueve. Para moverlo, lo elijo antes, en el carrusel o tocando su pin.
+
 **En todas partes**
 
 11. **Dado** una versión anterior de la app, **cuando** aparca un vehículo que tiene ubicación
@@ -111,3 +121,18 @@ segundo botón.
 
 - **Varias ubicaciones por vehículo** y **compartirlas entre vehículos**.
 - **Detectar la ubicación por cercanía.**
+
+## Cambio después de probarla (2026-11-27)
+
+Alberto lo probó en su móvil y pidió tres cosas (criterios 13, 14 y 15):
+
+- **Los pines de Android eran más pequeños y la casa no se distinguía.** Eran el icono `Place` de
+  Material, más pequeño que el pin de Google y con un agujero en la cabeza: la casa blanca quedaba
+  encima del mapa claro. Ahora se dibujan con la forma y el tamaño del de Google, con la cabeza
+  sólida. En iOS ya se veían bien, porque son el pin del SDK con la casa encima.
+- **En iOS, mantener pulsado un pin aparcaba el vehículo en el punto del dedo** en vez de empezar a
+  arrastrarlo, y el arrastre se cortaba. Venía de la spec 017: allí el SDK avisa de la pulsación larga
+  también encima de un marcador. En Android pasaba lo mismo con los pines que no se pueden arrastrar:
+  al probar que el de otro vehículo no se movía, el elegido acabó encima de él. Ahora, en las dos
+  plataformas, una pulsación larga encima de cualquier pin no aparca.
+- **Solo se arrastra el pin del vehículo elegido**, para no mover otro sin querer.

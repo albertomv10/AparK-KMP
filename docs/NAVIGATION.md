@@ -35,7 +35,7 @@ Vehículos ────── cómo están · gestionar
        ├── Datos · Miembros · Compartir
        ├── Incidencias
        ├── Mantenimiento · ITV
-       └── Ubicaciones guardadas
+       └── Ubicación predeterminada  (en «Dónde está», spec 024)
 
 Cuenta ───────── quién eres · cómo se comporta
   foto · nombre · email

@@ -376,7 +376,7 @@ JSON se sustituye por una colección `catalog` en Firestore que la app cachea �
 | 3.1 | **Incidencias** (`vehicles/{id}/incidents`): reportar, estado, quién y cuándo, resolver | L | ✅ Hecho en la [spec 019](specs/019-incidents/spec.md), desde el detalle; y a la vista en la [spec 020](specs/020-pending-incidents/spec.md): «Pendiente» en *Vehículos*, iconos en la tarjeta y la chapita |
 | 3.2 | **ITV y revisiones**: fechas, aviso de proximidad | M | Necesita el **primer índice** del proyecto |
 | 3.3 | **Mantenimiento**: historial de intervenciones | M | Mismo patrón de subcolección que 3.1 |
-| 3.4 | **Ubicaciones predeterminadas** (garaje) | M | Ver decisión abierta abajo |
+| 3.4 | **Ubicaciones predeterminadas** (garaje) | M | ✅ Hecho en la [spec 024](specs/024-default-place/spec.md): una por vehículo, que pone cualquier miembro, con su botón en la tarjeta y el pin con la casa |
 
 Sobre 3.4, la duda de diseño es a quién pertenece un garaje. En tu ejemplo —dos vehículos, una
 plaza— el garaje es **del hogar**, no de un vehículo, y en el modelo actual no existe el concepto
@@ -458,7 +458,9 @@ defecto**. Eso es un ajuste que hay que diseñar en la fase 1, aunque no se use 
    Firebase Storage, que es un servicio nuevo con sus propias reglas y sus propios costes, y era la
    única pieza de la fase 1 que se podía posponer sin arrastrar nada. Lo mismo con el selector de
    idioma: la app sigue el del sistema. Con eso la fase 1 queda cerrada, y se sigue por la 2.
-4. **¿Las ubicaciones predeterminadas van por vehículo?** (§3.4)
+4. ~~**¿Las ubicaciones predeterminadas van por vehículo?** (§3.4)~~ → **Sí, una por vehículo**, en
+   el propio documento ([spec 024](specs/024-default-place/spec.md)). Dos coches en la misma plaza la
+   definen dos veces.
 5. **¿Se pide el entitlement de CarPlay ya**, aunque no se vaya a tocar hasta dentro de meses?
 
 ---

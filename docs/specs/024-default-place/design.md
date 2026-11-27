@@ -91,3 +91,16 @@ Hay que desplegarlas a `apark-dev` antes de probar en un móvil, y a producción
 - **Las reglas tienen que llegar antes que la app.** Una app nueva contra reglas viejas no puede
   guardar la ubicación, y un miembro que no es el dueño tampoco puede aparcar con la marca: la rama de
   aparcar no la admite hasta que se despliegan.
+
+## Lo que salió al probarla
+
+- **El pin de Android se dibuja a mano.** Primero fue el icono `Place` de Material: más pequeño que el
+  de Google, y con un agujero en la cabeza por el que se veía el mapa, así que la casa blanca no se
+  distinguía. Ahora es un `Canvas` con la forma y el tamaño del de Google, la cabeza sólida, el borde
+  y el punto oscuros, y anclado en la punta.
+- **Una pulsación larga sobre un pin no aparca.** Los dos SDK avisan al mapa también cuando el dedo
+  está sobre un pin: iOS siempre, y Android si el pin no se puede arrastrar. El elegido saltaba al
+  dedo, o encima de otro vehículo, y en iOS el arrastre se cortaba. Cada plataforma comprueba primero
+  si la pulsación cae sobre un pin (`isOnMarker` en Swift, `isOnPin` en Kotlin).
+- **Solo se arrastra el pin del vehículo elegido**, para no mover otro sin querer.
+- **El destino se llama `DefaultPlaceEditor`**, porque `DefaultPlace` ya es la clase del modelo.

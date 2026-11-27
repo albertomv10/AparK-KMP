@@ -144,7 +144,7 @@ permissions (`LocationPermissionHandler`) and the settings deep link (`OpenAppSe
 | Collection | Document ID | Key fields |
 |------------|-------------|------------|
 | `users` | `FirebaseAuth.uid` | `email`, `name` — **the only copy the client writes**; `userVehicles: List<String>` — **an ordering hint only**, never the source of the list |
-| `vehicles` | Auto-generated | `name`, `licensePlate`, `ownerId`, `memberIds: List<String>` (owner included), `lastLocation`, `createdAt`, `updatedAt`; and spec 015's `type`, `powertrain`, `fuel`, `make`, `model`, `color`, `emissionsLabel` — codes or text, `""` meaning no data |
+| `vehicles` | Auto-generated | `name`, `licensePlate`, `ownerId`, `memberIds: List<String>` (owner included), `lastLocation`, `createdAt`, `updatedAt`; and spec 015's `type`, `powertrain`, `fuel`, `make`, `model`, `color`, `emissionsLabel` — codes or text, `""` meaning no data; spec 024's `defaultPlace: {name, latitude, longitude}` (absent or `null` if none) and `lastLocation.atDefaultPlace` |
 | `invites` | The 8-character code | `vehicleId`, `createdBy`, `expiresAt`, `usedBy` — clients are denied all access |
 | `vehicles/{id}/incidents` | Auto-generated | `type` (one of 16 codes, or `custom`), `title` (a custom one's name, 1–40; `""` otherwise, always present), `note` (≤ 280), `status` (`open` · `resolved`), `reportedBy` (uid only), `createdAt`; once resolved, `resolvedBy`, `resolvedAt` and `expiresAt` — spec 019 |
 
@@ -378,6 +378,30 @@ graphify path "A" "B" --undirected
   `getCurrentUser()`, not `authStateChanges`: Firebase clears the user before it tells Firestore, so
   by the time the denial arrives the session is already known to be gone, and that is not a failure.
   With the session alive it is one: it goes to Crashlytics, and Home and Vehicles say so.
+- **The default place (spec 024) is the one piece of a vehicle any member may change.** The owner
+  changes everything else; a member may only park, leave, or write `defaultPlace` — and nothing else
+  in that same write, which a rules branch of its own proves. `null` counts as "no place", because
+  `createVehicle` writes every field of `Vehicle`. Whether the vehicle is *at* its place is the mark
+  `lastLocation.atDefaultPlace` **and** the place still existing (`parkedAtPlace`): it is a mark, not a
+  copy of the name, so renaming shows at once and removing it un-names the spot.
+- **Parking at the default place does not wait for the write**, unlike parking by GPS: it is meant
+  for underground garages, where there is no signal and the write never returns. `HomeViewModel`
+  confirms at once, with «Deshacer», and reports a failure only if the write later fails.
+- **Every Android vehicle pin is a `MarkerComposable`** (`VehiclePin`), not `defaultMarker`, since spec
+  024: the SDK's pin is an opaque `BitmapDescriptor` nothing can be drawn on, and the garage pin needs
+  a house inside. It is drawn on a `Canvas` with the SDK pin's shape and size (30 × 46 dp, a solid
+  head, a dark rim and dot), anchored at its tip. The Material `Place` icon was tried first: it is
+  smaller, and its head is a **hole**, so a white house on it vanished against the light map. iOS
+  keeps the SDK's pin and draws the house over it in Swift (`markerImageAtPlace`).
+- **A long press on a pin is never «park here»** (spec 024). Only the selected vehicle's pin is
+  draggable; a long press on it starts the drag, and on any other pin does nothing. Both SDKs also
+  report that long press to the map — iOS for every marker, Android for the non-draggable ones — and
+  the selected vehicle used to jump to the finger, or onto the other vehicle. Each platform
+  hit-tests the press against the pins first: `isOnMarker` in Swift, `isOnPin` in Kotlin.
+- **iOS has two `GMSMapView`s now**: the carousel's, owned by `MapLocationController.shared`, and
+  the default-place picker's, built by `iosPlacePickerFactory` with its own `PlacePickerController`.
+  They must not share a delegate or a reference, or the carousel's camera orders land on the picker.
+  Both style themselves through `applyMapStyle`, which pins `overrideUserInterfaceStyle`.
 - **Parking signs `ParkedBy.email` with the email in the ID token** (`tokenEmail()`), not the one in
   `users` nor the profile's. The rule compares it with `request.auth.token.email`; the document lags
   behind after an email change, and **`reload()` updates the profile but not the token** — which is
